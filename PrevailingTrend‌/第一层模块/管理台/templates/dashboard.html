@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一层模块管理台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .stat-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        .stat-card.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; }
+        .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .stat-card.info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
+        .module-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .module-card:hover {
+            border-color: #007bff;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">第一层模块管理台</span>
+            <span class="navbar-text" id="current-time"></span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- 数据流向图 -->
+        <div class="alert alert-info">
+            <h5>数据流向图</h5>
+            <div class="text-center">
+                <span class="badge bg-primary">数据采集层</span> →
+                <span class="badge bg-secondary">数据处理层</span> →
+                <span class="badge bg-success">数据整合层</span> →
+                <span class="badge bg-warning">数据评分层</span> →
+                <span class="badge bg-info">权重配置层</span> →
+                <span class="badge bg-dark">预测分析层</span>
+            </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card primary" onclick="showModuleList()">
+                    <div class="card-body text-center">
+                        <h5>总模块数</h5>
+                        <h3 id="total-modules">-</h3>
+                        <small>点击查看所有模块</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card success" onclick="showRunningModules()">
+                    <div class="card-body text-center">
+                        <h5>运行中模块</h5>
+                        <h3 id="running-modules">-</h3>
+                        <small>点击查看运行状态</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card warning" onclick="showIndustryData()">
+                    <div class="card-body text-center">
+                        <h5>行业数据</h5>
+                        <h3 id="industry-count">-</h3>
+                        <small>点击查看详情</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card info" onclick="showCompanyData()">
+                    <div class="card-body text-center">
+                        <h5>公司数据</h5>
+                        <h3 id="company-count">-</h3>
+                        <small>点击查看详情</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块列表 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>模块状态列表</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="module-list">
+                            <!-- 模块卡片将通过JavaScript动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情模态框 -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailTitle">详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detailContent">
+                    <!-- 内容将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 模块配置
+        const modules = {
+            'wind_industry': {
+                name: '万得行业分类',
+                description: '从万得数据库获取行业分类信息',
+                processing_logic: '1. 连接万得API获取行业分类数据\n2. 数据清洗和标准化\n3. 建立行业层级关系\n4. 存储到数据库',
+                status: 'running',
+                color: 'success'
+            },
+            'company_list': {
+                name: '公司名字列表',
+                description: '收集和管理上市公司基础信息',
+                processing_logic: '1. 从交易所官网获取上市公司列表\n2. 数据验证和去重\n3. 补充公司基础信息\n4. 建立市场分类映射',
+                status: 'running',
+                color: 'success'
+            },
+            'domestic_hotspot': {
+                name: '国内热点数据',
+                description: '采集国内热点新闻和事件',
+                processing_logic: '1. 爬取新闻网站和社交媒体\n2. 文本预处理和关键词提取\n3. 情感分析和热度计算\n4. 相关公司和行业关联',
+                status: 'stopped',
+                color: 'warning'
+            },
+            'foreign_hotspot': {
+                name: '国外热点数据',
+                description: '采集国外热点新闻和事件',
+                processing_logic: '1. 爬取国外新闻网站\n2. 文本翻译和本地化\n3. 情感分析和热度评估\n4. 与国内热点对比分析',
+                status: 'stopped',
+                color: 'warning'
+            },
+            'tencent_index': {
+                name: '腾讯济安指数',
+                description: '获取腾讯济安指数数据',
+                processing_logic: '1. 连接腾讯济安指数API\n2. 获取实时和历史数据\n3. 数据验证和存储\n4. 趋势分析和预警',
+                status: 'stopped',
+                color: 'warning'
+            },
+            'forum_hotspot': {
+                name: '雪球等论坛热点数据',
+                description: '采集论坛的热点话题和用户讨论',
+                processing_logic: '1. 爬取论坛热门话题\n2. 用户评论情感分析\n3. 话题热度计算\n4. 相关股票关联分析',
+                status: 'stopped',
+                color: 'warning'
+            },
+            'internet_info': {
+                name: '其他互联网信息',
+                description: '采集其他互联网信息源',
+                processing_logic: '1. 多源数据采集\n2. 数据去重和整合\n3. 质量评估和筛选\n4. 统一格式存储',
+                status: 'stopped',
+                color: 'warning'
+            }
+        };
+
+        // 更新当前时间
+        function updateTime() {
+            document.getElementById('current-time').textContent = new Date().toLocaleString('zh-CN');
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // 加载仪表板数据
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const dashboardData = data.data;
+                    document.getElementById('total-modules').textContent = dashboardData.modules.total;
+                    document.getElementById('running-modules').textContent = dashboardData.modules.running;
+                    document.getElementById('industry-count').textContent = dashboardData.data.industries;
+                    document.getElementById('company-count').textContent = dashboardData.data.companies;
+                }
+            } catch (error) {
+                console.error('加载仪表板数据失败:', error);
+            }
+        }
+
+        // 加载模块列表
+        function loadModuleList() {
+            const moduleList = document.getElementById('module-list');
+            moduleList.innerHTML = '';
+
+            Object.keys(modules).forEach(moduleId => {
+                const module = modules[moduleId];
+                const moduleCard = document.createElement('div');
+                moduleCard.className = 'col-md-4 col-lg-3 mb-3';
+                moduleCard.innerHTML = `
+                    <div class="card module-card" onclick="showModuleDetail('${moduleId}')">
+                        <div class="card-body text-center">
+                            <h6>${module.name}</h6>
+                            <span class="badge bg-${module.color}">${module.status}</span>
+                            <p class="text-muted small mt-2">${module.description}</p>
+                        </div>
+                    </div>
+                `;
+                moduleList.appendChild(moduleCard);
+            });
+        }
+
+        // 显示模块详情
+        function showModuleDetail(moduleId) {
+            const module = modules[moduleId];
+            const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+            
+            document.getElementById('detailTitle').textContent = module.name;
+            document.getElementById('detailContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>模块描述</h6>
+                        <p>${module.description}</p>
+                        
+                        <h6>处理逻辑</h6>
+                        <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${module.processing_logic}</pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>模块状态</h6>
+                        <p><span class="badge bg-${module.color}">${module.status}</span></p>
+                        
+                        <h6>数据统计</h6>
+                        <div id="module-stats-${moduleId}">加载中...</div>
+                    </div>
+                </div>
+            `;
+            
+            modal.show();
+            loadModuleStats(moduleId);
+        }
+
+        // 加载模块统计数据
+        async function loadModuleStats(moduleId) {
+            try {
+                const response = await fetch(`/api/data/${moduleId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById(`module-stats-${moduleId}`).innerHTML = `
+                        <p>数据条数: ${data.count}</p>
+                        <p>最后更新: ${new Date().toLocaleString()}</p>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById(`module-stats-${moduleId}`).innerHTML = '<p class="text-danger">加载失败</p>';
+            }
+        }
+
+        // 显示模块列表
+        function showModuleList() {
+            const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+            document.getElementById('detailTitle').textContent = '所有模块详情';
+            document.getElementById('detailContent').innerHTML = `
+                <div class="row">
+                    ${Object.keys(modules).map(moduleId => {
+                        const module = modules[moduleId];
+                        return `
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>${module.name}</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>${module.description}</p>
+                                        <span class="badge bg-${module.color}">${module.status}</span>
+                                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="showModuleDetail('${moduleId}')">查看详情</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            modal.show();
+        }
+
+        // 显示运行中的模块
+        function showRunningModules() {
+            const runningModules = Object.keys(modules).filter(id => modules[id].status === 'running');
+            const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+            document.getElementById('detailTitle').textContent = '运行中的模块';
+            document.getElementById('detailContent').innerHTML = `
+                <div class="row">
+                    ${runningModules.map(moduleId => {
+                        const module = modules[moduleId];
+                        return `
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6>${module.name}</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>${module.description}</p>
+                                        <button class="btn btn-sm btn-outline-success" onclick="showModuleDetail('${moduleId}')">查看详情</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            modal.show();
+        }
+
+        // 显示行业数据
+        async function showIndustryData() {
+            try {
+                const response = await fetch('/api/data/industries');
+                const data = await response.json();
+                
+                const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                document.getElementById('detailTitle').textContent = '行业分类数据';
+                
+                if (data.success) {
+                    let html = '<div class="table-responsive"><table class="table table-striped">';
+                    html += '<thead><tr><th>代码</th><th>名称</th><th>层级</th><th>状态</th></tr></thead><tbody>';
+                    data.data.forEach(industry => {
+                        html += `<tr>
+                            <td>${industry.industry_code}</td>
+                            <td>${industry.industry_name}</td>
+                            <td>L${industry.industry_level}</td>
+                            <td><span class="badge bg-success">${industry.status}</span></td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table></div>';
+                    document.getElementById('detailContent').innerHTML = html;
+                } else {
+                    document.getElementById('detailContent').innerHTML = '<div class="alert alert-danger">加载失败</div>';
+                }
+                modal.show();
+            } catch (error) {
+                console.error('加载行业数据失败:', error);
+            }
+        }
+
+        // 显示公司数据
+        async function showCompanyData() {
+            try {
+                const response = await fetch('/api/data/companies');
+                const data = await response.json();
+                
+                const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                document.getElementById('detailTitle').textContent = '公司列表数据';
+                
+                if (data.success) {
+                    let html = '<div class="table-responsive"><table class="table table-striped">';
+                    html += '<thead><tr><th>公司名称</th><th>股票代码</th><th>市场</th><th>状态</th></tr></thead><tbody>';
+                    data.data.forEach(company => {
+                        html += `<tr>
+                            <td>${company.company_name}</td>
+                            <td>${company.stock_code}</td>
+                            <td>${company.market}</td>
+                            <td><span class="badge bg-success">${company.status}</span></td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table></div>';
+                    document.getElementById('detailContent').innerHTML = html;
+                } else {
+                    document.getElementById('detailContent').innerHTML = '<div class="alert alert-danger">加载失败</div>';
+                }
+                modal.show();
+            } catch (error) {
+                console.error('加载公司数据失败:', error);
+            }
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+            loadModuleList();
+            
+            // 每30秒刷新一次数据
+            setInterval(() => {
+                loadDashboard();
+            }, 30000);
+        });
+    </script>
+</body>
+</html> 
