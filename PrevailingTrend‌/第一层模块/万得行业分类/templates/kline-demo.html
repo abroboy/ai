@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K线图插件演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+        }
+        
+        .demo-section h2 {
+            color: #374151;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        
+        .controls {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-group label {
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        input, select, button {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3730a3;
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .chart-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .chart-header {
+            background: #f3f4f6;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chart-title {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            min-height: 400px;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #6b7280;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .feature-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #4f46e5;
+        }
+        
+        .feature-card h3 {
+            color: #374151;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+        
+        .code-example {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 K线图插件演示</h1>
+            <p>独立、可复用的K线图组件，支持多种配置和主题</p>
+        </div>
+        
+        <div class="content">
+            <!-- 基本使用演示 -->
+            <div class="demo-section">
+                <h2>🎯 基本使用</h2>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label>股票代码:</label>
+                        <input type="text" id="stockCode" value="000001" placeholder="输入股票代码">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>图表高度:</label>
+                        <select id="chartHeight">
+                            <option value="300">300px</option>
+                            <option value="400" selected>400px</option>
+                            <option value="500">500px</option>
+                            <option value="600">600px</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>主题:</label>
+                        <select id="theme">
+                            <option value="light" selected>浅色</option>
+                            <option value="dark">深色</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="loadChart()">加载图表</button>
+                    <button onclick="updateData()">更新数据</button>
+                    <button onclick="destroyChart()">销毁图表</button>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">K线图演示</div>
+                        <div class="chart-actions">
+                            <button onclick="toggleVolume()" id="volumeBtn">隐藏成交量</button>
+                            <button onclick="toggleGrid()" id="gridBtn">隐藏网格</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div id="chartContainer">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <div>点击"加载图表"开始</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="status"></div>
+            </div>
+            
+            <!-- 功能特性 -->
+            <div class="demo-section">
+                <h2>✨ 功能特性</h2>
+                <div class="features">
+                    <div class="feature-card">
+                        <h3>🎨 主题定制</h3>
+                        <p>支持浅色和深色主题，可自定义颜色方案，适配不同界面风格。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📱 响应式设计</h3>
+                        <p>自动适应容器大小变化，支持移动端和桌面端显示。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>⚡ 高性能</h3>
+                        <p>基于LightweightCharts库，渲染速度快，内存占用低。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔧 易于集成</h3>
+                        <p>简单的API接口，几行代码即可集成到任何项目中。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📊 数据可视化</h3>
+                        <p>支持K线图和成交量显示，提供完整的股票数据可视化。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔄 实时更新</h3>
+                        <p>支持数据实时更新，可手动或自动刷新图表数据。</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 使用示例 -->
+            <div class="demo-section">
+                <h2>💻 使用示例</h2>
+                
+                <h3>基本用法</h3>
+                <div class="code-example">
+// 1. 引入依赖
+&lt;script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"&gt;&lt;/script&gt;
+&lt;script src="/static/js/kline-plugin.js"&gt;&lt;/script&gt;
+
+// 2. 创建容器
+&lt;div id="chartContainer"&gt;&lt;/div&gt;
+
+// 3. 初始化图表
+const chart = KlineChart.create(document.getElementById('chartContainer'), {
+    height: 400,
+    theme: 'light'
+});
+
+// 4. 加载数据
+chart.loadData('000001');
+                </div>
+                
+                <h3>高级配置</h3>
+                <div class="code-example">
+const chart = KlineChart.create(container, {
+    height: 500,
+    theme: 'dark',
+    showVolume: true,
+    showGrid: false,
+    showCrosshair: true,
+    colors: {
+        up: '#00ff88',
+        down: '#ff4444',
+        background: '#1a1a1a',
+        text: '#ffffff'
+    },
+    apiEndpoint: '/api/stock/{code}/kline'
+});
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入依赖 -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="/static/js/kline-plugin.js"></script>
+    
+    <script>
+        let klineChart = null;
+        let currentStockCode = '000001';
+        
+        // 显示状态信息
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // 加载图表
+        async function loadChart() {
+            const stockCode = document.getElementById('stockCode').value.trim();
+            const height = parseInt(document.getElementById('chartHeight').value);
+            const theme = document.getElementById('theme').value;
+            
+            if (!stockCode) {
+                showStatus('请输入股票代码', 'error');
+                return;
+            }
+            
+            currentStockCode = stockCode;
+            
+            try {
+                // 销毁现有图表
+                if (klineChart) {
+                    klineChart.destroy();
+                }
+                
+                // 显示加载状态
+                const container = document.getElementById('chartContainer');
+                container.innerHTML = '<div class="loading"><div class="spinner"></div><div>加载图表中...</div></div>';
+                
+                // 创建新图表
+                const options = {
+                    height: height,
+                    theme: theme,
+                    colors: theme === 'dark' ? {
+                        up: '#00ff88',
+                        down: '#ff4444',
+                        grid: '#333333',
+                        background: '#1a1a1a',
+                        text: '#ffffff'
+                    } : undefined
+                };
+                
+                klineChart = KlineChart.create(container, options);
+                
+                // 加载数据
+                const success = await klineChart.loadData(stockCode);
+                
+                if (success) {
+                    showStatus(`✅ 图表加载成功 - ${stockCode}`, 'success');
+                } else {
+                    showStatus('❌ 图表加载失败', 'error');
+                }
+                
+            } catch (error) {
+                showStatus('❌ 图表加载失败: ' + error.message, 'error');
+                console.error('加载图表失败:', error);
+            }
+        }
+        
+        // 更新数据
+        async function updateData() {
+            if (!klineChart) {
+                showStatus('请先加载图表', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('🔄 更新数据中...', 'info');
+                const success = await klineChart.updateData(currentStockCode);
+                
+                if (success) {
+                    showStatus('✅ 数据更新成功', 'success');
+                } else {
+                    showStatus('❌ 数据更新失败', 'error');
+                }
+            } catch (error) {
+                showStatus('❌ 数据更新失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 销毁图表
+        function destroyChart() {
+            if (klineChart) {
+                klineChart.destroy();
+                klineChart = null;
+                
+                const container = document.getElementById('chartContainer');
+                container.innerHTML = '<div class="loading"><div>图表已销毁</div></div>';
+                
+                showStatus('🗑️ 图表已销毁', 'info');
+            }
+        }
+        
+        // 切换成交量显示
+        function toggleVolume() {
+            if (!klineChart) return;
+            
+            const btn = document.getElementById('volumeBtn');
+            const isVisible = btn.textContent.includes('隐藏');
+            
+            if (isVisible) {
+                btn.textContent = '显示成交量';
+                // 这里可以添加隐藏成交量的逻辑
+            } else {
+                btn.textContent = '隐藏成交量';
+                // 这里可以添加显示成交量的逻辑
+            }
+        }
+        
+        // 切换网格显示
+        function toggleGrid() {
+            if (!klineChart) return;
+            
+            const btn = document.getElementById('gridBtn');
+            const isVisible = btn.textContent.includes('隐藏');
+            
+            if (isVisible) {
+                btn.textContent = '显示网格';
+                // 这里可以添加隐藏网格的逻辑
+            } else {
+                btn.textContent = '隐藏网格';
+                // 这里可以添加显示网格的逻辑
+            }
+        }
+        
+        // 页面加载完成后的初始化
+        window.addEventListener('load', function() {
+            showStatus('🚀 K线图插件已加载，点击"加载图表"开始使用', 'info');
+        });
+    </script>
+</body>
+</html> 

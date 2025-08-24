@@ -891,17 +891,17 @@ function displayStocksList(data) {
         
         html += `
             <tr>
-                <td><strong>${stock.code}</strong></td>
-                <td>${stock.name}</td>
-                <td><span class="badge ${marketClass}">${stock.market}</span></td>
-                <td>${stock.industry || '-'}</td>
+                <td><strong>${stock.stock_code || stock.code || 'N/A'}</strong></td>
+                <td>${stock.stock_name || stock.name || 'N/A'}</td>
+                <td><span class="badge ${marketClass}">${stock.market || 'A股'}</span></td>
+                <td>${stock.industry_name || stock.industry || '-'}</td>
                 <td><span class="badge ${mappingClass}">${mappingText}</span></td>
-                <td>${new Date().toLocaleDateString('zh-CN')}</td>
+                <td>${stock.updated_at ? new Date(stock.updated_at).toLocaleDateString('zh-CN') : new Date().toLocaleDateString('zh-CN')}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editStockMapping('${stock.code}')">
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editStockMapping('${stock.stock_code || stock.code}')">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-info" onclick="viewStockDetail('${stock.code}')">
+                    <button class="btn btn-sm btn-outline-info" onclick="viewStockDetail('${stock.stock_code || stock.code}')">
                         <i class="fas fa-eye"></i>
                     </button>
                 </td>
@@ -1021,7 +1021,332 @@ function editStockMapping(stockCode) {
 
 // 查看股票详情
 function viewStockDetail(stockCode) {
-    alert(`查看股票详情: ${stockCode} - 功能开发中...`);
+    console.log('查看股票详情:', stockCode);
+    
+    // 显示模态框
+    const modal = new bootstrap.Modal(document.getElementById('stockModal'));
+    const modalTitle = document.getElementById('stockModalTitle');
+    
+    // 设置标题
+    modalTitle.textContent = `股票详情 - ${stockCode}`;
+    
+    // 显示模态框
+    modal.show();
+    
+    // 加载股票详情数据
+    loadStockDetailData(stockCode);
+}
+
+// 加载股票详情数据
+function loadStockDetailData(stockCode) {
+    console.log('加载股票详情数据:', stockCode);
+    
+    // 并行加载基本信息和K线数据
+    Promise.all([
+        loadStockBasicInfo(stockCode),
+        loadStockKlineData(stockCode)
+    ]).then(() => {
+        console.log('股票详情数据加载完成');
+    }).catch(error => {
+        console.error('加载股票详情数据失败:', error);
+        showMessage('加载股票详情失败，请重试', 'error');
+    });
+}
+
+// 加载股票基本信息
+function loadStockBasicInfo(stockCode) {
+    return fetch(`/api/stock/${stockCode}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.data) {
+                displayStockBasicInfo(data.data);
+            } else {
+                throw new Error(data.message || '获取股票基本信息失败');
+            }
+        });
+}
+
+// 显示股票基本信息
+function displayStockBasicInfo(stockInfo) {
+    const basicInfo = stockInfo.basic_info;
+    const priceInfo = stockInfo.price_info;
+    
+    const basicInfoContainer = document.getElementById('stockBasicInfo');
+    if (!basicInfoContainer) {
+        console.error('找不到股票基本信息容器');
+        return;
+    }
+    
+    const basicInfoHtml = `
+        <div class="stock-info">
+            <div class="stock-info-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> 基本信息</h6>
+            </div>
+            <div class="stock-info-grid">
+                <div class="stock-info-item">
+                    <span class="label">股票代码:</span>
+                    <span class="value">${basicInfo.code}</span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">股票名称:</span>
+                    <span class="value">${basicInfo.name}</span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">市场类型:</span>
+                    <span class="value">${basicInfo.market}</span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">所属行业:</span>
+                    <span class="value">${basicInfo.industry}</span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">当前价格:</span>
+                    <span class="value">¥${priceInfo.current_price || 'N/A'}</span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">涨跌幅:</span>
+                    <span class="value ${parseFloat(priceInfo.change_percent || 0) >= 0 ? 'text-success' : 'text-danger'}">
+                        ${priceInfo.change_percent || 'N/A'}% (${priceInfo.change || 'N/A'})
+                    </span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">成交量:</span>
+                    <span class="value">${(priceInfo.volume || 0).toLocaleString()}</span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">市值:</span>
+                    <span class="value">${priceInfo.market_cap || 'N/A'}亿</span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">市盈率(PE):</span>
+                    <span class="value">${priceInfo.pe || 'N/A'}</span>
+                </div>
+                <div class="stock-info-item">
+                    <span class="label">市净率(PB):</span>
+                    <span class="value">${priceInfo.pb || 'N/A'}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    basicInfoContainer.innerHTML = basicInfoHtml;
+}
+
+// 加载股票K线数据
+function loadStockKlineData(stockCode) {
+    return new Promise((resolve, reject) => {
+        console.log('开始加载K线数据:', stockCode);
+        
+        fetch(`/api/stock/${stockCode}/kline`)
+            .then(response => {
+                console.log('K线API响应状态:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('K线API返回数据:', data);
+                if (data.success && data.data) {
+                    console.log('数据源:', data.source);
+                    console.log('K线数据条数:', data.data.candles ? data.data.candles.length : 0);
+                    console.log('成交量数据条数:', data.data.volumes ? data.data.volumes.length : 0);
+                    
+                    // 检查K线图插件是否加载
+                    if (typeof KlineChart === 'undefined') {
+                        console.error('K线图插件未加载');
+                        const chartContainer = document.getElementById('klineChart');
+                        if (chartContainer) {
+                            chartContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">K线图插件未加载，请刷新页面重试</div>';
+                        }
+                        reject(new Error('K线图插件未加载'));
+                        return;
+                    }
+                    
+                    // 立即初始化K线图，减少延迟
+                    setTimeout(() => {
+                        try {
+                            initKlineChart(stockCode, data.data);
+                            resolve();
+                        } catch (error) {
+                            console.error('初始化K线图失败:', error);
+                            reject(error);
+                        }
+                    }, 100); // 增加延迟时间确保DOM准备就绪
+                } else {
+                    console.error('获取K线数据失败:', data.message);
+                    reject(new Error(data.message || '获取K线数据失败'));
+                }
+            })
+            .catch(error => {
+                console.error('K线数据加载失败:', error);
+                reject(error);
+            });
+    });
+}
+
+// 初始化K线图
+function initKlineChart(stockCode, klineData) {
+    console.log('初始化K线图:', stockCode);
+    console.log('K线数据:', klineData);
+    
+    const chartContainer = document.getElementById('klineChart');
+    if (!chartContainer) {
+        console.error('找不到K线图容器');
+        return;
+    }
+    
+    // 清空容器内容
+    chartContainer.innerHTML = '';
+    
+    // 检查LightweightCharts库是否可用
+    if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts库未加载');
+        chartContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">LightweightCharts库未加载</div>';
+        return;
+    }
+    
+    // 检查K线图插件是否可用
+    if (typeof KlineChart === 'undefined') {
+        console.error('K线图插件未加载');
+        chartContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">K线图插件未加载</div>';
+        return;
+    }
+    
+    try {
+        console.log('开始创建K线图实例...');
+        
+        // 创建K线图实例，使用专业配置
+        window.currentKlineChart = KlineChart.create(chartContainer, {
+            width: chartContainer.clientWidth || 800,
+            height: 500,  // 增加高度以容纳分离的成交量
+            theme: 'light',
+            colors: {
+                background: '#ffffff',
+                text: '#333333',
+                grid: '#e1e5e9',
+                border: '#d1d5db',
+                up: '#f56565',      // 红色，上涨
+                down: '#48bb78',    // 绿色，下跌
+                volume: '#4299e1',  // 蓝色，成交量
+                volumeUp: '#f56565', // 红色，上涨成交量
+                volumeDown: '#48bb78', // 绿色，下跌成交量
+                ma5: '#ff6b6b',     // 5日均线
+                ma10: '#4ecdc4',    // 10日均线
+                ma20: '#45b7d1',    // 20日均线
+                ma30: '#96ceb4'     // 30日均线
+            },
+            showGrid: true,
+            showCrosshair: true,
+            showVolume: true,
+            showMA: true,           // 显示均线
+            maPeriods: [5, 10, 20, 30], // 均线周期
+            volumeHeight: 0.2       // 成交量区域高度比例
+        });
+        
+        console.log('K线图实例创建成功:', window.currentKlineChart);
+        
+        // 设置数据
+        if (klineData && klineData.candles && klineData.candles.length > 0) {
+            console.log('设置K线数据,数据条数:', klineData.candles.length);
+            window.currentKlineChart.setData(klineData);
+            console.log('K线图初始化成功');
+        } else {
+            console.warn('K线数据为空或格式不正确');
+            chartContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">暂无K线数据</div>';
+        }
+    } catch (error) {
+        console.error('K线图初始化失败:', error);
+        chartContainer.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">图表初始化失败: ${error.message}</div>`;
+    }
+}
+
+// 更新股票K线数据
+function updateStockKline() {
+    const stockCode = getCurrentStockCode();
+    if (!stockCode) {
+        showMessage('无法获取当前股票代码', 'error');
+        return;
+    }
+    
+    console.log('更新K线数据:', stockCode);
+    
+    // 显示更新状态
+    const updateButton = document.querySelector('.kline-header button');
+    const originalText = updateButton.innerHTML;
+    updateButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 更新中...';
+    updateButton.disabled = true;
+    
+    // 使用K线图插件的更新方法
+    if (window.currentKlineChart) {
+        window.currentKlineChart.updateData(stockCode)
+            .then(success => {
+                if (success) {
+                    showMessage('K线数据更新成功', 'success');
+                } else {
+                    showMessage('K线数据更新失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('更新K线数据失败:', error);
+                showMessage('更新K线数据失败: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                updateButton.innerHTML = originalText;
+                updateButton.disabled = false;
+            });
+    } else {
+        // 回退到原来的方法
+        fetch(`/api/stock/${stockCode}/update-kline`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showMessage('K线数据更新成功', 'success');
+                // 重新加载K线数据
+                loadStockKlineData(stockCode);
+            } else {
+                throw new Error(data.message || '更新失败');
+            }
+        })
+        .catch(error => {
+            console.error('更新K线数据失败:', error);
+            showMessage('更新K线数据失败: ' + error.message, 'error');
+        })
+        .finally(() => {
+            // 恢复按钮状态
+            updateButton.innerHTML = originalText;
+            updateButton.disabled = false;
+        });
+    }
+}
+
+// 获取当前股票代码
+function getCurrentStockCode() {
+    const modalTitle = document.getElementById('stockModalTitle');
+    if (modalTitle) {
+        const titleText = modalTitle.textContent;
+        const match = titleText.match(/股票详情 - (.+)/);
+        if (match) {
+            return match[1];
+        }
+    }
+    return null;
 }
 
 // 批量导入映射

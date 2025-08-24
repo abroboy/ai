@@ -351,7 +351,7 @@ def main():
                 if filter_type == 'a':
                     where_conditions.append("(stock_code LIKE '0%' OR stock_code LIKE '3%' OR stock_code LIKE '6%')")
                 elif filter_type == 'hk':
-                    where_conditions.append("stock_code LIKE '%HK%' OR LENGTH(stock_code) = 5")
+                    where_conditions.append("LENGTH(stock_code) = 5")
                 elif filter_type == 'mapped':
                     where_conditions.append("industry_code IS NOT NULL AND industry_code != ''")
                 elif filter_type == 'unmapped':
@@ -423,6 +423,336 @@ def main():
                     'data': {'stocks': [], 'total': 0, 'page': page, 'page_size': page_size}
                 })
         
+        @app.route('/api/stock/<stock_code>')
+        def get_stock_detail(stock_code):
+            """获取股票详情"""
+            try:
+                connection = get_db_connection()
+                if not connection:
+                    return jsonify({
+                        'success': False,
+                        'message': '数据库连接失败'
+                    })
+                
+                cursor = connection.cursor(pymysql.cursors.DictCursor)
+                
+                # 获取股票基本信息
+                sql = """
+                    SELECT 
+                        stock_code,
+                        stock_name,
+                        industry_code,
+                        industry_name,
+                        mapping_status,
+                        confidence,
+                        created_at,
+                        updated_at
+                    FROM stock_industry_mapping
+                    WHERE stock_code = %s
+                """
+                cursor.execute(sql, [stock_code])
+                stock_info = cursor.fetchone()
+                
+                if not stock_info:
+                    return jsonify({
+                        'success': False,
+                        'message': '股票不存在'
+                    })
+                
+                # 根据股票代码判断市场类型
+                if stock_code.startswith(('0', '3', '6')) and len(stock_code) == 6:
+                    market = 'A股'
+                elif 'HK' in stock_code or len(stock_code) == 5:
+                    market = '港股通'
+                else:
+                    market = 'A股'
+                
+                # 构建基本信息
+                basic_info = {
+                    'code': stock_info['stock_code'],
+                    'name': stock_info['stock_name'],
+                    'market': market,
+                    'industry': stock_info['industry_name'] or '未分类',
+                    'mapping_status': stock_info['mapping_status'] or 'unknown',
+                    'confidence': stock_info['confidence'] or 0.0
+                }
+                
+                # 模拟价格信息（实际项目中应该从行情API获取）
+                import random
+                price_info = {
+                    'current_price': round(random.uniform(10, 100), 2),
+                    'change': round(random.uniform(-10, 10), 2),
+                    'change_percent': round(random.uniform(-5, 5), 2),
+                    'volume': random.randint(100000, 10000000),
+                    'market_cap': round(random.uniform(50, 1000), 2),
+                    'pe': round(random.uniform(10, 50), 2),
+                    'pb': round(random.uniform(1, 10), 2)
+                }
+                
+                cursor.close()
+                connection.close()
+                
+                return jsonify({
+                    'success': True,
+                    'data': {
+                        'basic_info': basic_info,
+                        'price_info': price_info
+                    }
+                })
+                
+            except Exception as e:
+                print(f"获取股票详情失败: {e}")
+                return jsonify({
+                    'success': False,
+                    'message': str(e)
+                })
+        
+        @app.route('/api/stock/<stock_code>/kline')
+        def get_stock_kline(stock_code):
+            """获取股票K线数据"""
+            try:
+                connection = get_db_connection()
+                if not connection:
+                    # 如果没有数据库连接，生成模拟数据
+                    import random
+                    import time
+                    
+                    kline_data = {
+                        'candles': [],
+                        'volumes': []
+                    }
+                    
+                    base_price = random.uniform(30, 70)
+                    now = int(time.time())
+                    
+                    for i in range(100, -1, -1):
+                        timestamp = now - i * 24 * 3600
+                        open_price = base_price + random.uniform(-5, 5)
+                        high_price = open_price + random.uniform(0, 3)
+                        low_price = open_price - random.uniform(0, 3)
+                        close_price = open_price + random.uniform(-4, 4)
+                        volume = random.randint(100000, 1000000)
+                        
+                        kline_data['candles'].append({
+                            'time': timestamp,
+                            'open': round(open_price, 2),
+                            'high': round(high_price, 2),
+                            'low': round(low_price, 2),
+                            'close': round(close_price, 2)
+                        })
+                        
+                        kline_data['volumes'].append({
+                            'time': timestamp,
+                            'value': volume,
+                            'color': '#26a69a' if close_price >= open_price else '#ef5350'
+                        })
+                        
+                        base_price = close_price
+                    
+                    return jsonify({
+                        'success': True,
+                        'data': kline_data,
+                        'source': 'simulated'
+                    })
+                
+                cursor = connection.cursor(pymysql.cursors.DictCursor)
+                
+                # 检查是否有K线数据表
+                cursor.execute("SHOW TABLES LIKE 'stock_kline_data'")
+                if not cursor.fetchone():
+                    # 如果没有K线数据表，生成模拟数据
+                    import random
+                    import time
+                    
+                    kline_data = {
+                        'candles': [],
+                        'volumes': []
+                    }
+                    
+                    base_price = random.uniform(30, 70)
+                    now = int(time.time())
+                    
+                    for i in range(100, -1, -1):
+                        timestamp = now - i * 24 * 3600
+                        open_price = base_price + random.uniform(-5, 5)
+                        high_price = open_price + random.uniform(0, 3)
+                        low_price = open_price - random.uniform(0, 3)
+                        close_price = open_price + random.uniform(-4, 4)
+                        volume = random.randint(100000, 1000000)
+                        
+                        kline_data['candles'].append({
+                            'time': timestamp,
+                            'open': round(open_price, 2),
+                            'high': round(high_price, 2),
+                            'low': round(low_price, 2),
+                            'close': round(close_price, 2)
+                        })
+                        
+                        kline_data['volumes'].append({
+                            'time': timestamp,
+                            'value': volume,
+                            'color': '#26a69a' if close_price >= open_price else '#ef5350'
+                        })
+                        
+                        base_price = close_price
+                    
+                    cursor.close()
+                    connection.close()
+                    
+                    return jsonify({
+                        'success': True,
+                        'data': kline_data,
+                        'source': 'simulated'
+                    })
+                
+                # 获取K线数据
+                sql = """
+                    SELECT 
+                        trade_date,
+                        open_price,
+                        high_price,
+                        low_price,
+                        close_price,
+                        volume
+                    FROM stock_kline_data
+                    WHERE stock_code = %s
+                    ORDER BY trade_date DESC
+                    LIMIT 100
+                """
+                cursor.execute(sql, [stock_code])
+                kline_records = cursor.fetchall()
+                
+                if kline_records:
+                    kline_data = {
+                        'candles': [],
+                        'volumes': []
+                    }
+                    
+                    for record in reversed(kline_records):  # 按时间正序
+                        # 转换日期格式
+                        if isinstance(record['trade_date'], str):
+                            trade_date = datetime.strptime(record['trade_date'], '%Y-%m-%d')
+                        else:
+                            trade_date = record['trade_date']
+                        
+                        # 修复日期转换问题
+                        if hasattr(trade_date, 'timestamp'):
+                            timestamp = int(trade_date.timestamp())
+                        else:
+                            # 如果是date对象，转换为datetime
+                            timestamp = int(datetime.combine(trade_date, datetime.min.time()).timestamp())
+                        
+                        # K线数据
+                        kline_data['candles'].append({
+                            'time': timestamp,
+                            'open': float(record['open_price']) if record['open_price'] else 0,
+                            'high': float(record['high_price']) if record['high_price'] else 0,
+                            'low': float(record['low_price']) if record['low_price'] else 0,
+                            'close': float(record['close_price']) if record['close_price'] else 0
+                        })
+                        
+                        # 成交量数据
+                        volume = int(record['volume']) if record['volume'] else 0
+                        close_price = float(record['close_price']) if record['close_price'] else 0
+                        open_price = float(record['open_price']) if record['open_price'] else 0
+                        
+                        kline_data['volumes'].append({
+                            'time': timestamp,
+                            'value': volume,
+                            'color': '#26a69a' if close_price >= open_price else '#ef5350'
+                        })
+                    
+                    cursor.close()
+                    connection.close()
+                    
+                    return jsonify({
+                        'success': True,
+                        'data': kline_data,
+                        'source': 'database'
+                    })
+                else:
+                    # 如果没有数据库数据，生成模拟数据
+                    import random
+                    import time
+                    
+                    kline_data = {
+                        'candles': [],
+                        'volumes': []
+                    }
+                    
+                    base_price = random.uniform(30, 70)
+                    now = int(time.time())
+                    
+                    for i in range(100, -1, -1):
+                        timestamp = now - i * 24 * 3600
+                        open_price = base_price + random.uniform(-5, 5)
+                        high_price = open_price + random.uniform(0, 3)
+                        low_price = open_price - random.uniform(0, 3)
+                        close_price = open_price + random.uniform(-4, 4)
+                        volume = random.randint(100000, 1000000)
+                        
+                        kline_data['candles'].append({
+                            'time': timestamp,
+                            'open': round(open_price, 2),
+                            'high': round(high_price, 2),
+                            'low': round(low_price, 2),
+                            'close': round(close_price, 2)
+                        })
+                        
+                        kline_data['volumes'].append({
+                            'time': timestamp,
+                            'value': volume,
+                            'color': '#26a69a' if close_price >= open_price else '#ef5350'
+                        })
+                        
+                        base_price = close_price
+                    
+                    cursor.close()
+                    connection.close()
+                    
+                    return jsonify({
+                        'success': True,
+                        'data': kline_data,
+                        'source': 'simulated'
+                    })
+                
+            except Exception as e:
+                print(f"获取K线数据失败: {e}")
+                return jsonify({
+                    'success': False,
+                    'message': str(e)
+                })
+        
+        @app.route('/api/stock/<stock_code>/update-kline', methods=['POST'])
+        def update_stock_kline(stock_code):
+            """更新单个股票的K线数据"""
+            try:
+                # 导入K线数据收集器
+                from get_kline_data import KlineDataCollector
+                
+                collector = KlineDataCollector()
+                
+                # 更新指定股票的K线数据
+                success = collector.update_single_stock(stock_code)
+                
+                if success:
+                    return jsonify({
+                        'success': True,
+                        'message': f'股票 {stock_code} 的K线数据更新成功'
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': f'股票 {stock_code} 的K线数据更新失败'
+                    })
+                    
+            except Exception as e:
+                print(f"更新K线数据失败: {e}")
+                return jsonify({
+                    'success': False,
+                    'message': str(e)
+                })
+        
         @app.route('/api/health')
         def health_check():
             """健康检查接口"""
@@ -435,6 +765,36 @@ def main():
                     'industries_cached': cache['industries'] is not None
                 }
             })
+        
+        @app.route('/kline-test')
+        def kline_test():
+            """K线图测试页面"""
+            return render_template('kline_test.html')
+        
+        @app.route('/kline-demo')
+        def kline_demo():
+            """K线图插件演示页面"""
+            return render_template('kline-demo.html')
+        
+        @app.route('/debug-stock')
+        def debug_stock():
+            """股票详情调试页面"""
+            return render_template('debug-stock.html')
+        
+        @app.route('/kline-test-simple')
+        def kline_test_simple():
+            """K线图简单测试页面"""
+            return render_template('kline_test_simple.html')
+        
+        @app.route('/test-stock-detail')
+        def test_stock_detail():
+            """股票详情测试页面"""
+            return render_template('test_stock_detail.html')
+        
+        @app.route('/kline-test-fixed')
+        def kline_test_fixed():
+            """K线图修复测试页面"""
+            return render_template('kline_test_fixed.html')
         
         # 启动应用
         app.run(
