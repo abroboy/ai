@@ -10,7 +10,8 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from loguru import logger
 from models.hotspot_model import HotspotModel, HotspotType, HotspotLevel, HotspotStatus
-import config
+from config import config
+from .web_scraper import WebScraper
 
 
 class RealDataCollector:
@@ -21,6 +22,7 @@ class RealDataCollector:
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         })
+        self.web_scraper = WebScraper()
         
     def collect_from_news_api(self) -> List[HotspotModel]:
         """从新闻API获取数据"""
@@ -169,8 +171,8 @@ class RealDataCollector:
         
         all_hotspots = []
         
-        # 并行收集各类数据
-        collectors = [
+        # 首先尝试API数据收集
+        api_collectors = [
             self.collect_from_news_api,
             self.collect_from_stock_api,
             self.collect_from_policy_api,
@@ -178,13 +180,23 @@ class RealDataCollector:
             self.collect_from_market_api,
         ]
         
-        for collector in collectors:
+        for collector in api_collectors:
             try:
                 hotspots = collector()
                 all_hotspots.extend(hotspots)
                 logger.info(f"从 {collector.__name__} 获取到 {len(hotspots)} 条数据")
             except Exception as e:
-                logger.error(f"数据收集失败 {collector.__name__}: {e}")
+                logger.error(f"API数据收集失败 {collector.__name__}: {e}")
+        
+        # 如果API数据不足，使用爬虫获取数据
+        if len(all_hotspots) < 50:
+            logger.info("API数据不足，开始使用爬虫获取数据...")
+            try:
+                scraped_hotspots = self.web_scraper.scrape_all_sources()
+                all_hotspots.extend(scraped_hotspots)
+                logger.info(f"爬虫获取到 {len(scraped_hotspots)} 条数据")
+            except Exception as e:
+                logger.error(f"爬虫数据收集失败: {e}")
         
         logger.info(f"总共收集到 {len(all_hotspots)} 条真实数据")
         return all_hotspots

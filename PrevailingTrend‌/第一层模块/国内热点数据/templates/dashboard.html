@@ -91,46 +91,72 @@
             });
         
         function updateStats(stats) {
-            document.getElementById('total-count').textContent = stats.total_count;
-            document.getElementById('avg-heat').textContent = stats.avg_heat;
-            document.getElementById('avg-sentiment').textContent = stats.avg_sentiment;
-            document.getElementById('active-count').textContent = stats.by_status.active || 0;
+            // 安全地更新统计数据，避免undefined错误
+            const totalCountEl = document.getElementById('total-count');
+            const avgHeatEl = document.getElementById('avg-heat');
+            const avgSentimentEl = document.getElementById('avg-sentiment');
+            const activeCountEl = document.getElementById('active-count');
+            
+            if (totalCountEl) {
+                totalCountEl.textContent = stats.total_count || 0;
+            }
+            if (avgHeatEl) {
+                avgHeatEl.textContent = stats.avg_heat || 0;
+            }
+            if (avgSentimentEl) {
+                avgSentimentEl.textContent = stats.avg_sentiment || 0;
+            }
+            if (activeCountEl) {
+                // 安全地访问by_status.active
+                const byStatus = stats.by_status || {};
+                activeCountEl.textContent = byStatus.active || 0;
+            }
         }
         
         function createCharts(stats) {
+            // 安全地创建图表，避免undefined错误
+            const byType = stats.by_type || {};
+            const byLevel = stats.by_level || {};
+            
             // 类型分布图
-            const typeCtx = document.getElementById('typeChart').getContext('2d');
-            new Chart(typeCtx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(stats.by_type),
-                    datasets: [{
-                        data: Object.values(stats.by_type),
-                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
-                    }]
-                }
-            });
+            const typeChartEl = document.getElementById('typeChart');
+            if (typeChartEl) {
+                const typeCtx = typeChartEl.getContext('2d');
+                new Chart(typeCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(byType),
+                        datasets: [{
+                            data: Object.values(byType),
+                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
+                        }]
+                    }
+                });
+            }
             
             // 级别分布图
-            const levelCtx = document.getElementById('levelChart').getContext('2d');
-            new Chart(levelCtx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(stats.by_level),
-                    datasets: [{
-                        label: '数量',
-                        data: Object.values(stats.by_level),
-                        backgroundColor: '#36A2EB'
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+            const levelChartEl = document.getElementById('levelChart');
+            if (levelChartEl) {
+                const levelCtx = levelChartEl.getContext('2d');
+                new Chart(levelCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(byLevel),
+                        datasets: [{
+                            label: '数量',
+                            data: Object.values(byLevel),
+                            backgroundColor: '#36A2EB'
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
         }
     </script>
 </body>

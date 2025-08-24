@@ -30,6 +30,70 @@
             border-radius: 8px;
             margin: 1rem 0;
         }
+        
+        .sort-indicator {
+            margin-left: 5px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        
+        th[data-sort]:hover {
+            background-color: #f8f9fa;
+        }
+        
+        th[data-sort] {
+            user-select: none;
+        }
+        
+        .top-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -44,31 +108,30 @@
                     </h4>
                 </div>
                 <nav class="sidebar-nav">
-                    <div class="nav-item">
-                        <a class="nav-link active" href="#" onclick="showDashboard()">
-                            <span class="icon">📈</span> 仪表盘
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="#" onclick="showHotspots()">
-                            <span class="icon">📋</span> 热点列表
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="#" onclick="showStatistics()">
-                            <span class="icon">📊</span> 统计分析
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="#" onclick="showCollection()">
-                            <span class="icon">🔄</span> 数据采集
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="#" onclick="showSettings()">
-                            <span class="icon">⚙️</span> 系统设置
-                        </a>
-                    </div>
+                    <a href="#" class="nav-item active" onclick="showDashboard()">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>仪表盘</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showHotspotList()">
+                        <i class="fas fa-list"></i>
+                        <span>热点列表</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showRankings()">
+                        <i class="fas fa-chart-line"></i>
+                        <span>热度排名</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showAnalysis()">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>统计分析</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showDataCollection()">
+                        <i class="fas fa-cloud-download-alt"></i>
+                        <span>数据采集</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showSettings()">
+                        <i class="fas fa-cog"></i>
+                        <span>系统设置</span>
+                    </a>
                 </nav>
             </div>
 
@@ -78,6 +141,14 @@
                 <div id="dashboard-content">
                     <div class="top-navbar">
                         <div class="page-title">数据概览</div>
+                        <div class="top-actions">
+                            <button onclick="updateData()" class="btn btn-success btn-sm">
+                                🔄 更新数据
+                            </button>
+                            <button onclick="getUpdateStatus()" class="btn btn-info btn-sm">
+                                📊 更新状态
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 统计卡片 -->
@@ -320,14 +391,30 @@
                                 <table class="table">
                                     <thead>
                                         <tr>
-                                            <th>标题</th>
-                                            <th>类型</th>
-                                            <th>级别</th>
-                                            <th>来源</th>
-                                            <th>热度</th>
-                                            <th>情感</th>
-                                            <th>状态</th>
-                                            <th>发布时间</th>
+                                            <th data-sort="title" onclick="sortHotspots('title')" style="cursor: pointer;">
+                                                标题 <span class="sort-indicator"></span>
+                                            </th>
+                                            <th data-sort="hotspot_type" onclick="sortHotspots('hotspot_type')" style="cursor: pointer;">
+                                                类型 <span class="sort-indicator"></span>
+                                            </th>
+                                            <th data-sort="hotspot_level" onclick="sortHotspots('hotspot_level')" style="cursor: pointer;">
+                                                级别 <span class="sort-indicator"></span>
+                                            </th>
+                                            <th data-sort="source" onclick="sortHotspots('source')" style="cursor: pointer;">
+                                                来源 <span class="sort-indicator"></span>
+                                            </th>
+                                            <th data-sort="heat_score" onclick="sortHotspots('heat_score')" style="cursor: pointer;">
+                                                热度 <span class="sort-indicator"></span>
+                                            </th>
+                                            <th data-sort="sentiment_score" onclick="sortHotspots('sentiment_score')" style="cursor: pointer;">
+                                                情感 <span class="sort-indicator"></span>
+                                            </th>
+                                            <th data-sort="status" onclick="sortHotspots('status')" style="cursor: pointer;">
+                                                状态 <span class="sort-indicator"></span>
+                                            </th>
+                                            <th data-sort="publish_time" onclick="sortHotspots('publish_time')" style="cursor: pointer;">
+                                                发布时间 <span class="sort-indicator"></span>
+                                            </th>
                                             <th>操作</th>
                                         </tr>
                                     </thead>
@@ -373,6 +460,102 @@
                                     <div id="companies-chart" class="loading">
                                         <p>加载图表中...</p>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 热度排名 -->
+                <div id="rankings-content" style="display: none;">
+                    <div class="top-navbar">
+                        <div class="page-title">热度排名</div>
+                        <div class="top-actions">
+                            <button onclick="refreshRankings()" class="btn btn-success btn-sm">
+                                🔄 刷新排名
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-content">
+                        <div class="rankings-tabs" style="margin-bottom: 2rem;">
+                            <button class="tab-btn active" onclick="showRankingTab('industries')">行业排名</button>
+                            <button class="tab-btn" onclick="showRankingTab('companies')">公司排名</button>
+                            <button class="tab-btn" onclick="showRankingTab('trends')">趋势排名</button>
+                        </div>
+                        
+                        <!-- 行业排名 -->
+                        <div id="industry-rankings" class="ranking-section">
+                            <div class="table-section">
+                                <div class="table-header">
+                                    <h5 class="table-title">行业热度排名</h5>
+                                </div>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>排名</th>
+                                                <th>行业</th>
+                                                <th>热度得分</th>
+                                                <th>热点数量</th>
+                                                <th>趋势</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="industry-ranking-body">
+                                            <!-- 数据将通过JavaScript动态加载 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 公司排名 -->
+                        <div id="company-rankings" class="ranking-section" style="display: none;">
+                            <div class="table-section">
+                                <div class="table-header">
+                                    <h5 class="table-title">公司热度排名</h5>
+                                </div>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>排名</th>
+                                                <th>公司</th>
+                                                <th>热度得分</th>
+                                                <th>热点数量</th>
+                                                <th>所属行业</th>
+                                                <th>趋势</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="company-ranking-body">
+                                            <!-- 数据将通过JavaScript动态加载 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 趋势排名 -->
+                        <div id="trend-rankings" class="ranking-section" style="display: none;">
+                            <div class="table-section">
+                                <div class="table-header">
+                                    <h5 class="table-title">趋势热度排名</h5>
+                                </div>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>排名</th>
+                                                <th>趋势</th>
+                                                <th>热度得分</th>
+                                                <th>热点数量</th>
+                                                <th>分类</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="trend-ranking-body">
+                                            <!-- 数据将通过JavaScript动态加载 -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>

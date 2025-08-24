@@ -20,6 +20,9 @@ from core.data_collector import DataCollector
 from core.data_processor import DataProcessor
 from core.data_generator import DataGenerator
 from core.real_data_collector import RealDataCollector
+from core.data_storage import DataStorage
+from core.data_updater import start_data_updater, manual_update_data, get_update_status
+from loguru import logger
 
 # 创建Flask应用
 app = Flask(__name__)
@@ -30,6 +33,30 @@ data_collector = DataCollector()
 data_processor = DataProcessor()
 data_generator = DataGenerator()
 real_data_collector = RealDataCollector()
+data_storage = DataStorage()
+
+# 延迟启动后台数据更新任务，避免影响首页加载
+def start_background_update_delayed():
+    import threading
+    import time
+    
+    def delayed_start():
+        time.sleep(10)  # 等待10秒让应用完全启动
+        try:
+            # 只在配置允许时启动数据更新
+            if config.UPDATE.get('auto_update', False):
+                start_data_updater()
+                logger.info("后台数据更新任务已启动")
+            else:
+                logger.info("自动数据更新已禁用")
+        except Exception as e:
+            logger.error(f"启动后台数据更新任务失败: {e}")
+    
+    thread = threading.Thread(target=delayed_start, daemon=True)
+    thread.start()
+
+# 启动延迟的后台更新任务
+start_background_update_delayed()
 
 @app.route('/')
 def index():
@@ -52,29 +79,22 @@ def get_hotspots():
         source = request.args.get('source')
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 20))
+        sort_by = request.args.get('sort_by', 'publish_time')  # 排序字段
+        sort_order = request.args.get('sort_order', 'desc')    # 排序方向
         
-        # 模拟热点数据
-        hotspots = generate_sample_hotspots()
-        
-        # 过滤数据
-        if hotspot_type:
-            hotspots = [h for h in hotspots if h.hotspot_type.value == hotspot_type]
-        if hotspot_level:
-            hotspots = [h for h in hotspots if h.hotspot_level.value == hotspot_level]
-        if status:
-            hotspots = [h for h in hotspots if h.status.value == status]
-        if source:
-            hotspots = [h for h in hotspots if h.source == source]
-        
-        # 分页
-        total = len(hotspots)
-        start = (page - 1) * per_page
-        end = start + per_page
-        paginated_hotspots = hotspots[start:end]
+        # 从数据库获取数据
+        result = data_storage.get_hotspots_from_db(
+            page=page,
+            per_page=per_page,
+            hotspot_type=hotspot_type,
+            source=source,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
         
         # 转换为字典
         hotspot_list = []
-        for hotspot in paginated_hotspots:
+        for hotspot in result['hotspots']:
             hotspot_list.append({
                 'hotspot_id': hotspot.hotspot_id,
                 'title': hotspot.title,
@@ -98,10 +118,14 @@ def get_hotspots():
             'data': {
                 'hotspots': hotspot_list,
                 'pagination': {
-                    'page': page,
-                    'per_page': per_page,
-                    'total': total,
-                    'pages': (total + per_page - 1) // per_page
+                    'page': result['page'],
+                    'per_page': result['per_page'],
+                    'total': result['total'],
+                    'pages': result['total_pages']
+                },
+                'sorting': {
+                    'sort_by': result['sort_by'],
+                    'sort_order': result['sort_order']
                 }
             }
         })
@@ -116,9 +140,8 @@ def get_hotspots():
 def get_hotspot_detail(hotspot_id):
     """获取热点详情"""
     try:
-        # 模拟获取热点详情
-        hotspots = generate_sample_hotspots()
-        hotspot = next((h for h in hotspots if h.hotspot_id == hotspot_id), None)
+        # 从数据库获取热点详情
+        hotspot = data_storage.get_hotspot_detail(hotspot_id)
         
         if not hotspot:
             # 如果找不到，返回一个默认的热点详情
@@ -175,72 +198,25 @@ def get_hotspot_detail(hotspot_id):
 def get_statistics():
     """获取统计信息"""
     try:
-        hotspots = generate_sample_hotspots()
-        
-        # 按类型统计
-        by_type = {}
-        for hotspot in hotspots:
-            type_name = hotspot.hotspot_type.value
-            by_type[type_name] = by_type.get(type_name, 0) + 1
-        
-        # 按级别统计
-        by_level = {}
-        for hotspot in hotspots:
-            level_name = hotspot.hotspot_level.value
-            by_level[level_name] = by_level.get(level_name, 0) + 1
-        
-        # 按状态统计
-        by_status = {}
-        for hotspot in hotspots:
-            status_name = hotspot.status.value
-            by_status[status_name] = by_status.get(status_name, 0) + 1
-        
-        # 按来源统计
-        by_source = {}
-        for hotspot in hotspots:
-            source_name = hotspot.source
-            by_source[source_name] = by_source.get(source_name, 0) + 1
-        
-        # 平均情感得分
-        sentiment_scores = [h.sentiment_score for h in hotspots if h.sentiment_score is not None]
-        avg_sentiment = sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0
-        
-        # 平均热度得分
-        heat_scores = [h.heat_score for h in hotspots if h.heat_score is not None]
-        avg_heat = sum(heat_scores) / len(heat_scores) if heat_scores else 0
-        
-        # 关键词统计
-        keyword_count = {}
-        for hotspot in hotspots:
-            for keyword in hotspot.keywords:
-                keyword_count[keyword] = keyword_count.get(keyword, 0) + 1
-        
-        top_keywords = sorted(keyword_count.items(), key=lambda x: x[1], reverse=True)[:10]
-        
-        # 公司统计
-        company_count = {}
-        for hotspot in hotspots:
-            for company in hotspot.related_companies:
-                company_count[company] = company_count.get(company, 0) + 1
-        
-        top_companies = sorted(company_count.items(), key=lambda x: x[1], reverse=True)[:10]
+        # 从数据库获取统计数据
+        stats = data_storage.get_statistics()
         
         return jsonify({
             'success': True,
             'data': {
-                'total_count': len(hotspots),
-                'by_type': by_type,
-                'by_level': by_level,
-                'by_status': by_status,
-                'by_source': by_source,
-                'avg_sentiment': round(avg_sentiment, 2),
-                'avg_heat': round(avg_heat, 2),
-                'top_keywords': top_keywords,
-                'top_companies': top_companies
+                'total_count': stats.get('total_count', 0),
+                'today_count': stats.get('today_count', 0),
+                'avg_heat': stats.get('avg_heat', 0),
+                'avg_sentiment': stats.get('avg_sentiment', 0),
+                'by_type': stats.get('by_type', {}),
+                'by_level': stats.get('by_level', {}),
+                'by_status': stats.get('by_status', {}),
+                'by_source': stats.get('by_source', {})
             }
         })
         
     except Exception as e:
+        logger.error(f"获取统计信息失败: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -248,31 +224,30 @@ def get_statistics():
 
 @app.route('/api/collect', methods=['POST'])
 def collect_hotspots():
-    """采集真实热点数据"""
+    """手动触发数据更新"""
     try:
-        logger.info("手动触发真实数据采集...")
-        real_hotspots = real_data_collector.collect_all_real_data()
+        logger.info("手动触发数据更新...")
+        result = manual_update_data()
         
-        if real_hotspots:
-            # 处理热点数据
-            processed_hotspots = data_processor.process_hotspots(real_hotspots)
-            
-            return jsonify({
-                'success': True,
-                'data': {
-                    'collected_count': len(real_hotspots),
-                    'processed_count': len(processed_hotspots),
-                    'message': f'成功采集并处理 {len(processed_hotspots)} 条真实热点数据'
-                }
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': '未获取到真实数据'
-            }), 500
+        return jsonify(result)
         
     except Exception as e:
-        logger.error(f"数据采集失败: {e}")
+        logger.error(f"手动数据更新失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/update-status')
+def get_update_status():
+    """获取数据更新状态"""
+    try:
+        status = get_update_status()
+        return jsonify({
+            'success': True,
+            'data': status
+        })
+    except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
@@ -313,6 +288,72 @@ def delete_hotspot(hotspot_id):
         })
         
     except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/rankings/industries')
+def get_industry_rankings():
+    """获取行业热度排名"""
+    try:
+        # 从数据库获取行业热度数据
+        rankings = data_storage.get_industry_rankings()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'rankings': rankings,
+                'update_time': datetime.now().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取行业热度排名失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/rankings/companies')
+def get_company_rankings():
+    """获取公司热度排名"""
+    try:
+        # 从数据库获取公司热度数据
+        rankings = data_storage.get_company_rankings()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'rankings': rankings,
+                'update_time': datetime.now().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取公司热度排名失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/rankings/trends')
+def get_trend_rankings():
+    """获取趋势热度排名"""
+    try:
+        # 从数据库获取趋势热度数据
+        rankings = data_storage.get_trend_rankings()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'rankings': rankings,
+                'update_time': datetime.now().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取趋势热度排名失败: {e}")
         return jsonify({
             'success': False,
             'error': str(e)

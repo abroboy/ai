@@ -19,9 +19,10 @@ body {
     top: 0;
     width: 250px;
     height: 100vh;
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    color: white;
+    background-color: #2d3748;
+    color: #e2e8f0;
     z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-header {
@@ -43,23 +44,87 @@ body {
     margin: 0.25rem 0;
 }
 
-.nav-link {
+.nav-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    padding: 0.875rem 1.5rem;
+    color: #e2e8f0;
     text-decoration: none;
     transition: all 0.3s ease;
+    border-radius: 0;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 
-.nav-link:hover, .nav-link.active {
-    background-color: #4f46e5;
+.nav-item:hover, .nav-item.active {
+    background-color: #4a5568;
+    color: #ffffff;
+    border-left: 3px solid #4299e1;
+}
+
+.nav-item i {
+    margin-right: 0.875rem;
+    width: 18px;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.nav-item span {
+    font-weight: 500;
+}
+
+/* 新增内容区域样式 */
+.industry-item, .update-item, .analysis-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+    transition: background-color 0.2s ease;
+}
+
+.industry-item:hover, .update-item:hover, .analysis-item:hover {
+    background-color: #f3f4f6;
+}
+
+.industry-item:last-child, .update-item:last-child, .analysis-item:last-child {
+    border-bottom: none;
+}
+
+.badge {
+    background-color: #3b82f6;
     color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
 }
 
-.nav-link i {
-    margin-right: 0.75rem;
-    width: 20px;
+.time {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-right: 0.5rem;
+}
+
+.action {
+    color: #374151;
+    font-weight: 500;
+}
+
+.type {
+    background-color: #10b981;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+}
+
+.result {
+    color: #374151;
+    font-weight: 500;
 }
 
 /* 主内容区域 */
@@ -333,6 +398,112 @@ body {
     color: white;
 }
 
+/* 排名页面样式 */
+.rankings-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: #f3f4f6;
+    color: #6b7280;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.tab-btn.active {
+    background: #3b82f6;
+    color: white;
+}
+
+.ranking-section {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.heat-score {
+    font-weight: 600;
+    color: #ef4444;
+    font-size: 1.1em;
+}
+
+.trend-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.trend-badge.up {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.trend-badge.down {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.trend-badge.stable {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.category-badge {
+    padding: 0.25rem 0.75rem;
+    background: #e0e7ff;
+    color: #3730a3;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 排名表格特殊样式 */
+.ranking-section .data-table th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #374151;
+}
+
+.ranking-section .data-table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+
+.ranking-section .data-table tr:hover {
+    background: #f8fafc;
+}
+
+/* 排名数字样式 */
+.ranking-section .data-table td:first-child {
+    font-weight: 600;
+    color: #6b7280;
+    text-align: center;
+    width: 60px;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
     .sidebar {
@@ -353,5 +524,23 @@ body {
     
     .chart-card {
         min-width: 100%;
+    }
+
+    .rankings-tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .tab-btn {
+        text-align: center;
+    }
+    
+    .ranking-section .data-table {
+        font-size: 0.875rem;
+    }
+    
+    .ranking-section .data-table th,
+    .ranking-section .data-table td {
+        padding: 0.5rem 0.25rem;
     }
 } 

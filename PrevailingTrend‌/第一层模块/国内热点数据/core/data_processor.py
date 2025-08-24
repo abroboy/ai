@@ -207,12 +207,12 @@ class DataProcessor:
                 base_score += 5.0
             
             # 根据情感得分调整热度
-            if hotspot.sentiment_score:
+            if hotspot.sentiment_score is not None:
                 if abs(hotspot.sentiment_score) > 0.5:
                     base_score += 10.0
             
             # 根据相关公司数量调整热度
-            if len(hotspot.related_companies) > 3:
+            if hotspot.related_companies and len(hotspot.related_companies) > 3:
                 base_score += 5.0
             
             # 限制在0-100范围内
