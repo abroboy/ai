@@ -22,26 +22,35 @@
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="card metric-card">
-                            <div class="metric-value text-success">+125.6B</div>
+                            <div class="metric-value text-success" id="global-flow">+125.6B</div>
                             <div>全球净流入</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card metric-card">
-                            <div class="metric-value text-primary">+45.2B</div>
+                            <div class="metric-value text-primary" id="forex-flow">+45.2B</div>
                             <div>外汇流向</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card metric-card">
-                            <div class="metric-value text-warning">+38.7B</div>
+                            <div class="metric-value text-warning" id="stock-flow">+38.7B</div>
                             <div>股票流向</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card metric-card">
-                            <div class="metric-value text-info">+41.7B</div>
+                            <div class="metric-value text-info" id="bond-flow">+41.7B</div>
                             <div>债券流向</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 数据状态 -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="alert alert-info" id="data-status">
+                            <strong>数据状态:</strong> <span id="last-update">正在加载...</span>
                         </div>
                     </div>
                 </div>
@@ -76,6 +85,78 @@
     </div>
 
     <script>
+        // 页面加载时获取数据
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            // 每30秒自动刷新数据
+            setInterval(loadDashboardData, 30000);
+        });
+
+        function loadDashboardData() {
+            fetch('/api/dashboard_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateDashboard(data.data);
+                    } else {
+                        console.error('获取数据失败:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('请求失败:', error);
+                    document.getElementById('data-status').innerHTML = 
+                        '<div class="alert alert-warning"><strong>数据状态:</strong> 连接失败，使用缓存数据</div>';
+                });
+        }
+
+        function updateDashboard(data) {
+            const analysis = data.global_analysis;
+            
+            // 更新关键指标
+            if (analysis.forex) {
+                const forexValue = analysis.forex.total_net_flow;
+                const forexElement = document.getElementById('forex-flow');
+                forexElement.textContent = (forexValue >= 0 ? '+' : '') + forexValue.toFixed(1) + 'B';
+                forexElement.className = 'metric-value ' + (forexValue >= 0 ? 'text-success' : 'text-danger');
+            }
+            
+            if (analysis.stock) {
+                const stockValue = analysis.stock.total_net_flow;
+                const stockElement = document.getElementById('stock-flow');
+                stockElement.textContent = (stockValue >= 0 ? '+' : '') + stockValue.toFixed(1) + 'B';
+                stockElement.className = 'metric-value ' + (stockValue >= 0 ? 'text-success' : 'text-danger');
+            }
+            
+            if (analysis.bond) {
+                const bondValue = analysis.bond.total_net_flow;
+                const bondElement = document.getElementById('bond-flow');
+                bondElement.textContent = (bondValue >= 0 ? '+' : '') + bondValue.toFixed(1) + 'B';
+                bondElement.className = 'metric-value ' + (bondValue >= 0 ? 'text-success' : 'text-danger');
+            }
+            
+            // 计算全球净流入
+            const globalFlow = (analysis.forex?.total_net_flow || 0) + 
+                              (analysis.stock?.total_net_flow || 0) + 
+                              (analysis.bond?.total_net_flow || 0) + 
+                              (analysis.commodity?.total_net_flow || 0);
+            
+            const globalElement = document.getElementById('global-flow');
+            globalElement.textContent = (globalFlow >= 0 ? '+' : '') + globalFlow.toFixed(1) + 'B';
+            globalElement.className = 'metric-value ' + (globalFlow >= 0 ? 'text-success' : 'text-danger');
+            
+            // 更新数据状态
+            const lastUpdate = data.last_update ? new Date(data.last_update).toLocaleString('zh-CN') : '未知';
+            document.getElementById('last-update').textContent = lastUpdate;
+            
+            if (data.note) {
+                document.getElementById('data-status').innerHTML = 
+                    `<div class="alert alert-info"><strong>数据状态:</strong> ${data.note} | 最后更新: ${lastUpdate}</div>`;
+            } else {
+                document.getElementById('data-status').innerHTML = 
+                    `<div class="alert alert-success"><strong>数据状态:</strong> 实时数据 | 最后更新: ${lastUpdate}</div>`;
+            }
+        }
+
         function collectData() {
             const statusDiv = document.getElementById('collection-status');
             statusDiv.innerHTML = '<div class="alert alert-info">正在收集数据...</div>';
@@ -85,6 +166,8 @@
                 .then(data => {
                     if (data.success) {
                         statusDiv.innerHTML = '<div class="alert alert-success">数据收集成功！</div>';
+                        // 收集完成后刷新数据
+                        setTimeout(loadDashboardData, 1000);
                     } else {
                         statusDiv.innerHTML = '<div class="alert alert-danger">收集失败: ' + data.message + '</div>';
                     }
@@ -98,11 +181,21 @@
             const resultsDiv = document.getElementById('analysis-results');
             resultsDiv.innerHTML = '<div class="alert alert-info">正在分析...</div>';
 
-            fetch('/api/analyze_flow')
+            fetch('/api/flow_analysis?period=30d')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        resultsDiv.innerHTML = '<div class="alert alert-success">分析完成！</div>';
+                        const analysis = data.data.analysis;
+                        let resultHtml = '<div class="alert alert-success"><h6>分析结果:</h6><ul>';
+                        
+                        for (const [asset, info] of Object.entries(analysis)) {
+                            const trend = info.trend === 'up' ? '📈' : '📉';
+                            const color = info.trend === 'up' ? 'text-success' : 'text-danger';
+                            resultHtml += `<li class="${color}">${asset.toUpperCase()}: ${trend} ${info.total_net_flow.toFixed(1)}B (${info.count}条记录)</li>`;
+                        }
+                        
+                        resultHtml += '</ul></div>';
+                        resultsDiv.innerHTML = resultHtml;
                     } else {
                         resultsDiv.innerHTML = '<div class="alert alert-danger">分析失败: ' + data.message + '</div>';
                     }

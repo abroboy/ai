@@ -75,6 +75,124 @@ class SimpleDataCollector:
             }
         }
     
+    def get_dashboard_data(self):
+        """获取仪表盘数据"""
+        if not self.collected_data:
+            return {
+                "success": True,
+                "data": {
+                    "global_analysis": {
+                        "forex": {"total_net_flow": 0, "flow_trend": "neutral"},
+                        "stock": {"total_net_flow": 0, "flow_trend": "neutral"},
+                        "bond": {"total_net_flow": 0, "flow_trend": "neutral"},
+                        "commodity": {"total_net_flow": 0, "flow_trend": "neutral"}
+                    },
+                    "last_update": datetime.now().isoformat()
+                }
+            }
+        
+        # 分析最近的数据
+        recent_data = self.collected_data[-100:]  # 最近100条记录
+        
+        # 按资产类型分组统计
+        analysis = {
+            "forex": {"total_net_flow": 0, "count": 0},
+            "stock": {"total_net_flow": 0, "count": 0},
+            "bond": {"total_net_flow": 0, "count": 0},
+            "commodity": {"total_net_flow": 0, "count": 0}
+        }
+        
+        for record in recent_data:
+            asset_type = record.get('asset_type', 'stock')
+            if asset_type in analysis:
+                analysis[asset_type]["total_net_flow"] += record.get('net_flow', 0)
+                analysis[asset_type]["count"] += 1
+        
+        # 计算趋势
+        result = {
+            "forex": {"total_net_flow": round(analysis["forex"]["total_net_flow"], 2), "flow_trend": "up" if analysis["forex"]["total_net_flow"] > 0 else "down"},
+            "stock": {"total_net_flow": round(analysis["stock"]["total_net_flow"], 2), "flow_trend": "up" if analysis["stock"]["total_net_flow"] > 0 else "down"},
+            "bond": {"total_net_flow": round(analysis["bond"]["total_net_flow"], 2), "flow_trend": "up" if analysis["bond"]["total_net_flow"] > 0 else "down"},
+            "commodity": {"total_net_flow": round(analysis["commodity"]["total_net_flow"], 2), "flow_trend": "up" if analysis["commodity"]["total_net_flow"] > 0 else "down"}
+        }
+        
+        return {
+            "success": True,
+            "data": {
+                "global_analysis": result,
+                "last_update": self.last_collection_time.isoformat() if self.last_collection_time else datetime.now().isoformat(),
+                "total_records": len(self.collected_data)
+            }
+        }
+    
+    def get_flow_analysis(self, period='30d'):
+        """获取资金流向分析数据"""
+        if not self.collected_data:
+            return {
+                "success": True,
+                "data": {
+                    "period": period,
+                    "analysis": {
+                        "forex": {"total_net_flow": 0, "trend": "neutral"},
+                        "stock": {"total_net_flow": 0, "trend": "neutral"},
+                        "bond": {"total_net_flow": 0, "trend": "neutral"},
+                        "commodity": {"total_net_flow": 0, "trend": "neutral"}
+                    },
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+        
+        # 根据时间段筛选数据
+        now = datetime.now()
+        if period == '7d':
+            cutoff_time = now - timedelta(days=7)
+        elif period == '30d':
+            cutoff_time = now - timedelta(days=30)
+        else:
+            cutoff_time = now - timedelta(days=30)
+        
+        # 筛选时间范围内的数据
+        filtered_data = []
+        for record in self.collected_data:
+            try:
+                record_time = datetime.fromisoformat(record['timestamp'].replace('Z', '+00:00'))
+                if record_time >= cutoff_time:
+                    filtered_data.append(record)
+            except:
+                continue
+        
+        # 分析数据
+        analysis = {
+            "forex": {"total_net_flow": 0, "count": 0},
+            "stock": {"total_net_flow": 0, "count": 0},
+            "bond": {"total_net_flow": 0, "count": 0},
+            "commodity": {"total_net_flow": 0, "count": 0}
+        }
+        
+        for record in filtered_data:
+            asset_type = record.get('asset_type', 'stock')
+            if asset_type in analysis:
+                analysis[asset_type]["total_net_flow"] += record.get('net_flow', 0)
+                analysis[asset_type]["count"] += 1
+        
+        result = {}
+        for asset_type, data in analysis.items():
+            result[asset_type] = {
+                "total_net_flow": round(data["total_net_flow"], 2),
+                "trend": "up" if data["total_net_flow"] > 0 else "down",
+                "count": data["count"]
+            }
+        
+        return {
+            "success": True,
+            "data": {
+                "period": period,
+                "analysis": result,
+                "timestamp": datetime.now().isoformat(),
+                "total_records": len(filtered_data)
+            }
+        }
+    
     def _generate_mock_data(self):
         data = []
         current_time = datetime.now()
@@ -134,6 +252,17 @@ def get_data():
             "total_count": len(collector_service.collected_data)
         }
     })
+
+@app.route('/api/dashboard_data')
+def dashboard_data():
+    """为展示服务提供仪表盘数据"""
+    return jsonify(collector_service.get_dashboard_data())
+
+@app.route('/api/flow_analysis')
+def flow_analysis():
+    """为展示服务提供资金流向分析数据"""
+    period = request.args.get('period', '30d')
+    return jsonify(collector_service.get_flow_analysis(period))
 
 if __name__ == '__main__':
     print("=" * 60)

@@ -7,6 +7,7 @@
 
 import os
 import sys
+import requests
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
@@ -32,35 +33,84 @@ def dashboard():
 
 @app.route('/api/dashboard_data')
 def dashboard_data():
-    """仪表盘数据API"""
-    return jsonify({
-        "success": True,
-        "data": {
-            "global_analysis": {
-                "forex": {"total_net_flow": 150.5, "flow_trend": "up"},
-                "stock": {"total_net_flow": -45.2, "flow_trend": "down"},
-                "global": {"total_net_flow": 105.3, "flow_trend": "up"}
-            },
-            "last_update": datetime.now().isoformat()
-        }
-    })
+    """仪表盘数据API - 从数据收集服务获取真实数据"""
+    try:
+        # 从数据收集服务获取数据
+        response = requests.get('http://localhost:5004/api/dashboard_data', timeout=5)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            # 如果数据收集服务不可用，返回模拟数据
+            return jsonify({
+                "success": True,
+                "data": {
+                    "global_analysis": {
+                        "forex": {"total_net_flow": 150.5, "flow_trend": "up"},
+                        "stock": {"total_net_flow": -45.2, "flow_trend": "down"},
+                        "bond": {"total_net_flow": 85.3, "flow_trend": "up"},
+                        "commodity": {"total_net_flow": 25.1, "flow_trend": "up"}
+                    },
+                    "last_update": datetime.now().isoformat(),
+                    "note": "使用模拟数据（数据收集服务不可用）"
+                }
+            })
+    except Exception as e:
+        # 异常情况下返回模拟数据
+        return jsonify({
+            "success": True,
+            "data": {
+                "global_analysis": {
+                    "forex": {"total_net_flow": 150.5, "flow_trend": "up"},
+                    "stock": {"total_net_flow": -45.2, "flow_trend": "down"},
+                    "bond": {"total_net_flow": 85.3, "flow_trend": "up"},
+                    "commodity": {"total_net_flow": 25.1, "flow_trend": "up"}
+                },
+                "last_update": datetime.now().isoformat(),
+                "note": f"使用模拟数据（连接失败: {str(e)}）"
+            }
+        })
 
 @app.route('/api/flow_analysis')
 def flow_analysis():
-    """资金流向分析API"""
+    """资金流向分析API - 从数据收集服务获取真实数据"""
     period = request.args.get('period', '30d')
-    return jsonify({
-        "success": True,
-        "data": {
-            "period": period,
-            "analysis": {
-                "forex": {"total_net_flow": 150.5},
-                "stock": {"total_net_flow": -45.2},
-                "global": {"total_net_flow": 105.3}
-            },
-            "timestamp": datetime.now().isoformat()
-        }
-    })
+    try:
+        # 从数据收集服务获取数据
+        response = requests.get(f'http://localhost:5004/api/flow_analysis?period={period}', timeout=5)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            # 如果数据收集服务不可用，返回模拟数据
+            return jsonify({
+                "success": True,
+                "data": {
+                    "period": period,
+                    "analysis": {
+                        "forex": {"total_net_flow": 150.5, "trend": "up", "count": 25},
+                        "stock": {"total_net_flow": -45.2, "trend": "down", "count": 30},
+                        "bond": {"total_net_flow": 85.3, "trend": "up", "count": 20},
+                        "commodity": {"total_net_flow": 25.1, "trend": "up", "count": 15}
+                    },
+                    "timestamp": datetime.now().isoformat(),
+                    "note": "使用模拟数据（数据收集服务不可用）"
+                }
+            })
+    except Exception as e:
+        # 异常情况下返回模拟数据
+        return jsonify({
+            "success": True,
+            "data": {
+                "period": period,
+                "analysis": {
+                    "forex": {"total_net_flow": 150.5, "trend": "up", "count": 25},
+                    "stock": {"total_net_flow": -45.2, "trend": "down", "count": 30},
+                    "bond": {"total_net_flow": 85.3, "trend": "up", "count": 20},
+                    "commodity": {"total_net_flow": 25.1, "trend": "up", "count": 15}
+                },
+                "timestamp": datetime.now().isoformat(),
+                "note": f"使用模拟数据（连接失败: {str(e)}）"
+            }
+        })
 
 @app.route('/api/system_status')
 def system_status():
