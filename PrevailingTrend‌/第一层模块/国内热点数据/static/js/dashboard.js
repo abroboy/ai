@@ -231,6 +231,52 @@ function createSimplePieChart(containerId, data, title) {
     console.log(`饼图 ${containerId} 创建完成`);
 }
 
+// 更新统计摘要信息
+function updateStatisticsSummary(data) {
+    console.log('更新统计摘要信息:', data);
+    
+    // 查找或创建统计摘要容器
+    let summaryContainer = document.getElementById('statistics-summary');
+    if (!summaryContainer) {
+        // 如果不存在，在统计分析页面顶部创建
+        const statisticsContent = document.getElementById('statistics-content');
+        if (statisticsContent) {
+            const dashboardContent = statisticsContent.querySelector('.dashboard-content');
+            if (dashboardContent) {
+                const summaryHtml = `
+                    <div id="statistics-summary" style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 0.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: #2c3e50;">数据概览</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div style="text-align: center; padding: 1rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2rem; font-weight: bold; color: #4f46e5;">${data.total_count}</div>
+                                <div style="color: #666;">总热点数</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2rem; font-weight: bold; color: #10b981;">${data.avg_heat}</div>
+                                <div style="color: #666;">平均热度</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">${data.avg_sentiment}</div>
+                                <div style="color: #666;">平均情感分数</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2rem; font-weight: bold; color: #ef4444;">${Object.keys(data.by_type).length}</div>
+                                <div style="color: #666;">热点类型</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                dashboardContent.insertAdjacentHTML('afterbegin', summaryHtml);
+                summaryContainer = document.getElementById('statistics-summary');
+            }
+        }
+    }
+    
+    if (summaryContainer) {
+        console.log('统计摘要容器已更新');
+    }
+}
+
 // 创建简单柱状图
 function createSimpleBarChart(containerId, data, title) {
     const container = document.getElementById(containerId);
@@ -873,6 +919,9 @@ function loadStatistics() {
                 // 创建图表
                 createSimplePieChart('keywords-chart', keywordsData, '关键词统计');
                 createSimplePieChart('companies-chart', companiesData, '相关公司统计');
+                
+                // 添加统计摘要信息
+                updateStatisticsSummary(data.data);
                 
                 console.log('统计分析图表创建完成');
             } else {
