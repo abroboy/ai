@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理台 - 全球资金流向分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 10px 25px;
+        }
+        .btn-custom:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online {
+            background-color: #28a745;
+        }
+        .status-offline {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="p-3">
+                    <h4 class="mb-4">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        管理台
+                    </h4>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#overview" data-bs-toggle="tab">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            系统概览
+                        </a>
+                        <a class="nav-link" href="#data-management" data-bs-toggle="tab">
+                            <i class="fas fa-database me-2"></i>
+                            数据管理
+                        </a>
+                        <a class="nav-link" href="#system-monitor" data-bs-toggle="tab">
+                            <i class="fas fa-chart-line me-2"></i>
+                            系统监控
+                        </a>
+                        <a class="nav-link" href="#user-management" data-bs-toggle="tab">
+                            <i class="fas fa-users me-2"></i>
+                            用户管理
+                        </a>
+                        <a class="nav-link" href="#system-logs" data-bs-toggle="tab">
+                            <i class="fas fa-file-alt me-2"></i>
+                            系统日志
+                        </a>
+                        <a class="nav-link" href="#backup" data-bs-toggle="tab">
+                            <i class="fas fa-download me-2"></i>
+                            数据备份
+                        </a>
+                        <hr class="my-3">
+                        <a class="nav-link" href="#" onclick="logout()">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            退出登录
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="tab-content">
+                    <!-- 系统概览 -->
+                    <div class="tab-pane fade show active" id="overview">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-tachometer-alt me-2"></i>系统概览</h2>
+                            <div>
+                                <span class="status-indicator status-online"></span>
+                                <span>系统运行正常</span>
+                            </div>
+                        </div>
+
+                        <!-- 关键指标 -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="metric-card">
+                                    <div class="metric-value text-success" id="total-records">0</div>
+                                    <div>总数据记录</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-card">
+                                    <div class="metric-value text-primary" id="db-size">0 MB</div>
+                                    <div>数据库大小</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-card">
+                                    <div class="metric-value text-warning" id="table-count">0</div>
+                                    <div>数据表数量</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-card">
+                                    <div class="metric-value text-info" id="last-update">-</div>
+                                    <div>最后更新</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 快速操作 -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-sync me-2"></i>数据操作</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <button class="btn btn-custom mb-2" onclick="collectData()">
+                                            <i class="fas fa-download me-2"></i>收集数据
+                                        </button>
+                                        <button class="btn btn-custom mb-2" onclick="analyzeData()">
+                                            <i class="fas fa-chart-bar me-2"></i>分析数据
+                                        </button>
+                                        <button class="btn btn-custom" onclick="backupDatabase()">
+                                            <i class="fas fa-save me-2"></i>备份数据库
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-cog me-2"></i>系统信息</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="system-info">
+                                            <p><strong>系统版本:</strong> v1.0.0</p>
+                                            <p><strong>运行时间:</strong> <span id="uptime">-</span></p>
+                                            <p><strong>内存使用:</strong> <span id="memory-usage">-</span></p>
+                                            <p><strong>CPU使用:</strong> <span id="cpu-usage">-</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据管理 -->
+                    <div class="tab-pane fade" id="data-management">
+                        <h2><i class="fas fa-database me-2"></i>数据管理</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">数据统计</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="data-stats"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统监控 -->
+                    <div class="tab-pane fade" id="system-monitor">
+                        <h2><i class="fas fa-chart-line me-2"></i>系统监控</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">实时监控</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="monitor-charts"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 用户管理 -->
+                    <div class="tab-pane fade" id="user-management">
+                        <h2><i class="fas fa-users me-2"></i>用户管理</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">用户列表</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="user-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统日志 -->
+                    <div class="tab-pane fade" id="system-logs">
+                        <h2><i class="fas fa-file-alt me-2"></i>系统日志</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">最新日志</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="system-logs-content" style="max-height: 400px; overflow-y: auto;">
+                                    <pre id="logs-text"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据备份 -->
+                    <div class="tab-pane fade" id="backup">
+                        <h2><i class="fas fa-download me-2"></i>数据备份</h2>
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">备份管理</h5>
+                            </div>
+                            <div class="card-body">
+                                <button class="btn btn-custom" onclick="backupDatabase()">
+                                    <i class="fas fa-save me-2"></i>创建备份
+                                </button>
+                                <div id="backup-status" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('admin_token');
+            if (!token) {
+                window.location.href = '/admin/login';
+                return;
+            }
+        }
+
+        // 加载系统状态
+        function loadSystemStatus() {
+            const token = localStorage.getItem('admin_token');
+            
+            fetch('/admin/api/system_status', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('total-records').textContent = data.data.total_records.toLocaleString();
+                    document.getElementById('db-size').textContent = data.data.database_size.toFixed(2) + ' MB';
+                    document.getElementById('table-count').textContent = data.data.database_tables;
+                    document.getElementById('last-update').textContent = new Date(data.data.last_update).toLocaleString();
+                }
+            })
+            .catch(error => {
+                console.error('加载系统状态失败:', error);
+            });
+        }
+
+        // 收集数据
+        function collectData() {
+            const token = localStorage.getItem('admin_token');
+            
+            fetch('/admin/api/collect_data', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('数据收集成功！');
+                    loadSystemStatus();
+                } else {
+                    alert('数据收集失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('请求失败: ' + error.message);
+            });
+        }
+
+        // 分析数据
+        function analyzeData() {
+            const token = localStorage.getItem('admin_token');
+            
+            fetch('/admin/api/analyze_data', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    days: 30
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('数据分析完成！');
+                } else {
+                    alert('数据分析失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('请求失败: ' + error.message);
+            });
+        }
+
+        // 备份数据库
+        function backupDatabase() {
+            const token = localStorage.getItem('admin_token');
+            const statusDiv = document.getElementById('backup-status');
+            
+            statusDiv.innerHTML = '<div class="alert alert-info">正在创建备份...</div>';
+            
+            fetch('/admin/api/backup', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = '<div class="alert alert-success">备份创建成功！</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="alert alert-danger">备份失败: ' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = '<div class="alert alert-danger">请求失败: ' + error.message + '</div>';
+            });
+        }
+
+        // 加载用户列表
+        function loadUsers() {
+            const token = localStorage.getItem('admin_token');
+            
+            fetch('/admin/api/users', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const userList = document.getElementById('user-list');
+                    let html = '<div class="table-responsive"><table class="table">';
+                    html += '<thead><tr><th>用户名</th><th>角色</th><th>权限</th></tr></thead><tbody>';
+                    
+                    data.data.forEach(user => {
+                        html += `<tr>
+                            <td>${user.username}</td>
+                            <td><span class="badge bg-primary">${user.role}</span></td>
+                            <td>${user.permissions.join(', ')}</td>
+                        </tr>`;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    userList.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                console.error('加载用户列表失败:', error);
+            });
+        }
+
+        // 加载系统日志
+        function loadLogs() {
+            const token = localStorage.getItem('admin_token');
+            
+            fetch('/admin/api/logs', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const logsText = document.getElementById('logs-text');
+                    logsText.textContent = data.data.logs.join('\n');
+                }
+            })
+            .catch(error => {
+                console.error('加载日志失败:', error);
+            });
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_user');
+            window.location.href = '/admin/login';
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadSystemStatus();
+            loadUsers();
+            loadLogs();
+            
+            // 定期刷新系统状态
+            setInterval(loadSystemStatus, 30000); // 30秒刷新一次
+        });
+    </script>
+</body>
+</html> 

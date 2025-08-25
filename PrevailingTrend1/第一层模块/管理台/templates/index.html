@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一层模块管理台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+        }
+        .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .status-running {
+            color: #28a745;
+        }
+        .status-stopped {
+            color: #dc3545;
+        }
+        .status-warning {
+            color: #ffc107;
+        }
+        .module-card {
+            transition: transform 0.2s;
+        }
+        .module-card:hover {
+            transform: translateY(-2px);
+        }
+        .dashboard-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">第一层模块管理台</h4>
+                        <small class="text-white-50">数据采集层管理</small>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" onclick="showDashboard()">
+                                <i class="bi bi-speedometer2"></i> 仪表板
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showModules()">
+                                <i class="bi bi-grid"></i> 模块管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSystem()">
+                                <i class="bi bi-gear"></i> 系统状态
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showLogs()">
+                                <i class="bi bi-journal-text"></i> 日志查看
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2" id="page-title">仪表板</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshData()">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 仪表板内容 -->
+                <div id="dashboard-content">
+                    <!-- 统计卡片 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card dashboard-stats">
+                                <div class="card-body text-center">
+                                    <h3 id="total-modules">7</h3>
+                                    <p class="mb-0">总模块数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card dashboard-stats">
+                                <div class="card-body text-center">
+                                    <h3 id="running-modules">2</h3>
+                                    <p class="mb-0">运行中</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card dashboard-stats">
+                                <div class="card-body text-center">
+                                    <h3 id="health-rate">28.6%</h3>
+                                    <p class="mb-0">健康率</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card dashboard-stats">
+                                <div class="card-body text-center">
+                                    <h3 id="uptime">2h 30m</h3>
+                                    <p class="mb-0">运行时间</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 模块状态 -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">模块状态</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="modules-grid" class="row">
+                                        <!-- 模块卡片将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">最近活动</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recent-activities">
+                                        <!-- 活动列表将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模块管理内容 -->
+                <div id="modules-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">模块管理</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="modules-table">
+                                <!-- 模块表格将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统状态内容 -->
+                <div id="system-content" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">系统资源</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="system-resources">
+                                        <!-- 系统资源信息将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">健康检查</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="health-check">
+                                        <!-- 健康检查信息将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日志查看内容 -->
+                <div id="logs-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">系统日志</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="logs-container">
+                                <pre id="logs-text" style="background: #f8f9fa; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto;">
+2025-08-19 22:30:00 - INFO - 万得行业分类模块启动成功
+2025-08-19 22:29:55 - INFO - 公司名字列表模块数据验证通过
+2025-08-19 22:29:50 - INFO - 系统初始化完成
+2025-08-19 22:29:45 - INFO - 数据库连接成功
+2025-08-19 22:29:40 - INFO - 配置加载完成
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let modulesData = {};
+        let dashboardData = {};
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            loadModulesData();
+            showDashboard();
+        });
+
+        // 加载仪表板数据
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/dashboard');
+                const data = await response.json();
+                if (data.success) {
+                    dashboardData = data.data;
+                    updateDashboard();
+                }
+            } catch (error) {
+                console.error('加载仪表板数据失败:', error);
+            }
+        }
+
+        // 加载模块数据
+        async function loadModulesData() {
+            try {
+                const response = await fetch('/api/modules');
+                const data = await response.json();
+                if (data.success) {
+                    modulesData = data.data;
+                    updateModulesGrid();
+                }
+            } catch (error) {
+                console.error('加载模块数据失败:', error);
+            }
+        }
+
+        // 更新仪表板
+        function updateDashboard() {
+            const stats = dashboardData.statistics;
+            if (stats) {
+                document.getElementById('total-modules').textContent = stats.total_modules;
+                document.getElementById('running-modules').textContent = stats.running_modules;
+                document.getElementById('health-rate').textContent = stats.health_rate + '%';
+            }
+
+            // 更新最近活动
+            const activities = dashboardData.recent_activities;
+            if (activities) {
+                const container = document.getElementById('recent-activities');
+                container.innerHTML = activities.map(activity => `
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-circle-fill text-${activity.status === 'success' ? 'success' : 'warning'}"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <small class="text-muted">${activity.time}</small><br>
+                            <small>${activity.module} - ${activity.action}</small>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 更新模块网格
+        function updateModulesGrid() {
+            const container = document.getElementById('modules-grid');
+            container.innerHTML = Object.entries(modulesData).map(([id, module]) => `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card module-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">${module.name}</h6>
+                                <span class="badge bg-${module.status === 'running' ? 'success' : 'danger'}">${module.status}</span>
+                            </div>
+                            <p class="card-text small text-muted">${module.description}</p>
+                            <div class="btn-group btn-group-sm w-100">
+                                <button class="btn btn-outline-primary" onclick="viewModule('${id}')">查看</button>
+                                <button class="btn btn-outline-${module.status === 'running' ? 'warning' : 'success'}" 
+                                        onclick="toggleModule('${id}', '${module.status === 'running' ? 'stopped' : 'running'}')">
+                                    ${module.status === 'running' ? '停止' : '启动'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 显示仪表板
+        function showDashboard() {
+            document.getElementById('page-title').textContent = '仪表板';
+            document.getElementById('dashboard-content').style.display = 'block';
+            document.getElementById('modules-content').style.display = 'none';
+            document.getElementById('system-content').style.display = 'none';
+            document.getElementById('logs-content').style.display = 'none';
+            
+            // 更新导航状态
+            updateNavState('dashboard');
+        }
+
+        // 显示模块管理
+        function showModules() {
+            document.getElementById('page-title').textContent = '模块管理';
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('modules-content').style.display = 'block';
+            document.getElementById('system-content').style.display = 'none';
+            document.getElementById('logs-content').style.display = 'none';
+            
+            updateNavState('modules');
+            updateModulesTable();
+        }
+
+        // 显示系统状态
+        function showSystem() {
+            document.getElementById('page-title').textContent = '系统状态';
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('modules-content').style.display = 'none';
+            document.getElementById('system-content').style.display = 'block';
+            document.getElementById('logs-content').style.display = 'none';
+            
+            updateNavState('system');
+            loadSystemData();
+        }
+
+        // 显示日志
+        function showLogs() {
+            document.getElementById('page-title').textContent = '日志查看';
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('modules-content').style.display = 'none';
+            document.getElementById('system-content').style.display = 'none';
+            document.getElementById('logs-content').style.display = 'block';
+            
+            updateNavState('logs');
+        }
+
+        // 更新导航状态
+        function updateNavState(active) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // 切换模块状态
+        async function toggleModule(moduleId, newStatus) {
+            try {
+                const response = await fetch(`/api/modules/${moduleId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    loadModulesData();
+                    loadDashboardData();
+                    alert(data.message);
+                } else {
+                    alert('操作失败: ' + data.message);
+                }
+            } catch (error) {
+                console.error('切换模块状态失败:', error);
+                alert('操作失败');
+            }
+        }
+
+        // 查看模块详情
+        function viewModule(moduleId) {
+            const module = modulesData[moduleId];
+            if (module) {
+                alert(`模块: ${module.name}\n状态: ${module.status}\n描述: ${module.description}`);
+            }
+        }
+
+        // 更新模块表格
+        function updateModulesTable() {
+            const container = document.getElementById('modules-table');
+            container.innerHTML = `
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>模块名称</th>
+                            <th>状态</th>
+                            <th>描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(modulesData).map(([id, module]) => `
+                            <tr>
+                                <td>${module.name}</td>
+                                <td><span class="badge bg-${module.status === 'running' ? 'success' : 'danger'}">${module.status}</span></td>
+                                <td>${module.description}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewModule('${id}')">查看</button>
+                                    <button class="btn btn-sm btn-outline-${module.status === 'running' ? 'warning' : 'success'}" 
+                                            onclick="toggleModule('${id}', '${module.status === 'running' ? 'stopped' : 'running'}')">
+                                        ${module.status === 'running' ? '停止' : '启动'}
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // 加载系统数据
+        async function loadSystemData() {
+            try {
+                const response = await fetch('/api/system/health');
+                const data = await response.json();
+                if (data.success) {
+                    const systemData = data.data;
+                    
+                    // 更新系统资源
+                    document.getElementById('system-resources').innerHTML = `
+                        <div class="mb-3">
+                            <label class="form-label">CPU使用率</label>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: ${systemData.cpu_usage}">${systemData.cpu_usage}</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">内存使用率</label>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: ${systemData.memory_usage}">${systemData.memory_usage}</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">磁盘使用率</label>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: ${systemData.disk_usage}">${systemData.disk_usage}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 更新健康检查
+                    document.getElementById('health-check').innerHTML = `
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>系统状态: ${systemData.status}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-clock me-2"></i>
+                            <span>运行时间: ${systemData.uptime}</span>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载系统数据失败:', error);
+            }
+        }
+
+        // 刷新数据
+        function refreshData() {
+            loadDashboardData();
+            loadModulesData();
+        }
+
+        // 自动刷新
+        setInterval(refreshData, 30000); // 每30秒刷新一次
+    </script>
+</body>
+</html> 

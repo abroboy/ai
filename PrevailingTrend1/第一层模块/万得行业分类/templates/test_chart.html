@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K线图测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .chart-container {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        #chart {
+            height: 400px;
+            width: 100%;
+        }
+        .test-data {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3730a3;
+        }
+    </style>
+</head>
+<body>
+    <h1>K线图测试页面</h1>
+    
+    <div class="test-data">
+        <h3>测试数据</h3>
+        <button onclick="loadTestData()">加载测试数据</button>
+        <button onclick="loadRealData()">加载真实数据</button>
+        <button onclick="clearChart()">清除图表</button>
+    </div>
+    
+    <div class="chart-container">
+        <div id="chart"></div>
+    </div>
+    
+    <div id="status" style="margin: 20px 0; padding: 10px; background: #e5e7eb; border-radius: 4px;">
+        状态: 等待操作
+    </div>
+
+    <script>
+        let chart = null;
+        let candlestickSeries = null;
+        let volumeSeries = null;
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = '状态: ' + message;
+            console.log(message);
+        }
+        
+        function initChart() {
+            updateStatus('初始化图表...');
+            
+            if (typeof LightweightCharts === 'undefined') {
+                updateStatus('错误: LightweightCharts库未加载');
+                return false;
+            }
+            
+            const chartContainer = document.getElementById('chart');
+            
+            chart = LightweightCharts.createChart(chartContainer, {
+                width: chartContainer.clientWidth,
+                height: 400,
+                layout: {
+                    background: { color: '#1a1a1a' },
+                    textColor: '#d1d4dc',
+                },
+                grid: {
+                    vertLines: { color: '#2B2B43' },
+                    horzLines: { color: '#2B2B43' },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                rightPriceScale: {
+                    borderColor: '#2B2B43',
+                },
+                timeScale: {
+                    borderColor: '#2B2B43',
+                    timeVisible: true,
+                    secondsVisible: false,
+                },
+            });
+            
+            candlestickSeries = chart.addCandlestickSeries({
+                upColor: '#26a69a',
+                downColor: '#ef5350',
+                borderVisible: false,
+                wickUpColor: '#26a69a',
+                wickDownColor: '#ef5350',
+            });
+            
+            volumeSeries = chart.addHistogramSeries({
+                color: '#26a69a',
+                priceFormat: {
+                    type: 'volume',
+                },
+                priceScaleId: '',
+                scaleMargins: {
+                    top: 0.8,
+                    bottom: 0,
+                },
+            });
+            
+            updateStatus('图表初始化完成');
+            return true;
+        }
+        
+        function loadTestData() {
+            if (!initChart()) return;
+            
+            updateStatus('加载测试数据...');
+            
+            // 生成测试数据
+            const testData = {
+                candles: [],
+                volumes: []
+            };
+            
+            const now = Math.floor(Date.now() / 1000);
+            let basePrice = 50;
+            
+            for (let i = 30; i >= 0; i--) {
+                const time = now - i * 24 * 3600;
+                const open = basePrice + (Math.random() - 0.5) * 5;
+                const high = open + Math.random() * 3;
+                const low = open - Math.random() * 3;
+                const close = open + (Math.random() - 0.5) * 4;
+                const volume = Math.floor(Math.random() * 1000000) + 100000;
+                
+                testData.candles.push({
+                    time: time,
+                    open: open,
+                    high: high,
+                    low: low,
+                    close: close
+                });
+                
+                testData.volumes.push({
+                    time: time,
+                    value: volume,
+                    color: close >= open ? '#26a69a' : '#ef5350'
+                });
+                
+                basePrice = close;
+            }
+            
+            candlestickSeries.setData(testData.candles);
+            volumeSeries.setData(testData.volumes);
+            
+            updateStatus('测试数据加载完成');
+        }
+        
+        function loadRealData() {
+            if (!initChart()) return;
+            
+            updateStatus('加载真实数据...');
+            
+            fetch('/api/stock/000001/kline')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        candlestickSeries.setData(data.data.candles);
+                        volumeSeries.setData(data.data.volumes);
+                        updateStatus('真实数据加载完成，共 ' + data.data.candles.length + ' 条记录');
+                    } else {
+                        updateStatus('加载真实数据失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    updateStatus('请求失败: ' + error.message);
+                });
+        }
+        
+        function clearChart() {
+            if (chart) {
+                chart.remove();
+                chart = null;
+                candlestickSeries = null;
+                volumeSeries = null;
+                updateStatus('图表已清除');
+            }
+        }
+        
+        // 页面加载完成后自动初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('页面加载完成，可以开始测试');
+        });
+    </script>
+</body>
+</html> 

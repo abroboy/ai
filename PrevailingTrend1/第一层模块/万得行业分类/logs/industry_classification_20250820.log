@@ -1,0 +1,4 @@
+2025-08-20 11:42:30 - industry_classification - INFO - 测试日志功能
+2025-08-20 11:44:08 - industry_classification - INFO - 测试日志功能
+2025-08-20 11:44:08 - industry_classification - WARNING - 测试警告日志
+2025-08-20 11:44:08 - industry_classification - ERROR - 测试错误日志
