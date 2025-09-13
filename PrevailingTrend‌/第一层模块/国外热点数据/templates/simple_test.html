@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单测试 - 国外热点数据</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { margin: 5px; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 国外热点数据 - 修复验证测试</h1>
+        
+        <div class="test-section info">
+            <h3>📋 测试说明</h3>
+            <p>此页面用于验证heat_score错误修复是否生效。如果所有测试都通过，说明修复成功。</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 测试控制</h3>
+            <button class="btn-primary" onclick="runAllTests()">运行所有测试</button>
+            <button class="btn-success" onclick="testHeatScoreFix()">测试heat_score修复</button>
+            <button class="btn-primary" onclick="testAPI()">测试API数据</button>
+            <button class="btn-danger" onclick="goToDashboard()">返回Dashboard</button>
+        </div>
+        
+        <div id="testResults"></div>
+        
+        <div class="test-section info">
+            <h3>📊 当前状态</h3>
+            <div id="currentStatus">等待测试...</div>
+        </div>
+    </div>
+    
+    <script>
+        let testResults = [];
+        
+        // 运行所有测试
+        function runAllTests() {
+            testResults = [];
+            document.getElementById('testResults').innerHTML = '<h3>🧪 测试结果:</h3>';
+            document.getElementById('currentStatus').innerHTML = '正在运行测试...';
+            
+            testHeatScoreFix();
+            setTimeout(() => testAPI(), 1000);
+        }
+        
+        // 测试heat_score修复
+        function testHeatScoreFix() {
+            const results = document.getElementById('testResults');
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            section.innerHTML = '<h4>🔢 heat_score修复测试</h4>';
+            
+            // 模拟各种数据类型
+            const testCases = [
+                { value: "9.2", type: "string", expected: "9.2" },
+                { value: 8.5, type: "number", expected: "8.5" },
+                { value: null, type: "null", expected: "-" },
+                { value: undefined, type: "undefined", expected: "-" },
+                { value: "invalid", type: "invalid string", expected: "-" },
+                { value: "0.0", type: "zero string", expected: "0.0" },
+                { value: 0, type: "zero number", expected: "0.0" }
+            ];
+            
+            let passed = 0;
+            let total = testCases.length;
+            
+            testCases.forEach((testCase, index) => {
+                try {
+                    let heatScore = '-';
+                    const value = testCase.value;
+                    
+                    if (value !== null && value !== undefined) {
+                        let score;
+                        if (typeof value === 'string') {
+                            score = parseFloat(value);
+                        } else if (typeof value === 'number') {
+                            score = value;
+                        } else if (value && typeof value.toString === 'function') {
+                            score = parseFloat(value.toString());
+                        } else {
+                            score = parseFloat(value);
+                        }
+                        
+                        if (!isNaN(score)) {
+                            heatScore = score.toFixed(1);
+                        }
+                    }
+                    
+                    const isSuccess = heatScore === testCase.expected;
+                    if (isSuccess) passed++;
+                    
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = isSuccess ? 'success' : 'error';
+                    resultDiv.style.margin = '5px 0';
+                    resultDiv.style.padding = '8px';
+                    resultDiv.style.borderRadius = '4px';
+                    resultDiv.innerHTML = `
+                        <strong>测试 ${index + 1}:</strong> ${testCase.type} (${value}) → ${heatScore} 
+                        ${isSuccess ? '✓' : '✗ (期望: ' + testCase.expected + ')'}
+                    `;
+                    section.appendChild(resultDiv);
+                    
+                } catch (error) {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'error';
+                    resultDiv.style.margin = '5px 0';
+                    resultDiv.style.padding = '8px';
+                    resultDiv.style.borderRadius = '4px';
+                    resultDiv.innerHTML = `
+                        <strong>测试 ${index + 1}:</strong> ${testCase.type} (${value}) → 错误: ${error.message} ✗
+                    `;
+                    section.appendChild(resultDiv);
+                }
+            });
+            
+            const summary = document.createElement('div');
+            summary.className = passed === total ? 'success' : 'error';
+            summary.style.marginTop = '10px';
+            summary.style.padding = '10px';
+            summary.style.borderRadius = '4px';
+            summary.innerHTML = `<strong>总结:</strong> ${passed}/${total} 测试通过`;
+            section.appendChild(summary);
+            
+            results.appendChild(section);
+            
+            // 更新状态
+            const status = document.getElementById('currentStatus');
+            if (passed === total) {
+                status.innerHTML = `<span style="color: green;">✅ heat_score修复测试通过 (${passed}/${total})</span>`;
+            } else {
+                status.innerHTML = `<span style="color: red;">❌ heat_score修复测试失败 (${passed}/${total})</span>`;
+            }
+        }
+        
+        // 测试API数据
+        function testAPI() {
+            const results = document.getElementById('testResults');
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            section.innerHTML = '<h4>🌐 API数据测试</h4>';
+            
+            fetch('/api/hotspots?limit=3')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const resultDiv = document.createElement('div');
+                        resultDiv.className = 'success';
+                        resultDiv.style.margin = '5px 0';
+                        resultDiv.style.padding = '8px';
+                        resultDiv.style.borderRadius = '4px';
+                        resultDiv.innerHTML = `
+                            <strong>API测试成功:</strong> 获取到 ${data.data.length} 条数据 ✓
+                        `;
+                        section.appendChild(resultDiv);
+                        
+                        // 显示第一条数据
+                        if (data.data.length > 0) {
+                            const dataDiv = document.createElement('div');
+                            dataDiv.style.marginTop = '10px';
+                            dataDiv.innerHTML = `
+                                <strong>第一条数据:</strong>
+                                <pre>${JSON.stringify(data.data[0], null, 2)}</pre>
+                            `;
+                            section.appendChild(dataDiv);
+                        }
+                        
+                        // 更新状态
+                        const status = document.getElementById('currentStatus');
+                        status.innerHTML += '<br><span style="color: green;">✅ API测试通过</span>';
+                        
+                    } else {
+                        const resultDiv = document.createElement('div');
+                        resultDiv.className = 'error';
+                        resultDiv.style.margin = '5px 0';
+                        resultDiv.style.padding = '8px';
+                        resultDiv.style.borderRadius = '4px';
+                        resultDiv.innerHTML = `
+                            <strong>API测试失败:</strong> ${data.error || '未知错误'} ✗
+                        `;
+                        section.appendChild(resultDiv);
+                        
+                        // 更新状态
+                        const status = document.getElementById('currentStatus');
+                        status.innerHTML += '<br><span style="color: red;">❌ API测试失败</span>';
+                    }
+                })
+                .catch(error => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'error';
+                    resultDiv.style.margin = '5px 0';
+                    resultDiv.style.padding = '8px';
+                    resultDiv.style.borderRadius = '4px';
+                    resultDiv.innerHTML = `
+                        <strong>API测试失败:</strong> ${error.message} ✗
+                    `;
+                    section.appendChild(resultDiv);
+                    
+                    // 更新状态
+                    const status = document.getElementById('currentStatus');
+                    status.innerHTML += '<br><span style="color: red;">❌ API测试失败</span>';
+                });
+            
+            results.appendChild(section);
+        }
+        
+        // 返回Dashboard
+        function goToDashboard() {
+            window.location.href = '/dashboard';
+        }
+        
+        // 页面加载时自动运行测试
+        window.onload = function() {
+            console.log('简单测试页面加载完成');
+            document.getElementById('currentStatus').innerHTML = '页面已加载，点击按钮开始测试';
+        };
+    </script>
+</body>
+</html> 

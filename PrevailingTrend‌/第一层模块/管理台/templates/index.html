@@ -74,6 +74,16 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showWindIndustries()">
+                                <i class="bi bi-building"></i> 万得行业分类
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showStockMappings()">
+                                <i class="bi bi-list-task"></i> 股票映射管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="#" onclick="showSystem()">
                                 <i class="bi bi-gear"></i> 系统状态
                             </a>
@@ -230,6 +240,179 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- 万得行业分类内容 -->
+                <div id="wind-industries-content" style="display: none;">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4>万得行业分类数据</h4>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-primary" onclick="refreshWindIndustries()">
+                                        <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="loadWindIndustryStats()">
+                                        <i class="bi bi-bar-chart"></i> 统计信息
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 统计卡片 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="wind-total-industries">-</h4>
+                                    <p class="mb-0">总行业数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="wind-level1-count">-</h4>
+                                    <p class="mb-0">一级行业</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="wind-level2-count">-</h4>
+                                    <p class="mb-0">二级行业</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="wind-level3-count">-</h4>
+                                    <p class="mb-0">三级行业</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 数据表格 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">行业分类列表</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="wind-industries-table">
+                                    <thead>
+                                        <tr>
+                                            <th>行业代码</th>
+                                            <th>行业名称</th>
+                                            <th>行业级别</th>
+                                            <th>父行业代码</th>
+                                            <th>描述</th>
+                                            <th>更新时间</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="wind-industries-tbody">
+                                        <tr>
+                                            <td colspan="6" class="text-center">加载中...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 股票映射管理内容 -->
+                <div id="stock-mappings-content" style="display: none;">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4>股票映射管理</h4>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-primary" onclick="refreshStockMappings()">
+                                        <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                                    </button>
+                                    <a href="http://localhost:5001/stock-mappings" target="_blank" class="btn btn-outline-primary">
+                                        <i class="bi bi-box-arrow-up-right"></i> 在新窗口打开
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 统计卡片 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="stock-total-count">-</h4>
+                                    <p class="mb-0">总股票数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="stock-mapped-count">-</h4>
+                                    <p class="mb-0">已映射</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="stock-unmapped-count">-</h4>
+                                    <p class="mb-0">未映射</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="stock-a-count">-</h4>
+                                    <p class="mb-0">A股数量</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 数据表格简化版 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">股票映射列表 (前20条)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="stock-mappings-table">
+                                    <thead>
+                                        <tr>
+                                            <th>股票代码</th>
+                                            <th>股票名称</th>
+                                            <th>市场类型</th>
+                                            <th>所属行业</th>
+                                            <th>映射状态</th>
+                                            <th>日资金净流入(万)</th>
+                                            <th>流入比例(%)</th>
+                                            <th>最后更新</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stock-mappings-tbody">
+                                        <tr>
+                                            <td colspan="8" class="text-center">加载中...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="http://localhost:5001/stock-mappings" target="_blank" class="btn btn-primary">
+                                    查看全部股票映射数据
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -334,6 +517,7 @@
             document.getElementById('modules-content').style.display = 'none';
             document.getElementById('system-content').style.display = 'none';
             document.getElementById('logs-content').style.display = 'none';
+            document.getElementById('wind-industries-content').style.display = 'none';
             
             // 更新导航状态
             updateNavState('dashboard');
@@ -346,6 +530,7 @@
             document.getElementById('modules-content').style.display = 'block';
             document.getElementById('system-content').style.display = 'none';
             document.getElementById('logs-content').style.display = 'none';
+            document.getElementById('wind-industries-content').style.display = 'none';
             
             updateNavState('modules');
             updateModulesTable();
@@ -358,6 +543,7 @@
             document.getElementById('modules-content').style.display = 'none';
             document.getElementById('system-content').style.display = 'block';
             document.getElementById('logs-content').style.display = 'none';
+            document.getElementById('wind-industries-content').style.display = 'none';
             
             updateNavState('system');
             loadSystemData();
@@ -369,11 +555,41 @@
             document.getElementById('dashboard-content').style.display = 'none';
             document.getElementById('modules-content').style.display = 'none';
             document.getElementById('system-content').style.display = 'none';
+            document.getElementById('wind-industries-content').style.display = 'none';
             document.getElementById('logs-content').style.display = 'block';
             
             updateNavState('logs');
         }
-
+        
+        // 显示万得行业分类
+        function showWindIndustries() {
+            document.getElementById('page-title').textContent = '万得行业分类';
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('modules-content').style.display = 'none';
+            document.getElementById('system-content').style.display = 'none';
+            document.getElementById('logs-content').style.display = 'none';
+            document.getElementById('wind-industries-content').style.display = 'block';
+            
+            updateNavState('wind-industries');
+            loadWindIndustries();
+            loadWindIndustryStats();
+        }
+        
+        // 显示股票映射管理
+        function showStockMappings() {
+            document.getElementById('page-title').textContent = '股票映射管理';
+            document.getElementById('dashboard-content').style.display = 'none';
+            document.getElementById('modules-content').style.display = 'none';
+            document.getElementById('system-content').style.display = 'none';
+            document.getElementById('logs-content').style.display = 'none';
+            document.getElementById('wind-industries-content').style.display = 'none';
+            document.getElementById('stock-mappings-content').style.display = 'block';
+            
+            updateNavState('stock-mappings');
+            loadStockMappings();
+            loadStockMappingStats();
+        }
+        
         // 更新导航状态
         function updateNavState(active) {
             document.querySelectorAll('.nav-link').forEach(link => {
@@ -503,6 +719,243 @@
 
         // 自动刷新
         setInterval(refreshData, 30000); // 每30秒刷新一次
+        
+        // 加载万得行业数据
+        async function loadWindIndustries() {
+            try {
+                const response = await fetch('/api/wind-industries');
+                const data = await response.json();
+                if (data.success) {
+                    updateWindIndustriesTable(data.data);
+                } else {
+                    document.getElementById('wind-industries-tbody').innerHTML = 
+                        `<tr><td colspan="6" class="text-center text-danger">加载失败: ${data.message}</td></tr>`;
+                }
+            } catch (error) {
+                console.error('加载万得行业数据失败:', error);
+                document.getElementById('wind-industries-tbody').innerHTML = 
+                    `<tr><td colspan="6" class="text-center text-danger">网络错误</td></tr>`;
+            }
+        }
+        
+        // 加载万得行业统计数据
+        async function loadWindIndustryStats() {
+            try {
+                const response = await fetch('/api/wind-industries/stats');
+                const data = await response.json();
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('wind-total-industries').textContent = stats.total_industries || 0;
+                    
+                    // 初始化级别统计
+                    document.getElementById('wind-level1-count').textContent = '0';
+                    document.getElementById('wind-level2-count').textContent = '0';
+                    document.getElementById('wind-level3-count').textContent = '0';
+                    
+                    // 更新级别统计
+                    if (stats.level_stats) {
+                        stats.level_stats.forEach(level => {
+                            if (level.industry_level === 1) {
+                                document.getElementById('wind-level1-count').textContent = level.count;
+                            } else if (level.industry_level === 2) {
+                                document.getElementById('wind-level2-count').textContent = level.count;
+                            } else if (level.industry_level === 3) {
+                                document.getElementById('wind-level3-count').textContent = level.count;
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+        
+        // 更新万得行业表格
+        function updateWindIndustriesTable(industries) {
+            const tbody = document.getElementById('wind-industries-tbody');
+            if (industries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">暂无数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = industries.map(industry => {
+                const levelBadge = {
+                    1: '<span class="badge bg-primary">一级</span>',
+                    2: '<span class="badge bg-info">二级</span>',
+                    3: '<span class="badge bg-secondary">三级</span>'
+                }[industry.industry_level] || `<span class="badge bg-warning">级别${industry.industry_level}</span>`;
+                
+                const parentCode = industry.parent_industry_code || '-';
+                const description = industry.industry_description || '无描述';
+                const updatedAt = industry.updated_at ? new Date(industry.updated_at).toLocaleString('zh-CN') : '-';
+                
+                return `
+                    <tr>
+                        <td><code>${industry.industry_code}</code></td>
+                        <td><strong>${industry.industry_name}</strong></td>
+                        <td>${levelBadge}</td>
+                        <td><code>${parentCode}</code></td>
+                        <td class="text-muted small">${description}</td>
+                        <td class="text-muted small">${updatedAt}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // 刷新万得行业数据
+        async function refreshWindIndustries() {
+            try {
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> 刷新中...';
+                button.disabled = true;
+                
+                const response = await fetch('/api/wind-industries/refresh', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('数据刷新成功！');
+                    loadWindIndustries();
+                    loadWindIndustryStats();
+                } else {
+                    alert('数据刷新失败: ' + data.message);
+                }
+            } catch (error) {
+                console.error('刷新数据失败:', error);
+                alert('网络错误，刷新失败');
+            } finally {
+                const button = event.target;
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+        
+        // 加载股票映射数据
+        async function loadStockMappings() {
+            try {
+                const response = await fetch('/api/stock-mappings?page=0&size=20');
+                const data = await response.json();
+                if (data.success) {
+                    updateStockMappingsTable(data.data.content);
+                } else {
+                    document.getElementById('stock-mappings-tbody').innerHTML = 
+                        `<tr><td colspan="8" class="text-center text-danger">加载失败: ${data.message}</td></tr>`;
+                }
+            } catch (error) {
+                console.error('加载股票映射数据失败:', error);
+                document.getElementById('stock-mappings-tbody').innerHTML = 
+                    `<tr><td colspan="8" class="text-center text-danger">网络错误</td></tr>`;
+            }
+        }
+        
+        // 加载股票映射统计数据
+        async function loadStockMappingStats() {
+            try {
+                const response = await fetch('/api/stock-mappings/stats');
+                const data = await response.json();
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('stock-total-count').textContent = stats.total_stocks || 0;
+                    document.getElementById('stock-mapped-count').textContent = stats.mapped_count || 0;
+                    document.getElementById('stock-unmapped-count').textContent = stats.unmapped_count || 0;
+                    document.getElementById('stock-a-count').textContent = stats.a_stock_count || 0;
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+        
+        // 更新股票映射表格
+        function updateStockMappingsTable(stocks) {
+            const tbody = document.getElementById('stock-mappings-tbody');
+            if (stocks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">暂无数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = stocks.map(stock => {
+                const marketBadge = getStockMarketTypeBadge(stock.marketType);
+                const statusBadge = getStockMappingStatusBadge(stock.mappingStatus);
+                const industryName = stock.industryName || '未分类';
+                const dailyNetInflow = stock.dailyNetInflow ? stockNumberFormat(stock.dailyNetInflow) : '-';
+                const netInflowRatio = stock.netInflowRatio ? (stock.netInflowRatio * 100).toFixed(2) : '-';
+                const lastUpdated = stock.lastUpdated ? new Date(stock.lastUpdated).toLocaleDateString('zh-CN') : '-';
+                
+                return `
+                    <tr>
+                        <td><code>${stock.stockCode}</code></td>
+                        <td><strong>${stock.stockName}</strong></td>
+                        <td>${marketBadge}</td>
+                        <td>${industryName}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end ${dailyNetInflow.toString().startsWith('-') ? 'text-danger' : 'text-success'}">${dailyNetInflow}</td>
+                        <td class="text-end ${netInflowRatio.toString().startsWith('-') ? 'text-danger' : 'text-success'}">${netInflowRatio}%</td>
+                        <td class="text-muted">${lastUpdated}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // 获取股票市场类型徽章
+        function getStockMarketTypeBadge(marketType) {
+            const badges = {
+                'A股': '<span class="badge bg-primary">A股</span>',
+                '科创板': '<span class="badge bg-info">科创板</span>',
+                '创业板': '<span class="badge bg-success">创业板</span>'
+            };
+            return badges[marketType] || `<span class="badge bg-secondary">${marketType}</span>`;
+        }
+        
+        // 获取股票映射状态徽章
+        function getStockMappingStatusBadge(status) {
+            const badges = {
+                '已映射': '<span class="badge bg-success">已映射</span>',
+                '未映射': '<span class="badge bg-warning">未映射</span>',
+                '待处理': '<span class="badge bg-info">待处理</span>'
+            };
+            return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+        }
+        
+        // 股票数字格式化
+        function stockNumberFormat(num) {
+            if (num === null || num === undefined) return '-';
+            const numValue = parseFloat(num);
+            if (isNaN(numValue)) return '-';
+            return numValue.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+        }
+        
+        // 刷新股票映射数据
+        async function refreshStockMappings() {
+            try {
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> 刷新中...';
+                button.disabled = true;
+                
+                const response = await fetch('/api/stock-mappings/refresh', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('股票映射数据刷新成功！');
+                    loadStockMappings();
+                    loadStockMappingStats();
+                } else {
+                    alert('数据刷新失败: ' + data.message);
+                }
+            } catch (error) {
+                console.error('刷新数据失败:', error);
+                alert('网络错误，刷新失败');
+            } finally {
+                const button = event.target;
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
     </script>
 </body>
 </html> 

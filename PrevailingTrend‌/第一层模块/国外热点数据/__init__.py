@@ -11,7 +11,7 @@ from .core.international_hotspot_collector import InternationalHotspotCollector
 from .core.international_hotspot_analyzer import InternationalHotspotAnalyzer
 from .core.international_hotspot_manager import InternationalHotspotManager
 from .models.international_hotspot_model import InternationalHotspotModel
-from .utils.config import Config
+from .config import Config
 from .utils.logger import Logger
 
 __all__ = [

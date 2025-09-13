@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>万得行业分类 - 股票映射管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+            padding: 12px 16px;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+        }
+        .sidebar .nav-link.active {
+            background-color: #4a90e2;
+            color: white;
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .search-bar {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .badge-mapped {
+            background-color: #28a745;
+        }
+        .badge-unmapped {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .badge-pending {
+            background-color: #fd7e14;
+        }
+        .badge-a-stock {
+            background-color: #007bff;
+        }
+        .badge-kc-board {
+            background-color: #6f42c1;
+        }
+        .badge-cyb {
+            background-color: #20c997;
+        }
+        .status-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            border-top: none;
+            font-weight: 600;
+            color: #495057;
+        }
+        .table td {
+            vertical-align: middle;
+            padding: 12px 8px;
+        }
+        .pagination-info {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .action-buttons .btn {
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">万得行业分类</h4>
+                        <small class="text-white-50">Wind Industry Classification</small>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="bi bi-speedometer2"></i> 仪表盘
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/industries">
+                                <i class="bi bi-diagram-3"></i> 行业管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/stock-mappings">
+                                <i class="bi bi-list-task"></i> 股票映射
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/data-analysis">
+                                <i class="bi bi-graph-up"></i> 数据分析
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/capital-query">
+                                <i class="bi bi-search"></i> 资金查询
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/system-settings">
+                                <i class="bi bi-gear"></i> 系统设置
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-0 main-content">
+                <!-- 标题栏 -->
+                <div class="d-flex justify-content-between align-items-center p-3 bg-white border-bottom">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-list-task me-2 text-primary" style="font-size: 1.5rem;"></i>
+                        <h2 class="mb-0">股票映射管理</h2>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="input-group me-3" style="width: 300px;">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="搜索行业或股票..." id="globalSearch">
+                        </div>
+                        <div class="dropdown me-2">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> 管理员
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">个人设置</a></li>
+                                <li><a class="dropdown-item" href="#">退出登录</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3">
+                    <!-- 统计卡片区 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="bi bi-graph-up text-primary" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h3 id="total-stocks" class="mb-1">-</h3>
+                                    <p class="text-muted mb-0">总股票数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h3 id="mapped-stocks" class="mb-1">-</h3>
+                                    <p class="text-muted mb-0">已映射</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="bi bi-clock text-warning" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h3 id="unmapped-stocks" class="mb-1">-</h3>
+                                    <p class="text-muted mb-0">未映射</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="bi bi-star text-info" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h3 id="a-stock-count" class="mb-1">-</h3>
+                                    <p class="text-muted mb-0">A股数量</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 搜索筛选区 -->
+                    <div class="search-bar">
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <label class="form-label">股票代码</label>
+                                <input type="text" class="form-control" id="stockCodeFilter" placeholder="股票代码">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">股票名称</label>
+                                <input type="text" class="form-control" id="stockNameFilter" placeholder="股票名称">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">市场类型</label>
+                                <select class="form-select" id="marketTypeFilter">
+                                    <option value="">全部</option>
+                                    <option value="A股">A股</option>
+                                    <option value="科创板">科创板</option>
+                                    <option value="创业板">创业板</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">所属行业</label>
+                                <select class="form-select" id="industryFilter">
+                                    <option value="">全部</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">映射状态</label>
+                                <select class="form-select" id="mappingStatusFilter">
+                                    <option value="">全部</option>
+                                    <option value="已映射">已映射</option>
+                                    <option value="未映射">未映射</option>
+                                    <option value="待处理">待处理</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="d-flex align-items-end h-100">
+                                    <button type="button" class="btn btn-primary me-2" onclick="searchStocks()">
+                                        <i class="bi bi-search"></i> 搜索
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
+                                        <i class="bi bi-arrow-clockwise"></i> 重置
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 股票列表 -->
+                    <div class="table-container">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">股票列表</h5>
+                            <div class="d-flex align-items-center">
+                                <span class="pagination-info me-3" id="paginationInfo">显示第 1 到 20 条，共 0 条记录</span>
+                                <button type="button" class="btn btn-success btn-sm" onclick="refreshData()">
+                                    <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">股票代码</th>
+                                        <th style="width: 120px;">股票名称</th>
+                                        <th style="width: 80px;">市场类型</th>
+                                        <th style="width: 120px;">所属行业</th>
+                                        <th style="width: 80px;">映射状态</th>
+                                        <th style="width: 100px;">总市值(万)</th>
+                                        <th style="width: 100px;">日资金净流入(万)</th>
+                                        <th style="width: 80px;">流入比例(%)</th>
+                                        <th style="width: 80px;">最近波动率</th>
+                                        <th style="width: 100px;">最近7日流入(万)</th>
+                                        <th style="width: 100px;">最后更新</th>
+                                        <th style="width: 80px;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stockTableBody">
+                                    <tr>
+                                        <td colspan="12" class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">加载中...</span>
+                                            </div>
+                                            <div class="mt-2">正在加载数据...</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 分页 -->
+                        <nav>
+                            <ul class="pagination justify-content-center" id="pagination">
+                                <!-- 分页按钮将通过JavaScript生成 -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let currentPage = 0;
+        let totalPages = 0;
+        let pageSize = 20;
+        let totalElements = 0;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStockMappings();
+            loadIndustryOptions();
+            loadStockMappingStats();
+        });
+
+        // 加载股票映射数据
+        async function loadStockMappings(page = 0) {
+            try {
+                const filters = getFilters();
+                const params = new URLSearchParams({
+                    page: page,
+                    size: pageSize,
+                    sortBy: 'id',
+                    sortDir: 'asc',
+                    ...filters
+                });
+
+                const response = await fetch(`/api/stock-mappings?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stockData = data.data;
+                    currentPage = stockData.currentPage;
+                    totalPages = stockData.totalPages;
+                    totalElements = stockData.totalElements;
+                    
+                    updateStockTable(stockData.content);
+                    updatePagination();
+                    updatePaginationInfo();
+                } else {
+                    showError('加载数据失败: ' + (data.error || data.message));
+                }
+            } catch (error) {
+                console.error('加载股票映射数据失败:', error);
+                showError('网络错误，请检查连接');
+            }
+        }
+
+        // 获取筛选条件
+        function getFilters() {
+            const filters = {};
+            
+            const stockCode = document.getElementById('stockCodeFilter').value.trim();
+            if (stockCode) filters.stockCode = stockCode;
+            
+            const stockName = document.getElementById('stockNameFilter').value.trim();
+            if (stockName) filters.stockName = stockName;
+            
+            const marketType = document.getElementById('marketTypeFilter').value;
+            if (marketType) filters.marketType = marketType;
+            
+            const industryCode = document.getElementById('industryFilter').value;
+            if (industryCode) filters.industryCode = industryCode;
+            
+            const mappingStatus = document.getElementById('mappingStatusFilter').value;
+            if (mappingStatus) filters.mappingStatus = mappingStatus;
+            
+            return filters;
+        }
+
+        // 更新股票表格
+        function updateStockTable(stocks) {
+            const tbody = document.getElementById('stockTableBody');
+            
+            if (stocks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="text-center py-4">暂无数据</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = stocks.map(stock => {
+                const marketBadge = getMarketTypeBadge(stock.marketType);
+                const statusBadge = getMappingStatusBadge(stock.mappingStatus);
+                const industryName = stock.industryName || '未分类';
+                const totalMarketValue = stock.totalMarketValue ? numberFormat(stock.totalMarketValue) : '-';
+                const dailyNetInflow = stock.dailyNetInflow ? numberFormat(stock.dailyNetInflow) : '-';
+                const netInflowRatio = stock.netInflowRatio ? (stock.netInflowRatio * 100).toFixed(2) : '-';
+                const recentVolatility = stock.recentVolatility ? (stock.recentVolatility * 100).toFixed(2) + '%' : '-';
+                const latest7dInflow = stock.latest7dInflow ? numberFormat(stock.latest7dInflow) : '-';
+                const lastUpdated = stock.lastUpdated ? new Date(stock.lastUpdated).toLocaleDateString('zh-CN') : '-';
+                
+                return `
+                    <tr>
+                        <td><code>${stock.stockCode}</code></td>
+                        <td><strong>${stock.stockName}</strong></td>
+                        <td>${marketBadge}</td>
+                        <td>${industryName}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end">${totalMarketValue}</td>
+                        <td class="text-end ${dailyNetInflow.startsWith('-') ? 'text-danger' : 'text-success'}">${dailyNetInflow}</td>
+                        <td class="text-end ${netInflowRatio.startsWith('-') ? 'text-danger' : 'text-success'}">${netInflowRatio}</td>
+                        <td class="text-end">${recentVolatility}</td>
+                        <td class="text-end ${latest7dInflow.startsWith('-') ? 'text-danger' : 'text-success'}">${latest7dInflow}</td>
+                        <td class="text-muted">${lastUpdated}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editStock('${stock.stockCode}')" title="编辑">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="viewStock('${stock.stockCode}')" title="查看">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 获取市场类型徽章
+        function getMarketTypeBadge(marketType) {
+            const badges = {
+                'A股': '<span class="badge badge-a-stock">A股</span>',
+                '科创板': '<span class="badge badge-kc-board">科创板</span>',
+                '创业板': '<span class="badge badge-cyb">创业板</span>'
+            };
+            return badges[marketType] || `<span class="badge bg-secondary">${marketType}</span>`;
+        }
+
+        // 获取映射状态徽章
+        function getMappingStatusBadge(status) {
+            const badges = {
+                '已映射': '<span class="badge badge-mapped">已映射</span>',
+                '未映射': '<span class="badge badge-unmapped">未映射</span>',
+                '待处理': '<span class="badge badge-pending">待处理</span>'
+            };
+            return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+        }
+
+        // 数字格式化
+        function numberFormat(num) {
+            if (num === null || num === undefined) return '-';
+            const numValue = parseFloat(num);
+            if (isNaN(numValue)) return '-';
+            return numValue.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+        }
+
+        // 更新分页信息
+        function updatePaginationInfo() {
+            const start = currentPage * pageSize + 1;
+            const end = Math.min((currentPage + 1) * pageSize, totalElements);
+            document.getElementById('paginationInfo').textContent = 
+                `显示第 ${start} 到 ${end} 条，共 ${totalElements} 条记录`;
+        }
+
+        // 更新分页控件
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            
+            // 上一页
+            paginationHTML += `
+                <li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadStockMappings(${currentPage - 1})">上一页</a>
+                </li>
+            `;
+            
+            // 页码
+            const startPage = Math.max(0, currentPage - 2);
+            const endPage = Math.min(totalPages - 1, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="loadStockMappings(${i})">${i + 1}</a>
+                    </li>
+                `;
+            }
+            
+            // 下一页
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadStockMappings(${currentPage + 1})">下一页</a>
+                </li>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // 加载股票映射统计数据
+        async function loadStockMappingStats() {
+            try {
+                const response = await fetch('/api/stock-mappings/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('total-stocks').textContent = stats.total_stocks || 0;
+                    document.getElementById('mapped-stocks').textContent = stats.mapped_count || 0;
+                    document.getElementById('unmapped-stocks').textContent = stats.unmapped_count || 0;
+                    document.getElementById('a-stock-count').textContent = stats.a_stock_count || 0;
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+
+        // 加载行业选项
+        async function loadIndustryOptions() {
+            try {
+                const response = await fetch('/api/wind-industries');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('industryFilter');
+                    select.innerHTML = '<option value="">全部</option>';
+                    
+                    data.data.forEach(industry => {
+                        select.innerHTML += `<option value="${industry.industryCode}">${industry.industryName}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('加载行业选项失败:', error);
+            }
+        }
+
+        // 搜索股票
+        function searchStocks() {
+            loadStockMappings(0);
+        }
+
+        // 重置筛选条件
+        function resetFilters() {
+            document.getElementById('stockCodeFilter').value = '';
+            document.getElementById('stockNameFilter').value = '';
+            document.getElementById('marketTypeFilter').value = '';
+            document.getElementById('industryFilter').value = '';
+            document.getElementById('mappingStatusFilter').value = '';
+            loadStockMappings(0);
+        }
+
+        // 刷新数据
+        async function refreshData() {
+            try {
+                const response = await fetch('/api/stock-mappings/refresh', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('数据刷新成功！');
+                    loadStockMappings(currentPage);
+                    loadStockMappingStats();
+                } else {
+                    alert('数据刷新失败: ' + (data.error || data.message));
+                }
+            } catch (error) {
+                console.error('刷新数据失败:', error);
+                alert('网络错误，刷新失败');
+            }
+        }
+
+        // 编辑股票
+        async function editStock(stockCode) {
+            try {
+                const response = await fetch(`/api/stock-mappings/${stockCode}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showEditModal(data.data);
+                } else {
+                    alert('获取股票信息失败: ' + (data.error || data.message));
+                }
+            } catch (error) {
+                console.error('获取股票信息失败:', error);
+                alert('网络错误，获取股票信息失败');
+            }
+        }
+
+        // 查看股票详情
+        async function viewStock(stockCode) {
+            try {
+                const response = await fetch(`/api/stock-mappings/${stockCode}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStockDetailModal(data.data);
+                } else {
+                    alert('获取股票详情失败: ' + (data.error || data.message));
+                }
+            } catch (error) {
+                console.error('获取股票详情失败:', error);
+                alert('网络错误，获取股票详情失败');
+            }
+        }
+
+        // 显示编辑模态框
+        function showEditModal(stock) {
+            const modalHTML = `
+                <div class="modal fade" id="editStockModal" tabindex="-1" aria-labelledby="editStockModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editStockModalLabel">编辑股票映射 - ${stock.stockCode}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editStockForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editStockCode" class="form-label">股票代码</label>
+                                                <input type="text" class="form-control" id="editStockCode" value="${stock.stockCode}" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editStockName" class="form-label">股票名称</label>
+                                                <input type="text" class="form-control" id="editStockName" value="${stock.stockName}" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editMarketType" class="form-label">市场类型</label>
+                                                <select class="form-select" id="editMarketType" required>
+                                                    <option value="A股" ${stock.marketType === 'A股' ? 'selected' : ''}>A股</option>
+                                                    <option value="科创板" ${stock.marketType === '科创板' ? 'selected' : ''}>科创板</option>
+                                                    <option value="创业板" ${stock.marketType === '创业板' ? 'selected' : ''}>创业板</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editMappingStatus" class="form-label">映射状态</label>
+                                                <select class="form-select" id="editMappingStatus" required>
+                                                    <option value="已映射" ${stock.mappingStatus === '已映射' ? 'selected' : ''}>已映射</option>
+                                                    <option value="未映射" ${stock.mappingStatus === '未映射' ? 'selected' : ''}>未映射</option>
+                                                    <option value="待处理" ${stock.mappingStatus === '待处理' ? 'selected' : ''}>待处理</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editIndustryCode" class="form-label">所属行业</label>
+                                        <select class="form-select" id="editIndustryCode">
+                                            <option value="">请选择行业</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editTotalMarketValue" class="form-label">总市值(万)</label>
+                                                <input type="number" class="form-control" id="editTotalMarketValue" value="${stock.totalMarketValue || ''}" step="0.01">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editDailyNetInflow" class="form-label">日资金净流入(万)</label>
+                                                <input type="number" class="form-control" id="editDailyNetInflow" value="${stock.dailyNetInflow || ''}" step="0.01">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" onclick="saveStockEdit()">保存更改</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除现有模态框
+            const existingModal = document.getElementById('editStockModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // 加载行业选项
+            loadIndustryOptionsForModal('editIndustryCode', stock.industryCode);
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('editStockModal'));
+            modal.show();
+        }
+
+        // 显示股票详情模态框
+        function showStockDetailModal(stock) {
+            const modalHTML = `
+                <div class="modal fade" id="stockDetailModal" tabindex="-1" aria-labelledby="stockDetailModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="stockDetailModalLabel">股票详情 - ${stock.stockCode} ${stock.stockName}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">基本信息</div>
+                                            <div class="card-body">
+                                                <table class="table table-sm">
+                                                    <tr><td>股票代码</td><td><code>${stock.stockCode}</code></td></tr>
+                                                    <tr><td>股票名称</td><td><strong>${stock.stockName}</strong></td></tr>
+                                                    <tr><td>市场类型</td><td>${getMarketTypeBadge(stock.marketType)}</td></tr>
+                                                    <tr><td>所属行业</td><td>${stock.industryName || '未分类'}</td></tr>
+                                                    <tr><td>映射状态</td><td>${getMappingStatusBadge(stock.mappingStatus)}</td></tr>
+                                                    <tr><td>最后更新</td><td>${stock.lastUpdated ? new Date(stock.lastUpdated).toLocaleString('zh-CN') : '-'}</td></tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">财务数据</div>
+                                            <div class="card-body">
+                                                <table class="table table-sm">
+                                                    <tr><td>总市值</td><td class="text-end">${stock.totalMarketValue ? numberFormat(stock.totalMarketValue) + ' 万' : '-'}</td></tr>
+                                                    <tr><td>日资金净流入</td><td class="text-end ${(stock.dailyNetInflow && stock.dailyNetInflow < 0) ? 'text-danger' : 'text-success'}">${stock.dailyNetInflow ? numberFormat(stock.dailyNetInflow) + ' 万' : '-'}</td></tr>
+                                                    <tr><td>流入比例</td><td class="text-end ${(stock.netInflowRatio && stock.netInflowRatio < 0) ? 'text-danger' : 'text-success'}">${stock.netInflowRatio ? (stock.netInflowRatio * 100).toFixed(2) + '%' : '-'}</td></tr>
+                                                    <tr><td>最近波动率</td><td class="text-end">${stock.recentVolatility ? (stock.recentVolatility * 100).toFixed(2) + '%' : '-'}</td></tr>
+                                                    <tr><td>最近7日流入</td><td class="text-end ${(stock.latest7dInflow && stock.latest7dInflow < 0) ? 'text-danger' : 'text-success'}">${stock.latest7dInflow ? numberFormat(stock.latest7dInflow) + ' 万' : '-'}</td></tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header">操作历史</div>
+                                            <div class="card-body">
+                                                <div class="alert alert-info">
+                                                    <i class="bi bi-info-circle"></i> 操作历史功能开发中...
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary" onclick="editStock('${stock.stockCode}')">编辑</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除现有模态框
+            const existingModal = document.getElementById('stockDetailModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('stockDetailModal'));
+            modal.show();
+        }
+
+        // 为模态框加载行业选项
+        async function loadIndustryOptionsForModal(selectId, selectedValue) {
+            try {
+                const response = await fetch('/api/wind-industries');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById(selectId);
+                    select.innerHTML = '<option value="">请选择行业</option>';
+                    
+                    data.data.forEach(industry => {
+                        const selected = industry.industryCode === selectedValue ? 'selected' : '';
+                        select.innerHTML += `<option value="${industry.industryCode}" ${selected}>${industry.industryName}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('加载行业选项失败:', error);
+            }
+        }
+
+        // 保存股票编辑
+        async function saveStockEdit() {
+            try {
+                const stockCode = document.getElementById('editStockCode').value;
+                const stockData = {
+                    stockName: document.getElementById('editStockName').value,
+                    marketType: document.getElementById('editMarketType').value,
+                    mappingStatus: document.getElementById('editMappingStatus').value,
+                    industryCode: document.getElementById('editIndustryCode').value,
+                    totalMarketValue: parseFloat(document.getElementById('editTotalMarketValue').value) || null,
+                    dailyNetInflow: parseFloat(document.getElementById('editDailyNetInflow').value) || null
+                };
+                
+                const response = await fetch(`/api/stock-mappings/${stockCode}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(stockData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('股票信息更新成功！');
+                    // 关闭模态框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editStockModal'));
+                    modal.hide();
+                    // 刷新列表
+                    loadStockMappings(currentPage);
+                    loadStockMappingStats();
+                } else {
+                    alert('更新失败: ' + (data.error || data.message));
+                }
+            } catch (error) {
+                console.error('保存失败:', error);
+                alert('网络错误，保存失败');
+            }
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const tbody = document.getElementById('stockTableBody');
+            tbody.innerHTML = `<tr><td colspan="12" class="text-center py-4 text-danger">${message}</td></tr>`;
+        }
+    </script>
+</body>
+</html>

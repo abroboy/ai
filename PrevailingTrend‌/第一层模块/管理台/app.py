@@ -50,8 +50,10 @@ class ModuleManager:
                 'path': '../万得行业分类',
                 'status': 'running',
                 'description': '行业分类数据管理',
+                'port': '5001',
                 'endpoints': [
-                    {'name': '行业列表', 'url': '/api/industries'},
+                    {'name': '行业分类列表', 'url': '/api/wind-industries'},
+                    {'name': '行业统计', 'url': '/api/wind-industries/stats'},
                     {'name': '股票映射', 'url': '/api/stocks'},
                     {'name': '数据统计', 'url': '/api/stats'}
                 ]
@@ -326,6 +328,123 @@ def get_data(data_type):
             'message': f'获取数据失败: {str(e)}'
         }), 500
 
+@app.route('/api/wind-industries')
+def get_wind_industries():
+    """获取万得行业分类数据"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({
+                'success': False,
+                'message': '数据库连接失败'
+            }), 500
+        
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+        
+        # 获取万得行业分类数据
+        cursor.execute("""
+            SELECT industry_code, industry_name, industry_level, 
+                   parent_industry_code, industry_description, is_active,
+                   created_at, updated_at
+            FROM l1_wind_industry_classification 
+            WHERE is_active = 1
+            ORDER BY industry_level, industry_code
+            LIMIT 50
+        """)
+        wind_industries = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'data': wind_industries,
+            'count': len(wind_industries),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取万得行业数据失败: {str(e)}'
+        }), 500
+
+@app.route('/api/wind-industries/stats')
+def get_wind_industry_stats():
+    """获取万得行业统计数据"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({
+                'success': False,
+                'message': '数据库连接失败'
+            }), 500
+        
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+        
+        # 统计各级别行业数量
+        cursor.execute("""
+            SELECT industry_level, COUNT(*) as count 
+            FROM l1_wind_industry_classification 
+            WHERE is_active = 1
+            GROUP BY industry_level
+            ORDER BY industry_level
+        """)
+        level_stats = cursor.fetchall()
+        
+        # 获取总数
+        cursor.execute("""
+            SELECT COUNT(*) as total_count 
+            FROM l1_wind_industry_classification 
+            WHERE is_active = 1
+        """)
+        total_result = cursor.fetchone()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_industries': total_result['total_count'],
+                'level_stats': level_stats
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取统计数据失败: {str(e)}'
+        }), 500
+
+@app.route('/api/wind-industries/refresh', methods=['POST'])
+def refresh_wind_industries():
+    """刷新万得行业数据"""
+    try:
+        # 调用Java服务的刷新API
+        import requests
+        response = requests.post('http://localhost:5001/api/wind-industries/refresh')
+        
+        if response.status_code == 200:
+            result = response.json()
+            return jsonify({
+                'success': True,
+                'message': '万得行业数据刷新成功',
+                'timestamp': datetime.now().isoformat()
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': '调用Java服务失败'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'刷新数据失败: {str(e)}'
+        }), 500
+
 @app.route('/api/stats')
 def get_stats():
     """获取统计数据"""
@@ -368,6 +487,85 @@ def get_stats():
         return jsonify({
             'success': False,
             'message': f'获取统计数据失败: {str(e)}'
+        }), 500
+
+@app.route('/api/stock-mappings')
+def get_stock_mappings():
+    """获取股票映射数据"""
+    try:
+        # 调用Java服务的API
+        import requests
+        page = request.args.get('page', 0)
+        size = request.args.get('size', 20)
+        
+        # 构建请求参数
+        params = {
+            'page': page,
+            'size': size
+        }
+        
+        # 添加筛选条件
+        for key in ['stockCode', 'stockName', 'marketType', 'mappingStatus', 'industryCode']:
+            value = request.args.get(key)
+            if value:
+                params[key] = value
+        
+        response = requests.get('http://localhost:5001/api/stock-mappings', params=params)
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({
+                'success': False,
+                'message': '调用Java服务失败'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取股票映射数据失败: {str(e)}'
+        }), 500
+
+@app.route('/api/stock-mappings/stats')
+def get_stock_mapping_stats():
+    """获取股票映射统计数据"""
+    try:
+        import requests
+        response = requests.get('http://localhost:5001/api/stock-mappings/stats')
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({
+                'success': False,
+                'message': '调用Java服务失败'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取统计数据失败: {str(e)}'
+        }), 500
+
+@app.route('/api/stock-mappings/refresh', methods=['POST'])
+def refresh_stock_mappings():
+    """刷新股票映射数据"""
+    try:
+        import requests
+        response = requests.post('http://localhost:5001/api/stock-mappings/refresh')
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({
+                'success': False,
+                'message': '调用Java服务失败'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'刷新数据失败: {str(e)}'
         }), 500
 
 if __name__ == '__main__':
