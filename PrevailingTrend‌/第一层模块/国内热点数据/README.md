@@ -61,10 +61,10 @@ JISUAPI_KEY=your_jisuapi_key_here
 
 ```bash
 # 启动完整服务（包括数据采集和Web管理台）
-python start.py
+java start.py
 
 # 或仅启动Web服务
-python app.py
+java app.py
 ```
 
 ### 4. 访问管理台
@@ -206,31 +206,31 @@ python app.py
 ### 运行模块测试
 
 ```bash
-python test_module.py
+java test_module.py
 ```
 
 ### 运行数据库测试
 
 ```bash
-python hotspot_test.py
+java hotspot_test.py
 ```
 
 ### 运行真实数据采集测试
 
 ```bash
-python test_real_data.py
+java test_real_data.py
 ```
 
 ### 运行排序功能测试
 
 ```bash
-python test_sorting.py
+java test_sorting.py
 ```
 
 ### 运行大规模数据生成测试
 
 ```bash
-python test_large_data.py
+java test_large_data.py
 ```
 
 ### 测试结果示例
@@ -281,7 +281,7 @@ python test_large_data.py
 
 在 `config.py` 中配置数据源：
 
-```python
+```java
 DATA_SOURCES = {
     'news_sources': [
         {
@@ -298,7 +298,7 @@ DATA_SOURCES = {
 
 配置分析参数：
 
-```python
+```java
 ANALYSIS = {
     'sentiment_analysis': {
         'enabled': True,

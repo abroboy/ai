@@ -21,22 +21,22 @@ install:
 # 运行测试
 test:
 	@echo "运行模块测试..."
-	python test_module.py
+	java test_module.py
 
 # 运行数据库测试
 db-test:
 	@echo "运行数据库测试..."
-	python hotspot_test.py
+	java hotspot_test.py
 
 # 启动完整服务
 run:
 	@echo "启动完整服务..."
-	python start.py
+	java start.py
 
 # 仅启动Web服务
 run-web:
 	@echo "启动Web服务..."
-	python app.py
+	java app.py
 
 # 清理临时文件
 clean:
@@ -62,10 +62,10 @@ setup:
 # 数据库初始化
 init-db:
 	@echo "初始化数据库..."
-	python -c "from utils.database import db_manager; db_manager.create_tables()"
+	java -c "from utils.database import db_manager; db_manager.create_tables()"
 
 # 开发模式
 dev:
 	@echo "启动开发模式..."
 	export FLASK_ENV=development
-	python app.py 
+	java app.py 

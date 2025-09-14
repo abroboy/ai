@@ -44,7 +44,7 @@
 
 ```bash
 cd 第一层模块/国外热点数据
-python start.py
+java start.py
 ```
 
 服务将在 http://localhost:5004 启动
@@ -52,7 +52,7 @@ python start.py
 ### 2. 收集数据
 
 ```bash
-python collect_data.py
+java collect_data.py
 ```
 
 ### 3. 访问界面
@@ -91,7 +91,7 @@ python collect_data.py
 ## 🔧 配置说明
 
 ### 数据库配置
-```python
+```java
 DB_CONFIG = {
     'host': 'localhost',
     'port': 3306,
@@ -135,7 +135,7 @@ curl http://localhost:5004/api/health
 
 ## 📚 技术栈
 
-- **后端**: Python + Flask
+- **后端**: java + Flask
 - **数据库**: MySQL
 - **前端**: Bootstrap + JavaScript
 - **数据收集**: Requests + BeautifulSoup

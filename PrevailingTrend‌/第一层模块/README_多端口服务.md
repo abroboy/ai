@@ -18,7 +18,7 @@
 
 ```bash
 # 在项目根目录下运行
-python 第一层模块/quick_start.py
+java 第一层模块/quick_start.py
 ```
 
 这将自动启动所有三个模块的服务。
@@ -28,15 +28,15 @@ python 第一层模块/quick_start.py
 ```bash
 # 启动万得行业分类模块
 cd 第一层模块/万得行业分类
-python run_dashboard.py
+java run_dashboard.py
 
 # 启动国内热点数据模块
 cd 第一层模块/国内热点数据
-python app.py
+java app.py
 
 # 启动全球资金流向模块
 cd 第一层模块/全球资金流向
-python display_service.py
+java display_service.py
 ```
 
 ## 服务测试
@@ -44,7 +44,7 @@ python display_service.py
 运行测试脚本验证所有服务是否正常运行：
 
 ```bash
-python 第一层模块/test_multi_ports.py
+java 第一层模块/test_multi_ports.py
 ```
 
 ## 各模块功能
@@ -119,7 +119,7 @@ python 第一层模块/test_multi_ports.py
 
 ### 模块配置示例
 
-```python
+```java
 '新模块名称': {
     'port': 5004,  # 使用未被占用的端口
     'path': '第一层模块/新模块目录',

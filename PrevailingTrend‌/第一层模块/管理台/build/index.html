@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趋势科技数据 - 智能金融数据监控平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f5f6fa;
+            overflow-x: hidden;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 300px;
+            background: linear-gradient(180deg, #1a2332 0%, #2c3e50 100%);
+            color: white;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 3px 0 20px rgba(0,0,0,0.15);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .sidebar-header p {
+            margin: 5px 0 0 0;
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .nav-section {
+            padding: 15px 0;
+        }
+        
+        .nav-section-title {
+            padding: 0 20px 10px 20px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 15px 25px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            border-radius: 0 25px 25px 0;
+            margin: 2px 0;
+        }
+        
+        .nav-item:hover {
+            background: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            color: white;
+            border-left-color: #3498db;
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(52, 152, 219, 0.1));
+            color: white;
+            border-left-color: #3498db;
+            font-weight: 600;
+            transform: translateX(8px);
+        }
+        
+        .nav-item i {
+            width: 20px;
+            margin-right: 12px;
+        }
+        
+        .main-content {
+            margin-left: 300px;
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        .top-header {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .top-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .content-area {
+            padding: 0;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+        
+        .content-frame {
+            background: white;
+            margin: 20px;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            min-height: calc(100vh - 140px);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 100px 0;
+            color: #6c757d;
+        }
+        
+        .loading i {
+            font-size: 3rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .module-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .module-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .module-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .module-5001 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .module-5002 { background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%); }
+        .module-5003 { background: linear-gradient(135deg, #8B0000 0%, #CD5C5C 100%); }
+        .module-5004 { background: linear-gradient(135deg, #2F4F4F 0%, #708090 100%); }
+        .module-5005 { background: linear-gradient(135deg, #4B0082 0%, #8A2BE2 100%); }
+        .module-5006 { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); }
+        
+        .module-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .module-desc {
+            color: #6c757d;
+            font-size: 14px;
+            margin: 10px 0 15px 0;
+            line-height: 1.5;
+        }
+        
+        .module-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .port-info {
+            color: #495057;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .module-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-module {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-visit {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-visit:hover {
+            background: #2980b9;
+            color: white;
+        }
+        
+        .btn-api {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-api:hover {
+            background: #7f8c8d;
+            color: white;
+        }
+        
+        .stats-overview {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 5px 0 0 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 左侧导航栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="bi bi-graph-up-arrow"></i> 趋势科技数据</h4>
+            <p>TrendTech Data Analytics</p>
+            <small class="text-muted">智能金融数据服务平台</small>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">主要功能</div>
+            <div class="nav-item active" onclick="loadContent('dashboard')">
+                <i class="bi bi-speedometer2"></i> 控制台概览
+            </div>
+            <div class="nav-item" onclick="loadContent('windindustry')">
+                <i class="bi bi-table"></i> 万得行业分类
+            </div>
+            <div class="nav-item" onclick="loadContent('globalflow')">
+                <i class="bi bi-globe-americas"></i> 全球资金流向
+            </div>
+            <div class="nav-item" onclick="loadContent('domestic')">
+                <i class="bi bi-newspaper"></i> 国内热点数据
+            </div>
+            <div class="nav-item" onclick="loadContent('international')">
+                <i class="bi bi-globe"></i> 国外热点数据
+            </div>
+            <div class="nav-item" onclick="loadContent('tencentindex')">
+                <i class="bi bi-graph-up"></i> 腾讯济安指数
+            </div>
+            <div class="nav-item" onclick="loadContent('forum')">
+                <i class="bi bi-chat-dots"></i> 论坛热点数据
+            </div>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">系统工具</div>
+            <div class="nav-item" onclick="loadContent('systeminfo')">
+                <i class="bi bi-info-circle"></i> 系统信息
+            </div>
+            <div class="nav-item" onclick="loadContent('apidocs')">
+                <i class="bi bi-book"></i> API文档
+            </div>
+            <div class="nav-item" onclick="refreshAllServices()">
+                <i class="bi bi-arrow-clockwise"></i> 刷新所有服务
+            </div>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">系统管理</div>
+            <div class="nav-item" onclick="loadContent('settings')">
+                <i class="bi bi-gear"></i> 系统设置
+            </div>
+            <div class="nav-item" onclick="loadContent('users')">
+                <i class="bi bi-person"></i> 用户管理
+            </div>
+        </div>
+    </div>
+    
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+        <div class="top-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 id="page-title">数据监控管理平台</h2>
+                <div class="d-flex align-items-center">
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" class="form-control" placeholder="搜索行业或股票...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <div class="ms-3">
+                        <button class="btn btn-outline-primary">
+                            <i class="bi bi-person"></i> 管理员
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div id="main-content" class="content-frame">
+                <div class="loading" id="loading">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <p>加载中...</p>
+                </div>
+                
+                <!-- 这里将动态加载内容 -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 当前活跃的内容类型
+        let currentContent = 'dashboard';
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContent('dashboard');
+            setTimeout(checkServiceStatus, 1000);
+            setInterval(checkServiceStatus, 30000);
+        });
+        
+        // 加载内容的主函数
+        function loadContent(contentType) {
+            if (currentContent === contentType) return;
+            
+            currentContent = contentType;
+            
+            // 更新导航状态
+            updateActiveNav(contentType);
+            
+            // 显示加载状态
+            const mainContent = document.getElementById('main-content');
+            showLoading();
+            
+            // 根据内容类型加载不同内容
+            setTimeout(() => {
+                switch(contentType) {
+                    case 'dashboard':
+                        loadDashboard();
+                        break;
+                    case 'windindustry':
+                        loadWindIndustryContent();
+                        break;
+                    case 'globalflow':
+                        loadGlobalFlowContent();
+                        break;
+                    case 'domestic':
+                        loadDomesticContent();
+                        break;
+                    case 'international':
+                        loadInternationalContent();
+                        break;
+                    case 'tencentindex':
+                        loadTencentIndexContent();
+                        break;
+                    case 'forum':
+                        loadForumContent();
+                        break;
+                    case 'systeminfo':
+                        loadSystemInfo();
+                        break;
+                    case 'apidocs':
+                        loadApiDocs();
+                        break;
+                    case 'settings':
+                        loadSettings();
+                        break;
+                    case 'users':
+                        loadUsers();
+                        break;
+                    default:
+                        loadDashboard();
+                }
+            }, 300);
+        }
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="loading">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <p>加载中...</p>
+                </div>
+            `;
+        }
+        
+        // 更新导航活跃状态
+        function updateActiveNav(contentType) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 根据内容类型设置活跃状态
+            const activeItem = document.querySelector(`[onclick="loadContent('${contentType}')"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+        }
+        
+        // 加载仪表板内容
+        function loadDashboard() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-speedometer2"></i> 控制台概览</h2>
+                    <p class="text-muted">趋势科技数据智能金融数据监控平台统一管理中心</p>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-2 mb-3">
+                        <div class="card text-center border-primary">
+                            <div class="card-body">
+                                <h3 class="text-primary">6</h3>
+                                <small class="text-muted">运行服务</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="card text-center border-success">
+                            <div class="card-body">
+                                <h3 class="text-success">5500+</h3>
+                                <small class="text-muted">监控股票</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="card text-center border-info">
+                            <div class="card-body">
+                                <h3 class="text-info">16</h3>
+                                <small class="text-muted">全球市场</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="card text-center border-warning">
+                            <div class="card-body">
+                                <h3 class="text-warning">145</h3>
+                                <small class="text-muted">热点资讯</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="card text-center border-secondary">
+                            <div class="card-body">
+                                <h3 class="text-secondary">24/7</h3>
+                                <small class="text-muted">运行时间</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="card text-center border-dark">
+                            <div class="card-body">
+                                <h3 class="text-dark">99.9%</h3>
+                                <small class="text-muted">可用性</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-primary text-white">
+                                <h5><i class="bi bi-table"></i> 万得行业分类</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>实时监控5000+只股票数据</p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="badge bg-success">运行中</span>
+                                    <span class="text-muted">端口: 5001</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-primary btn-sm" onclick="loadExternalContent('http://localhost:5001', '万得行业分类服务')">访问服务</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="loadContent('windindustry')">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-success text-white">
+                                <h5><i class="bi bi-globe-americas"></i> 全球资金流向</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>监控全球主要市场资金流向</p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="badge bg-success">运行中</span>
+                                    <span class="text-muted">端口: 5002</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-success btn-sm" onclick="loadExternalContent('http://localhost:5002', '全球资金流向服务')">访问服务</button>
+                                <button class="btn btn-outline-success btn-sm" onclick="loadContent('globalflow')">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-danger text-white">
+                                <h5><i class="bi bi-newspaper"></i> 国内热点数据</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>监控国内财经热点和政策动态</p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="badge bg-success">运行中</span>
+                                    <span class="text-muted">端口: 5003</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-danger btn-sm" onclick="loadExternalContent('http://localhost:5003', '国内热点数据服务')">访问服务</button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="loadContent('domestic')">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-secondary text-white">
+                                <h5><i class="bi bi-globe"></i> 国外热点数据</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>监控国际财经和地缘政治资讯</p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="badge bg-success">运行中</span>
+                                    <span class="text-muted">端口: 5004</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-secondary btn-sm" onclick="loadExternalContent('http://localhost:5004', '国外热点数据服务')">访问服务</button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="loadContent('international')">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-info text-white">
+                                <h5><i class="bi bi-graph-up"></i> 腾讯济安指数</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>监控腾讯济安金融科技指数</p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="badge bg-warning">待启动</span>
+                                    <span class="text-muted">端口: 5005</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-info btn-sm" onclick="loadExternalContent('http://localhost:5005', '腾讯济安指数服务')">访问服务</button>
+                                <button class="btn btn-outline-info btn-sm" onclick="loadContent('tencentindex')">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-warning text-white">
+                                <h5><i class="bi bi-chat-dots"></i> 论坛热点数据</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>监控雪球等论坛热点讨论</p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="badge bg-warning">待启动</span>
+                                    <span class="text-muted">端口: 5006</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-warning btn-sm" onclick="loadExternalContent('http://localhost:5006', '论坛热点数据服务')">访问服务</button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="loadContent('forum')">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载万得行业分类内容
+        function loadWindIndustryContent() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-table"></i> 万得行业分类智能数据平台</h2>
+                    <p class="text-muted">实时监控5000+只股票与万得行业分类的映射关系</p>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h4 class="text-primary">5001</h4>
+                                <p class="mb-0">服务端口</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h4 class="text-success">5000+</h4>
+                                <p class="mb-0">监控股票</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h4 class="text-info">A股·科创板</h4>
+                                <p class="mb-0">创业板·港股通</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h4 class="text-warning">24/7</h4>
+                                <p class="mb-0">实时监控</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-graph-up"></i> 快速操作</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary" onclick="loadExternalContent('http://localhost:5001', '万得行业分类主页')">
+                                        <i class="bi bi-box-arrow-up-right"></i> 访问主页
+                                    </button>
+                                    <button class="btn btn-success" onclick="loadExternalContent('http://localhost:5001/stock-mappings', '股票映射管理')">
+                                        <i class="bi bi-table"></i> 股票映射管理
+                                    </button>
+                                    <button class="btn btn-info" onclick="loadExternalContent('http://localhost:5001/data-analysis', '数据分析面板')">
+                                        <i class="bi bi-bar-chart"></i> 数据分析面板
+                                    </button>
+                                    <button class="btn btn-warning" onclick="loadExternalContent('http://localhost:5001/功能测试页面.html', '功能测试中心')">
+                                        <i class="bi bi-gear"></i> 功能测试中心
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-api"></i> API接口</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    <button onclick="loadExternalContent('http://localhost:5001/api/stock-mappings', 'API: 股票数据')" class="list-group-item list-group-item-action">
+                                        <strong>/api/stock-mappings</strong><br>
+                                        <small class="text-muted">实时股票数据接口</small>
+                                    </button>
+                                    <button onclick="loadExternalContent('http://localhost:5001/api/stock-mappings/stats', 'API: 数据统计')" class="list-group-item list-group-item-action">
+                                        <strong>/api/stock-mappings/stats</strong><br>
+                                        <small class="text-muted">数据统计分析接口</small>
+                                    </button>
+                                    <button onclick="loadExternalContent('http://localhost:5001/api/wind-industries', 'API: 行业分类')" class="list-group-item list-group-item-action">
+                                        <strong>/api/wind-industries</strong><br>
+                                        <small class="text-muted">万得行业分类接口</small>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载全球资金流向内容
+        function loadGlobalFlowContent() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-globe-americas"></i> 全球资金流向监控平台</h2>
+                    <p class="text-muted">实时监控全球主要市场的资金流向趋势</p>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h4>5002</h4>
+                                <p class="mb-0">服务端口</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h4>16</h4>
+                                <p class="mb-0">监控市场</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h4>美欧亚</h4>
+                                <p class="mb-0">新兴市场</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h4>实时</h4>
+                                <p class="mb-0">数据更新</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-graph-up"></i> 快速操作</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-success" onclick="loadExternalContent('http://localhost:5002', '全球资金流向主页')">
+                                                <i class="bi bi-house"></i> 访问主页
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="loadExternalContent('http://localhost:5002/global-capital-flow', '全球资金流向')">
+                                                <i class="bi bi-globe-americas"></i> 全球资金流向
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-info" onclick="loadExternalContent('http://localhost:5002/market-comparison', '市场对比分析')">
+                                                <i class="bi bi-bar-chart-line"></i> 市场对比分析
+                                            </button>
+                                            <button class="btn btn-warning" onclick="refreshServiceData(5002)">
+                                                <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-info-circle"></i> 服务状态</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="service-status-5002">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">在线</span>
+                                        <span>服务状态</span>
+                                    </div>
+                                    <small class="text-muted">最后检查: 刚刚</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载国内热点数据内容
+        function loadDomesticContent() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-newspaper"></i> 国内热点数据监控平台</h2>
+                    <p class="text-muted">监控国内财经热点、政策动态、市场新闻等信息</p>
+                </div>
+                
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle"></i> 服务状态：正常运行中
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white text-center">
+                            <div class="card-body">
+                                <h4>5003</h4>
+                                <p class="mb-0">服务端口</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white text-center">
+                            <div class="card-body">
+                                <h4>145</h4>
+                                <p class="mb-0">热点资讯</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white text-center">
+                            <div class="card-body">
+                                <h4>财经政策</h4>
+                                <p class="mb-0">市场动态</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white text-center">
+                            <div class="card-body">
+                                <h4>智能分析</h4>
+                                <p class="mb-0">舆情监控</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-list-check"></i> 快速操作</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-danger btn-lg w-100 mb-3" onclick="loadExternalContent('http://localhost:5003', '国内热点数据主页')">
+                                    <i class="bi bi-house"></i> 访问服务主页
+                                </button>
+                                <button class="btn btn-outline-danger w-100" onclick="loadExternalContent('http://localhost:5003/api/domestic-hotspot', 'API数据接口')">
+                                    <i class="bi bi-api"></i> API数据接口
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-info w-100 mb-3" onclick="loadExternalContent('http://localhost:5003/api/domestic-hotspot/stats', '统计数据接口')">
+                                    <i class="bi bi-bar-chart"></i> 统计数据接口
+                                </button>
+                                <button class="btn btn-warning w-100" onclick="refreshServiceData(5003)">
+                                    <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载国外热点数据内容
+        function loadInternationalContent() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-globe"></i> 国外热点数据监控平台</h2>
+                    <p class="text-muted">监控国际财经热点、地缘政治、全球市场动态</p>
+                </div>
+                
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle"></i> 服务状态：正常运行中
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-secondary text-white text-center">
+                            <div class="card-body">
+                                <h4>5004</h4>
+                                <p class="mb-0">服务端口</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white text-center">
+                            <div class="card-body">
+                                <h4>130</h4>
+                                <p class="mb-0">国际资讯</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-dark text-white text-center">
+                            <div class="card-body">
+                                <h4>全球视野</h4>
+                                <p class="mb-0">深度分析</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-globe2"></i> 快速操作</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <button class="btn btn-secondary btn-lg w-100 mb-3" onclick="loadExternalContent('http://localhost:5004', '国外热点数据主页')">
+                                    <i class="bi bi-house"></i> 访问服务主页
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-secondary w-100 mb-3" onclick="loadExternalContent('http://localhost:5004/api/international-hotspot', 'API数据接口')">
+                                    <i class="bi bi-api"></i> API数据接口
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-warning w-100 mb-3" onclick="refreshServiceData(5004)">
+                                    <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载腾讯济安指数内容
+        function loadTencentIndexContent() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-graph-up"></i> 腾讯济安指数监控平台</h2>
+                    <p class="text-muted">监控腾讯济安金融指数和相关分析</p>
+                </div>
+                
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> 注意：此服务当前处于待启动状态，请等待管理员启动服务。
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white text-center">
+                            <div class="card-body">
+                                <h4>5005</h4>
+                                <p class="mb-0">服务端口</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning text-white text-center">
+                            <div class="card-body">
+                                <h4>16</h4>
+                                <p class="mb-0">金融指数</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white text-center">
+                            <div class="card-body">
+                                <h4>济安科技</h4>
+                                <p class="mb-0">数字经济</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-gear"></i> 服务控制</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-success btn-lg w-100 mb-3" onclick="startService(5005)">
+                                    <i class="bi bi-play-circle"></i> 启动服务
+                                </button>
+                                <button class="btn btn-outline-info w-100" onclick="loadExternalContent('http://localhost:5005', '腾讯济安指数主页')">
+                                    <i class="bi bi-house"></i> 访问服务主页
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-info w-100 mb-3" onclick="loadExternalContent('http://localhost:5005/api/tencent-index', 'API数据接口')">
+                                    <i class="bi bi-api"></i> API数据接口
+                                </button>
+                                <button class="btn btn-secondary w-100" onclick="checkServiceStatus()">
+                                    <i class="bi bi-arrow-clockwise"></i> 检查状态
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载论坛热点数据内容
+        function loadForumContent() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-chat-dots"></i> 论坛热点数据监控平台</h2>
+                    <p class="text-muted">监控雪球、东方财富、同花顺等金融论坛的热点讨论</p>
+                </div>
+                
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> 注意：此服务当前处于待启动状态，请等待管理员启动服务。
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-white text-center" style="background: linear-gradient(45deg, #FF6B35, #F7931E);">
+                            <div class="card-body">
+                                <h4>5006</h4>
+                                <p class="mb-0">服务端口</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white text-center">
+                            <div class="card-body">
+                                <h4>140</h4>
+                                <p class="mb-0">论坛热贴</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white text-center">
+                            <div class="card-body">
+                                <h4>用户情绪</h4>
+                                <p class="mb-0">热点话题</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-gear"></i> 服务控制</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-success btn-lg w-100 mb-3" onclick="startService(5006)">
+                                    <i class="bi bi-play-circle"></i> 启动服务
+                                </button>
+                                <button class="btn btn-outline-warning w-100" onclick="loadExternalContent('http://localhost:5006', '论坛热点数据主页')">
+                                    <i class="bi bi-house"></i> 访问服务主页
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-warning w-100 mb-3" onclick="loadExternalContent('http://localhost:5006/api/forum-hotspot', 'API数据接口')">
+                                    <i class="bi bi-api"></i> API数据接口
+                                </button>
+                                <button class="btn btn-secondary w-100" onclick="checkServiceStatus()">
+                                    <i class="bi bi-arrow-clockwise"></i> 检查状态
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载系统信息内容
+        function loadSystemInfo() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-info-circle"></i> 系统信息</h2>
+                    <p class="text-muted">查看系统运行状态和配置信息</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-server"></i> 服务状态</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>服务</th>
+                                                <th>端口</th>
+                                                <th>状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>万得行业分类</td>
+                                                <td>5001</td>
+                                                <td><span class="badge bg-success">运行中</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>全球资金流向</td>
+                                                <td>5002</td>
+                                                <td><span class="badge bg-success">运行中</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>国内热点数据</td>
+                                                <td>5003</td>
+                                                <td><span class="badge bg-success">运行中</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>国外热点数据</td>
+                                                <td>5004</td>
+                                                <td><span class="badge bg-success">运行中</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>腾讯济安指数</td>
+                                                <td>5005</td>
+                                                <td><span class="badge bg-warning">待启动</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>论坛热点数据</td>
+                                                <td>5006</td>
+                                                <td><span class="badge bg-warning">待启动</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-gear"></i> 系统配置</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Java版本:</strong> OpenJDK 17.0.2</p>
+                                <p><strong>操作系统:</strong> Windows 10</p>
+                                <p><strong>内存使用:</strong> 2.1GB / 8GB</p>
+                                <p><strong>CPU使用率:</strong> 15%</p>
+                                <p><strong>启动时间:</strong> 2025-01-01 10:30:15</p>
+                                <p><strong>运行时长:</strong> 2小时30分钟</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载外部内容到右侧区域
+        function loadExternalContent(url, title) {
+            document.getElementById('page-title').textContent = title;
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-4">
+                    <h2><i class="bi bi-box-arrow-up-right"></i> ${title}</h2>
+                    <p class="text-muted">加载外部服务页面: ${url}</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body p-0">
+                        <iframe src="${url}" 
+                                style="width: 100%; height: calc(100vh - 220px); border: none; border-radius: 8px;"
+                                onload="this.style.opacity='1'" 
+                                style="opacity: 0; transition: opacity 0.3s;"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        </iframe>
+                        <div class="text-center p-5" style="display: none;">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> 无法加载外部页面，请检查服务是否启动。
+                                <br><br>
+                                <a href="${url}" target="_blank" class="btn btn-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> 在新窗口中打开
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 工具函数
+        function refreshServiceData(port) {
+            fetch(`http://localhost:${port}/api/refresh`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            }).then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert('数据刷新成功！');
+                } else {
+                    alert('数据刷新失败：' + data.error);
+                }
+            }).catch(error => {
+                alert('网络错误：' + error.message);
+            });
+        }
+        
+        function startService(port) {
+            alert(`正在启动端口 ${port} 的服务...\n请手动运行对应的启动脚本。`);
+        }
+        
+        function checkServiceStatus() {
+            const ports = [5001, 5002, 5003, 5004, 5005, 5006];
+            ports.forEach(port => {
+                fetch(`http://localhost:${port}/`, {
+                    method: 'GET',
+                    mode: 'no-cors'
+                }).then(() => {
+                    console.log(`服务 ${port} 在线`);
+                }).catch(() => {
+                    console.log(`服务 ${port} 离线`);
+                });
+            });
+            alert('服务状态检查完成，请查看控制台日志。');
+        }
+        
+        function refreshAllServices() {
+            const ports = [5001, 5002, 5003, 5004, 5005, 5006];
+            let completed = 0;
+            
+            const refreshBtn = event.target;
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> 刷新中...';
+            refreshBtn.disabled = true;
+            
+            ports.forEach(port => {
+                fetch(`http://localhost:${port}/api/refresh`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                }).finally(() => {
+                    completed++;
+                    if (completed === ports.length) {
+                        refreshBtn.innerHTML = originalText;
+                        refreshBtn.disabled = false;
+                        checkServiceStatus();
+                    }
+                });
+            });
+        }
+
+        // 添加动画CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .spin {
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

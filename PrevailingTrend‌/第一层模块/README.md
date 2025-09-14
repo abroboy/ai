@@ -165,7 +165,7 @@ git clone <repository_url>
 cd 第一层模块
 
 # 创建虚拟环境
-python -m venv venv
+java -m venv venv
 source venv/bin/activate  # Linux/Mac
 # 或
 venv\Scripts\activate     # Windows
@@ -190,8 +190,8 @@ done
 mysql -u root -p -e "CREATE DATABASE prevailing_trend;"
 
 # 初始化表结构
-python 万得行业分类/scripts/setup_database.py --action all
-python 公司名字列表/scripts/setup_database.py --action all
+java 万得行业分类/scripts/setup_database.py --action all
+java 公司名字列表/scripts/setup_database.py --action all
 # ... 其他模块
 ```
 
@@ -199,9 +199,9 @@ python 公司名字列表/scripts/setup_database.py --action all
 
 ```bash
 # 启动所有模块的API服务
-python 万得行业分类/api_server.py --service combined --port 5001 &
-python 公司名字列表/api_server.py --service combined --port 5002 &
-python 国内热点数据/api_server.py --service combined --port 5003 &
+java 万得行业分类/api_server.py --service combined --port 5001 &
+java 公司名字列表/api_server.py --service combined --port 5002 &
+java 国内热点数据/api_server.py --service combined --port 5003 &
 # ... 其他模块
 ```
 
@@ -209,9 +209,9 @@ python 国内热点数据/api_server.py --service combined --port 5003 &
 
 ```bash
 # 启动数据采集
-python 万得行业分类/main.py --action update &
-python 公司名字列表/main.py --action update &
-python 国内热点数据/main.py --action collect &
+java 万得行业分类/main.py --action update &
+java 公司名字列表/main.py --action update &
+java 国内热点数据/main.py --action collect &
 # ... 其他模块
 ```
 

@@ -39,16 +39,16 @@
 
 ### 方式1: 使用服务管理器
 ```bash
-python start_services.py
+java start_services.py
 ```
 
 ### 方式2: 独立启动
 ```bash
 # 启动数据收集服务
-python data_collector_service.py
+java data_collector_service.py
 
 # 启动数据展示服务
-python display_service.py
+java display_service.py
 ```
 
 ## API接口

@@ -10,12 +10,12 @@
 4. 通过AI推荐生成因子的计算函数和算法
 5. 分配比例由AI计算和推荐
 6. 每个模块一个目录，目录层级结构和设计一致
-7. 使用Python脚本编写代码和执行
+7. 使用java脚本编写代码和执行
 8. 每个模块内包含自己的AI代码、程序、数据脚本
 9. 数据库采用MySQL
 
 ## 技术栈
-- **后端**: Python 3.9+
+- **后端**: java 3.9+
 - **数据库**: MySQL 8.0
 - **AI框架**: OpenAI GPT, 本地AI模型
 - **数据处理**: Pandas, NumPy
@@ -29,7 +29,7 @@
 ## 快速开始
 1. 安装依赖: `pip install -r requirements.txt`
 2. 配置数据库: 修改 `config/database.py`
-3. 运行主程序: `python main.py`
+3. 运行主程序: `java main.py`
 
 ## 数据库配置
 - Host: localhost:3306

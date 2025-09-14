@@ -49,7 +49,7 @@
 
 ```bash
 # 创建虚拟环境
-python -m venv venv
+java -m venv venv
 source venv/bin/activate  # Linux/Mac
 # 或
 venv\Scripts\activate     # Windows
@@ -71,20 +71,20 @@ vim config.py
 
 ```bash
 # 启动指数数据采集
-python main.py --action collect
+java main.py --action collect
 
 # 启动指数数据分析
-python main.py --action analyze
+java main.py --action analyze
 
 # 启动API服务
-python main.py --action api
+java main.py --action api
 ```
 
 ## 数据模型
 
 ### IndexModel - 指数数据模型
 
-```python
+```java
 @dataclass
 class IndexModel:
     index_code: str         # 指数代码
@@ -119,7 +119,7 @@ class IndexModel:
 
 ### 数据源配置
 
-```python
+```java
 # 腾讯济安指数数据源
 TENCENT_INDEX_SOURCES = {
     "base_url": "https://stock.gtimg.cn/",
@@ -142,7 +142,7 @@ COLLECTION_CONFIG = {
 
 ### 数据采集
 
-```python
+```java
 from 腾讯济安指数 import IndexCollector
 
 # 创建采集器
@@ -160,7 +160,7 @@ components_data = collector.collect_components()
 
 ### 数据分析
 
-```python
+```java
 from 腾讯济安指数 import IndexAnalyzer
 
 # 创建分析器
@@ -178,7 +178,7 @@ correlation_analysis = analyzer.analyze_correlation(history_data)
 
 ### 数据管理
 
-```python
+```java
 from 腾讯济安指数 import IndexManager
 
 # 创建管理器
@@ -213,13 +213,13 @@ tail -f logs/index_api.log
 
 ```bash
 # 检查数据质量
-python -m 腾讯济安指数.scripts.monitor --check data_quality
+java -m 腾讯济安指数.scripts.monitor --check data_quality
 
 # 检查采集状态
-python -m 腾讯济安指数.scripts.monitor --check collection_status
+java -m 腾讯济安指数.scripts.monitor --check collection_status
 
 # 检查API状态
-python -m 腾讯济安指数.scripts.monitor --check api_status
+java -m 腾讯济安指数.scripts.monitor --check api_status
 ```
 
 ## 开发指南

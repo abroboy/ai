@@ -79,7 +79,7 @@
 ## 安装和配置
 
 ### 1. 环境要求
-- Python 3.8+
+- java 3.8+
 - MySQL 5.7+
 - 8GB+ RAM
 - 100GB+ 存储空间
@@ -92,7 +92,7 @@ git clone <repository-url>
 cd 全球资金流向
 
 # 2. 创建虚拟环境
-python -m venv venv
+java -m venv venv
 source venv/bin/activate  # Linux/Mac
 # 或
 venv\Scripts\activate     # Windows
@@ -112,7 +112,7 @@ cp env.example .env
 
 在 `config.py` 中配置数据库连接信息：
 
-```python
+```java
 DATABASE_CONFIG = {
     'host': 'localhost',
     'port': 3306,
@@ -129,10 +129,10 @@ DATABASE_CONFIG = {
 
 ```bash
 # 方式1: 使用启动脚本
-python start.py
+java start.py
 
 # 方式2: 直接启动Flask应用
-python app.py
+java app.py
 ```
 
 ### 2. 访问系统
@@ -145,7 +145,7 @@ python app.py
 
 ```bash
 # 运行系统测试
-python test_system.py
+java test_system.py
 ```
 
 ## API接口
@@ -190,7 +190,7 @@ python test_system.py
 ## 配置说明
 
 ### 数据源配置
-```python
+```java
 DATA_SOURCES = {
     'forex': {
         'api_key': 'your_api_key',
@@ -206,7 +206,7 @@ DATA_SOURCES = {
 ```
 
 ### 分析配置
-```python
+```java
 FLOW_ANALYSIS_CONFIG = {
     'time_windows': {
         'short_term': 7,      # 短期：7天
@@ -262,7 +262,7 @@ FLOW_ANALYSIS_CONFIG = {
 ```bash
 # 启用调试模式
 export FLASK_ENV=development
-python app.py
+java app.py
 ```
 
 ## 更新日志
