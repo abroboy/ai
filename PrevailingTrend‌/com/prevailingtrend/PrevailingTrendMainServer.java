@@ -5,7 +5,8 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 大势所趋风险框架主服务器
@@ -15,345 +16,101 @@ import java.util.concurrent.Executors;
  * @version 1.0
  */
 public class PrevailingTrendMainServer {
-    
-    private static final int PORT = 80;
     private static final String CHARSET = "UTF-8";
     
     public static void main(String[] args) throws Exception {
         System.out.println("========================================");
         System.out.println("大势所趋风险框架 - Java服务器启动中...");
         System.out.println("PrevailingTrend Risk Framework");
-        System.out.println("统一端口：" + PORT);
+        System.out.println("统一端口：8090");
         System.out.println("========================================");
         
-        // 创建HTTP服务器
-        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+        // Create HTTP Server on port 8090 (instead of 80 to avoid permission issues)
+        HttpServer server = HttpServer.create(new InetSocketAddress(8090), 0);
         
-        // 设置线程池
-        server.setExecutor(Executors.newFixedThreadPool(10));
-        
-        // 配置路由
+        // Main page - now served from 管理台 directory
         server.createContext("/", new MainPageHandler());
-        server.createContext("/layer1/", new Layer1Handler());
-        server.createContext("/layer2/", new Layer2Handler());
-        server.createContext("/layer3/", new Layer3Handler());
-        server.createContext("/layer4/", new Layer4Handler());
-        server.createContext("/layer5/", new Layer5Handler());
-        server.createContext("/layer6/", new Layer6Handler());
-        server.createContext("/api/", new ApiHandler());
         
-        // 启动服务器
+        // Layer routes
+        server.createContext("/layer1/", new LayerHandler("第一层模块 - 基础数据采集"));
+        server.createContext("/layer2/", new LayerHandler("第二层模块 - AI数据加工"));
+        server.createContext("/layer3/", new LayerHandler("第三层模块 - 深度数据挖掘"));
+        server.createContext("/layer4/", new LayerHandler("第四层模块 - 智能评分算法"));
+        server.createContext("/layer5/", new LayerHandler("第五层模块 - 因子权重分析"));
+        server.createContext("/layer6/", new LayerHandler("第六层模块 - 曲线预测分析"));
+        
+        // Management console route
+        server.createContext("/管理台/", new ManagementConsoleHandler());
+        
+        server.setExecutor(null);
         server.start();
         
         System.out.println("✅ 服务器启动成功！");
-        System.out.println("访问地址: http://localhost:" + PORT);
+        System.out.println("访问地址: http://localhost:8090");
+        System.out.println("管理台地址: http://localhost:8090/管理台/");
         System.out.println("========================================");
     }
     
-    /**
-     * 主页处理器
-     */
+    // Main page handler - now serves index.html from 管理台 directory
     static class MainPageHandler implements HttpHandler {
-        @Override
         public void handle(HttpExchange exchange) throws IOException {
-            String htmlContent = generateMainPageHtml();
-            sendResponse(exchange, 200, htmlContent, "text/html");
+            // Serve the main page from 管理台 directory
+            File file = new File("管理台/index.html");
+            System.out.println("Trying to serve file: " + file.getAbsolutePath());
+            System.out.println("File exists: " + file.exists());
+            
+            if (file.exists()) {
+                try {
+                    byte[] content = Files.readAllBytes(file.toPath());
+                    sendResponse(exchange, 200, new String(content, StandardCharsets.UTF_8), "text/html");
+                } catch (Exception e) {
+                    System.err.println("Error reading file: " + e.getMessage());
+                    // Fallback to original main page if file read fails
+                    String response = generateMainPage();
+                    sendResponse(exchange, 200, response, "text/html");
+                }
+            } else {
+                // Fallback to original main page if file not found
+                System.err.println("File not found, using fallback page");
+                String response = generateMainPage();
+                sendResponse(exchange, 200, response, "text/html");
+            }
         }
-        
-        private String generateMainPageHtml() {
-            StringBuilder html = new StringBuilder();
-            html.append("<!DOCTYPE html>\n");
-            html.append("<html lang=\"zh-CN\">\n");
-            html.append("<head>\n");
-            html.append("    <meta charset=\"UTF-8\">\n");
-            html.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
-            html.append("    <title>大势所趋风险框架 - PrevailingTrend Risk Framework</title>\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css\" rel=\"stylesheet\">\n");
-            
-            // Add CSS styles
-            html.append("    <style>\n");
-            html.append("        body {\n");
-            html.append("            font-family: 'Microsoft YaHei', sans-serif;\n");
-            html.append("            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n");
-            html.append("            min-height: 100vh;\n");
-            html.append("            margin: 0;\n");
-            html.append("            padding: 0;\n");
-            html.append("        }\n");
-            html.append("        .layout-container {\n");
-            html.append("            display: flex;\n");
-            html.append("            min-height: 100vh;\n");
-            html.append("            gap: 10px;\n");
-            html.append("            padding: 15px;\n");
-            html.append("        }\n");
-            html.append("        .left-nav {\n");
-            html.append("            width: 280px;\n");
-            html.append("            background: rgba(255, 255, 255, 0.98);\n");
-            html.append("            border-radius: 15px;\n");
-            html.append("            padding: 20px;\n");
-            html.append("            overflow-y: auto;\n");
-            html.append("            box-shadow: 0 10px 30px rgba(0,0,0,0.1);\n");
-            html.append("            border: 3px solid #e74c3c;\n");
-            html.append("        }\n");
-            html.append("        .main-content {\n");
-            html.append("            flex: 1;\n");
-            html.append("            background: rgba(255, 255, 255, 0.95);\n");
-            html.append("            border-radius: 15px;\n");
-            html.append("            padding: 30px;\n");
-            html.append("            overflow-y: auto;\n");
-            html.append("            box-shadow: 0 10px 30px rgba(0,0,0,0.1);\n");
-            html.append("        }\n");
-            html.append("        .nav-header {\n");
-            html.append("            font-size: 1.2rem;\n");
-            html.append("            font-weight: 700;\n");
-            html.append("            color: #e74c3c;\n");
-            html.append("            margin-bottom: 20px;\n");
-            html.append("            text-align: center;\n");
-            html.append("            padding: 10px;\n");
-            html.append("            background: #f8f9fa;\n");
-            html.append("            border-radius: 8px;\n");
-            html.append("        }\n");
-            html.append("        .layer-nav-item {\n");
-            html.append("            margin-bottom: 15px;\n");
-            html.append("            border: 2px solid;\n");
-            html.append("            border-radius: 10px;\n");
-            html.append("            overflow: hidden;\n");
-            html.append("        }\n");
-            html.append("        .layer-nav-item.layer-1 { border-color: #e74c3c; }\n");
-            html.append("        .layer-nav-item.layer-2 { border-color: #f39c12; }\n");
-            html.append("        .layer-nav-item.layer-3 { border-color: #f1c40f; }\n");
-            html.append("        .layer-nav-item.layer-4 { border-color: #2ecc71; }\n");
-            html.append("        .layer-nav-item.layer-5 { border-color: #3498db; }\n");
-            html.append("        .layer-nav-item.layer-6 { border-color: #9b59b6; }\n");
-            html.append("        .layer-header {\n");
-            html.append("            padding: 12px 15px;\n");
-            html.append("            font-weight: 600;\n");
-            html.append("            cursor: pointer;\n");
-            html.append("            transition: all 0.3s ease;\n");
-            html.append("            display: flex;\n");
-            html.append("            align-items: center;\n");
-            html.append("            justify-content: space-between;\n");
-            html.append("        }\n");
-            html.append("        .layer-header:hover {\n");
-            html.append("            background: rgba(0,0,0,0.05);\n");
-            html.append("        }\n");
-            html.append("        .layer-modules {\n");
-            html.append("            padding: 10px;\n");
-            html.append("            background: #f8f9fa;\n");
-            html.append("            display: none;\n");
-            html.append("        }\n");
-            html.append("        .layer-modules.show {\n");
-            html.append("            display: block;\n");
-            html.append("        }\n");
-            html.append("        .module-item {\n");
-            html.append("            display: block;\n");
-            html.append("            padding: 8px 12px;\n");
-            html.append("            margin: 3px 0;\n");
-            html.append("            background: white;\n");
-            html.append("            border: 1px solid #ddd;\n");
-            html.append("            border-radius: 5px;\n");
-            html.append("            text-decoration: none;\n");
-            html.append("            color: #495057;\n");
-            html.append("            font-size: 0.9rem;\n");
-            html.append("            transition: all 0.3s ease;\n");
-            html.append("        }\n");
-            html.append("        .module-item:hover {\n");
-            html.append("            background: #007bff;\n");
-            html.append("            color: white;\n");
-            html.append("            text-decoration: none;\n");
-            html.append("            transform: translateX(5px);\n");
-            html.append("        }\n");
-            html.append("        .header-title {\n");
-            html.append("            font-size: 2.2rem;\n");
-            html.append("            font-weight: 700;\n");
-            html.append("            color: #2c3e50;\n");
-            html.append("            text-align: center;\n");
-            html.append("            margin-bottom: 30px;\n");
-            html.append("            padding: 20px;\n");
-            html.append("            background: linear-gradient(135deg, #667eea, #764ba2);\n");
-            html.append("            color: white;\n");
-            html.append("            border-radius: 15px;\n");
-            html.append("            box-shadow: 0 5px 15px rgba(0,0,0,0.1);\n");
-            html.append("        }\n");
-            html.append("        .content-area {\n");
-            html.append("            background: white;\n");
-            html.append("            border-radius: 15px;\n");
-            html.append("            padding: 40px;\n");
-            html.append("            text-align: center;\n");
-            html.append("            box-shadow: 0 5px 15px rgba(0,0,0,0.05);\n");
-            html.append("            border: 2px dashed #dee2e6;\n");
-            html.append("            min-height: 300px;\n");
-            html.append("            display: flex;\n");
-            html.append("            align-items: center;\n");
-            html.append("            justify-content: center;\n");
-            html.append("            flex-direction: column;\n");
-            html.append("        }\n");
-            html.append("        .content-message {\n");
-            html.append("            font-size: 1.5rem;\n");
-            html.append("            color: #6c757d;\n");
-            html.append("            margin-bottom: 20px;\n");
-            html.append("        }\n");
-            html.append("        .expand-icon {\n");
-            html.append("            transition: transform 0.3s ease;\n");
-            html.append("        }\n");
-            html.append("        .expand-icon.rotated {\n");
-            html.append("            transform: rotate(90deg);\n");
-            html.append("        }\n");
-            html.append("    </style>\n");
-            html.append("</head>\n");
-            
-            // Body content
-            html.append("<body>\n");
-            html.append("    <div class=\"layout-container\">\n");
-            
-            // 左侧导航栏
-            html.append("        <div class=\"left-nav\">\n");
-            html.append("            <div class=\"nav-header\">\n");
-            html.append("                目录导航栏\n");
-            html.append("            </div>\n");
-            
-            // 第一层模块
-            html.append("            <div class=\"layer-nav-item layer-1\">\n");
-            html.append("                <div class=\"layer-header\" onclick=\"toggleLayer('layer1')\">\n");
-            html.append("                    <span><i class=\"bi bi-database\"></i> 第一层模块 - 基础数据采集</span>\n");
-            html.append("                    <i class=\"bi bi-chevron-right expand-icon\" id=\"icon-layer1\"></i>\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"layer-modules\" id=\"modules-layer1\">\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('公司名字列表')\">公司名字列表</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('万得行业分类')\">万得行业分类</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('国内热点数据')\">国内热点数据</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('国外热点数据')\">国外热点数据</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('雪球等论坛热点数据')\">雪球等论坛热点数据</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('腾讯济安指数')\">腾讯济安指数</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('全球资金流向')\">全球资金流向</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('其他互联网信息')\">其他互联网信息</div>\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            
-            // 第二层模块
-            html.append("            <div class=\"layer-nav-item layer-2\">\n");
-            html.append("                <div class=\"layer-header\" onclick=\"toggleLayer('layer2')\">\n");
-            html.append("                    <span><i class=\"bi bi-gear\"></i> 第二层模块 - AI数据加工</span>\n");
-            html.append("                    <i class=\"bi bi-chevron-right expand-icon\" id=\"icon-layer2\"></i>\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"layer-modules\" id=\"modules-layer2\">\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('公司属性表')\">公司属性表</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('热点数据表')\">热点数据表</div>\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            
-            // 第三层模块
-            html.append("            <div class=\"layer-nav-item layer-3\">\n");
-            html.append("                <div class=\"layer-header\" onclick=\"toggleLayer('layer3')\">\n");
-            html.append("                    <span><i class=\"bi bi-search\"></i> 第三层模块 - 深度数据挖掘</span>\n");
-            html.append("                    <i class=\"bi bi-chevron-right expand-icon\" id=\"icon-layer3\"></i>\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"layer-modules\" id=\"modules-layer3\">\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('税银报告')\">税银报告</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('财务三表')\">财务三表</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('企查查数据')\">企查查数据</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('雪球等论坛数据')\">雪球等论坛数据</div>\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            
-            // 第四层模块
-            html.append("            <div class=\"layer-nav-item layer-4\">\n");
-            html.append("                <div class=\"layer-header\" onclick=\"toggleLayer('layer4')\">\n");
-            html.append("                    <span><i class=\"bi bi-calculator\"></i> 第四层模块 - 智能评分算法</span>\n");
-            html.append("                    <i class=\"bi bi-chevron-right expand-icon\" id=\"icon-layer4\"></i>\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"layer-modules\" id=\"modules-layer4\">\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('行业分值表')\">行业分值表</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('公司分值表')\">公司分值表</div>\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('行业+公司分值表')\">行业+公司分值表</div>\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            
-            // 第五层模块
-            html.append("            <div class=\"layer-nav-item layer-5\">\n");
-            html.append("                <div class=\"layer-header\" onclick=\"toggleLayer('layer5')\">\n");
-            html.append("                    <span><i class=\"bi bi-sliders\"></i> 第五层模块 - 因子权重分析</span>\n");
-            html.append("                    <i class=\"bi bi-chevron-right expand-icon\" id=\"icon-layer5\"></i>\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"layer-modules\" id=\"modules-layer5\">\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('对象因子权重表')\">对象因子权重表</div>\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            
-            // 第六层模块
-            html.append("            <div class=\"layer-nav-item layer-6\">\n");
-            html.append("                <div class=\"layer-header\" onclick=\"toggleLayer('layer6')\">\n");
-            html.append("                    <span><i class=\"bi bi-graph-up\"></i> 第六层模块 - 曲线预测分析</span>\n");
-            html.append("                    <i class=\"bi bi-chevron-right expand-icon\" id=\"icon-layer6\"></i>\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"layer-modules\" id=\"modules-layer6\">\n");
-            html.append("                    <div class=\"module-item\" onclick=\"loadModule('曲线预测分析')\">曲线预测分析</div>\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            html.append("        </div>\n");
-            
-            // 中间主要内容区域
-            html.append("        <div class=\"main-content\">\n");
-            html.append("            <div class=\"header-title\">\n");
-            html.append("                <i class=\"bi bi-graph-up-arrow\"></i>\n");
-            html.append("                大势所趋风险框架\n");
-            html.append("            </div>\n");
-            html.append("            \n");
-            html.append("            <div class=\"content-area\">\n");
-            html.append("                <div class=\"content-message\">\n");
-            html.append("                    这里是左边点击后，显示的子页面。\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"text-muted\">\n");
-            html.append("                    <i class=\"bi bi-arrow-left\"></i> 请从左侧导航栏选择模块查看详细内容\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            html.append("        </div>\n");
-            html.append("    </div>\n");
-            
-            // JavaScript功能
-            html.append("    <script>\n");
-            html.append("        function toggleLayer(layerId) {\n");
-            html.append("            const modules = document.getElementById('modules-' + layerId);\n");
-            html.append("            const icon = document.getElementById('icon-' + layerId);\n");
-            html.append("            \n");
-            html.append("            if (modules.classList.contains('show')) {\n");
-            html.append("                modules.classList.remove('show');\n");
-            html.append("                icon.classList.remove('rotated');\n");
-            html.append("            } else {\n");
-            html.append("                modules.classList.add('show');\n");
-            html.append("                icon.classList.add('rotated');\n");
-            html.append("            }\n");
-            html.append("        }\n");
-            html.append("        \n");
-            html.append("        function loadModule(moduleName) {\n");
-            html.append("            const contentArea = document.querySelector('.content-area');\n");
-            html.append("            contentArea.innerHTML = `\n");
-            html.append("                <div class=\"content-message\">\n");
-            html.append("                    正在加载：${moduleName}\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"text-muted\">\n");
-            html.append("                    <i class=\"bi bi-gear-fill\"></i> 模块功能开发中，即将上线...\n");
-            html.append("                </div>\n");
-            html.append("            `;\n");
-            html.append("        }\n");
-            html.append("        \n");
-            html.append("        // 页面加载完成后的初始化\n");
-            html.append("        document.addEventListener('DOMContentLoaded', function() {\n");
-            html.append("            console.log('大势所趋风险框架管理台已加载');\n");
-            html.append("        });\n");
-            html.append("    </script>\n");
-            html.append("</body>\n");
-            html.append("</html>\n");
-            
-            return html.toString();
+    }
+    
+    // Management console handler
+    static class ManagementConsoleHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            // Serve the management console HTML file
+            File file = new File("管理台/index.html");
+            if (file.exists()) {
+                byte[] content = Files.readAllBytes(file.toPath());
+                sendResponse(exchange, 200, new String(content, StandardCharsets.UTF_8), "text/html");
+            } else {
+                String response = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>管理台</title>
+                </head>
+                <body>
+                    <h1>管理台</h1>
+                    <p>管理台页面文件未找到。</p>
+                    <a href="/">返回首页</a>
+                </body>
+                </html>
+                """;
+                sendResponse(exchange, 404, response, "text/html");
+            }
         }
     }
     
     /**
-     * 层级处理器基类
+     * 层处理器
      */
-    static abstract class LayerHandler implements HttpHandler {
-        protected final String layerName;
+    static class LayerHandler implements HttpHandler {
+        private final String layerName;
         
         public LayerHandler(String layerName) {
             this.layerName = layerName;
@@ -402,325 +159,242 @@ public class PrevailingTrendMainServer {
         }
     }
     
-    // 各层处理器实现
-    static class Layer1Handler extends LayerHandler {
-        public Layer1Handler() { super("第一层模块 - 基础数据采集"); }
-    }
-    
-    static class Layer2Handler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            String path = exchange.getRequestURI().getPath();
-        }
-    }
-    
-    static class Layer3Handler extends LayerHandler {
-        public Layer3Handler() { super("第三层模块 - 深度数据挖掘"); }
-    }
-    
-    static class Layer4Handler extends LayerHandler {
-        public Layer4Handler() { super("第四层模块 - 智能评分算法"); }
-    }
-    
-    static class Layer5Handler extends LayerHandler {
-        public Layer5Handler() { super("第五层模块 - 因子权重分析"); }
-    }
-    
-    static class Layer6Handler extends LayerHandler {
-        public Layer6Handler() { super("第六层模块 - 曲线预测分析"); }
-    }
-    
     /**
-     * API处理器
+     * 发送HTTP响应
      */
-    static class ApiHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            String path = exchange.getRequestURI().getPath();
-            String response;
-            
-            if (path.contains("company-attributes")) {
-                response = generateCompanyAttributesPage();
-            } else if (path.contains("hotspot-data")) {
-                response = generateHotspotDataPage();
-            } else {
-                response = generateLayer2HomePage();
-            }
-            
-            sendResponse(exchange, 200, response, "text/html");
-        }
+    private static void sendResponse(HttpExchange exchange, int statusCode, String response, String contentType) throws IOException {
+        exchange.getResponseHeaders().set("Content-Type", contentType + "; charset=" + CHARSET);
+        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         
-        private String generateLayer2HomePage() {
-            StringBuilder html = new StringBuilder();
-            html.append("<!DOCTYPE html>\n");
-            html.append("<html lang=\"zh-CN\">\n");
-            html.append("<head>\n");
-            html.append("    <meta charset=\"UTF-8\">\n");
-            html.append("    <title>第二层模块 - AI数据加工</title>\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css\" rel=\"stylesheet\">\n");
-            html.append("    <style>\n");
-            html.append("        body { font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); min-height: 100vh; }\n");
-            html.append("        .module-card { background: rgba(255,255,255,0.95); border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 20px; border: 2px solid #f39c12; }\n");
-            html.append("        .module-header { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: 20px; border-radius: 13px 13px 0 0; }\n");
-            html.append("        .feature-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 10px; padding: 20px; margin-bottom: 15px; }\n");
-            html.append("        .btn-custom { background: linear-gradient(135deg, #f39c12, #e67e22); border: none; color: white; }\n");
-            html.append("    </style>\n");
-            html.append("</head>\n");
-            html.append("<body>\n");
-            html.append("    <div class=\"container-fluid\">\n");
-            html.append("        <nav aria-label=\"breadcrumb\">\n");
-            html.append("            <ol class=\"breadcrumb\">\n");
-            html.append("                <li class=\"breadcrumb-item\"><a href=\"/\">首页</a></li>\n");
-            html.append("                <li class=\"breadcrumb-item active\">第二层模块</li>\n");
-            html.append("            </ol>\n");
-            html.append("        </nav>\n");
-            html.append("        <div class=\"module-card\">\n");
-            html.append("            <div class=\"module-header\">\n");
-            html.append("                <h2><i class=\"bi bi-gear-fill\"></i> 第二层模块 - AI数据加工</h2>\n");
-            html.append("                <p class=\"mb-0\">将第一层的原始数据通过AI算法进行智能加工处理</p>\n");
-            html.append("            </div>\n");
-            html.append("            <div class=\"p-4\">\n");
-            html.append("                <div class=\"feature-card\">\n");
-            html.append("                    <h4><i class=\"bi bi-building\"></i> 公司属性表</h4>\n");
-            html.append("                    <p>对公司基础信息进行AI分析和属性标注</p>\n");
-            html.append("                    <a href=\"/layer2/company-attributes\" class=\"btn btn-custom\">\n");
-            html.append("                        <i class=\"bi bi-table\"></i> 查看公司属性表\n");
-            html.append("                    </a>\n");
-            html.append("                </div>\n");
-            html.append("                <div class=\"feature-card\">\n");
-            html.append("                    <h4><i class=\"bi bi-fire\"></i> 热点数据表</h4>\n");
-            html.append("                    <p>通过AI算法分析热点数据，提取关键信息</p>\n");
-            html.append("                    <a href=\"/layer2/hotspot-data\" class=\"btn btn-custom\">\n");
-            html.append("                        <i class=\"bi bi-table\"></i> 查看热点数据表\n");
-            html.append("                    </a>\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            html.append("        </div>\n");
-            html.append("    </div>\n");
-            html.append("</body>\n");
-            html.append("</html>\n");
-            return html.toString();
-        }
+        byte[] responseBytes = response.getBytes(CHARSET);
+        exchange.sendResponseHeaders(statusCode, responseBytes.length);
         
-        private String generateCompanyAttributesPage() {
-            StringBuilder html = new StringBuilder();
-            html.append("<!DOCTYPE html>\n");
-            html.append("<html lang=\"zh-CN\">\n");
-            html.append("<head>\n");
-            html.append("    <meta charset=\"UTF-8\">\n");
-            html.append("    <title>公司属性表 - AI数据加工</title>\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css\" rel=\"stylesheet\">\n");
-            html.append("    <style>\n");
-            html.append("        body { font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); min-height: 100vh; }\n");
-            html.append("        .table-container { background: rgba(255,255,255,0.95); border-radius: 15px; padding: 20px; margin: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }\n");
-            html.append("        .table th { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }\n");
-            html.append("    </style>\n");
-            html.append("</head>\n");
-            html.append("<body>\n");
-            html.append("    <div class=\"container-fluid\">\n");
-            html.append("        <nav aria-label=\"breadcrumb\">\n");
-            html.append("            <ol class=\"breadcrumb\">\n");
-            html.append("                <li class=\"breadcrumb-item\"><a href=\"/\">首页</a></li>\n");
-            html.append("                <li class=\"breadcrumb-item\"><a href=\"/layer2/\">第二层模块</a></li>\n");
-            html.append("                <li class=\"breadcrumb-item active\">公司属性表</li>\n");
-            html.append("            </ol>\n");
-            html.append("        </nav>\n");
-            html.append("        <div class=\"table-container\">\n");
-            html.append("            <h3><i class=\"bi bi-building\"></i> 公司属性表</h3>\n");
-            html.append("            <div class=\"table-responsive\">\n");
-            html.append("                <table class=\"table table-hover\">\n");
-            html.append("                    <thead>\n");
-            html.append("                        <tr>\n");
-            html.append("                            <th>公司名称</th><th>股票代码</th><th>所属行业</th><th>公司规模</th><th>市值(亿)</th>\n");
-            html.append("                        </tr>\n");
-            html.append("                    </thead>\n");
-            html.append("                    <tbody>\n");
-            
-            // 添加示例数据
-            String[][] companies = {
-                {"中国平安", "000001", "保险", "大型", "1,245.8"},
-                {"贵州茅台", "600519", "白酒", "大型", "2,156.3"},
-                {"腾讯控股", "00700", "互联网", "大型", "3,287.5"},
-                {"比亚迪", "002594", "新能源", "大型", "1,089.2"},
-                {"宁德时代", "300750", "电池", "大型", "1,567.9"}
-            };
-            
-            for (String[] company : companies) {
-                html.append("                        <tr>\n");
-                for (String field : company) {
-                    html.append("                            <td>").append(field).append("</td>\n");
-                }
-                html.append("                        </tr>\n");
-            }
-            
-            html.append("                    </tbody>\n");
-            html.append("                </table>\n");
-            html.append("            </div>\n");
-            html.append("        </div>\n");
-            html.append("    </div>\n");
-            html.append("</body>\n");
-            html.append("</html>\n");
-            return html.toString();
-        }
-        
-        private String generateHotspotDataPage() {
-            StringBuilder html = new StringBuilder();
-            html.append("<!DOCTYPE html>\n");
-            html.append("<html lang=\"zh-CN\">\n");
-            html.append("<head>\n");
-            html.append("    <meta charset=\"UTF-8\">\n");
-            html.append("    <title>热点数据表 - AI数据加工</title>\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css\" rel=\"stylesheet\">\n");
-            html.append("    <style>\n");
-            html.append("        body { font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); min-height: 100vh; }\n");
-            html.append("        .hotspot-container { background: rgba(255,255,255,0.95); border-radius: 15px; padding: 20px; margin: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }\n");
-            html.append("        .hotspot-item { border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 15px; background: #f8f9fa; border-radius: 8px; }\n");
-            html.append("        .sentiment-positive { color: #2ecc71; } .sentiment-negative { color: #e74c3c; } .sentiment-neutral { color: #95a5a6; }\n");
-            html.append("    </style>\n");
-            html.append("</head>\n");
-            html.append("<body>\n");
-            html.append("    <div class=\"container-fluid\">\n");
-            html.append("        <nav aria-label=\"breadcrumb\">\n");
-            html.append("            <ol class=\"breadcrumb\">\n");
-            html.append("                <li class=\"breadcrumb-item\"><a href=\"/\">首页</a></li>\n");
-            html.append("                <li class=\"breadcrumb-item\"><a href=\"/layer2/\">第二层模块</a></li>\n");
-            html.append("                <li class=\"breadcrumb-item active\">热点数据表</li>\n");
-            html.append("            </ol>\n");
-            html.append("        </nav>\n");
-            html.append("        <div class=\"hotspot-container\">\n");
-            html.append("            <h3><i class=\"bi bi-fire\"></i> 实时热点数据分析</h3>\n");
-            
-            // 添加热点数据项
-            String[][] hotspots = {
-                {"人工智能赛道持续升温", "积极", "92", "新浪财经"},
-                {"新能源汽车销量创新高", "积极", "88", "中国证券报"},
-                {"半导体行业回暖趋势明显", "积极", "85", "第一财经"},
-                {"房地产市场政策调整预期", "中性", "65", "经济参考报"},
-                {"美联储加息预期渐趋缓和", "积极", "78", "华尔街日报"}
-            };
-            
-            for (String[] hotspot : hotspots) {
-                String sentimentClass = "sentiment-positive";
-                if (hotspot[1].equals("中性")) sentimentClass = "sentiment-neutral";
-                else if (hotspot[1].equals("消极")) sentimentClass = "sentiment-negative";
-                
-                html.append("            <div class=\"hotspot-item\">\n");
-                html.append("                <div class=\"d-flex justify-content-between align-items-start\">\n");
-                html.append("                    <div class=\"flex-grow-1\">\n");
-                html.append("                        <h5>").append(hotspot[0]).append("</h5>\n");
-                html.append("                        <div class=\"d-flex align-items-center gap-3\">\n");
-                html.append("                            <span class=\"badge bg-secondary\">").append(hotspot[3]).append("</span>\n");
-                html.append("                            <span class=\"").append(sentimentClass).append("\"><i class=\"bi bi-heart-fill\"></i> 情感: ").append(hotspot[1]).append("</span>\n");
-                html.append("                            <span class=\"text-primary\"><i class=\"bi bi-graph-up\"></i> 热度: ").append(hotspot[2]).append("</span>\n");
-                html.append("                        </div>\n");
-                html.append("                    </div>\n");
-                html.append("                    <small class=\"text-muted\">").append((int)(Math.random() * 30) + 1).append("分钟前</small>\n");
-                html.append("                </div>\n");
-                html.append("            </div>\n");
-            }
-            
-            html.append("        </div>\n");
-            html.append("    </div>\n");
-            html.append("</body>\n");
-            html.append("</html>\n");
-            return html.toString();
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(responseBytes);
         }
     }
     
-    static class Layer3Handler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            String path = exchange.getRequestURI().getPath();
-            String response;
-            
-            if (path.contains("tax-bank-report")) {
-                response = generateTaxBankReportPage();
-            } else if (path.contains("financial-statements")) {
-                response = generateFinancialStatementsPage();
-            } else if (path.contains("qichacha-data")) {
-                response = generateQichachaDataPage();
-            } else if (path.contains("forum-data")) {
-                response = generateForumDataPage();
-            } else {
-                response = generateLayer3HomePage();
-            }
-            
-            sendResponse(exchange, 200, response, "text/html");
-        }
-        
-        private String generateLayer3HomePage() {
-            StringBuilder html = new StringBuilder();
-            html.append("<!DOCTYPE html>\n");
-            html.append("<html lang=\"zh-CN\">\n");
-            html.append("<head>\n");
-            html.append("    <meta charset=\"UTF-8\">\n");
-            html.append("    <title>第三层模块 - 深度数据挖掘</title>\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n");
-            html.append("    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css\" rel=\"stylesheet\">\n");
-            html.append("    <style>\n");
-            html.append("        body { font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%); min-height: 100vh; }\n");
-            html.append("        .module-card { background: rgba(255,255,255,0.95); border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 20px; border: 2px solid #f1c40f; }\n");
-            html.append("        .module-header { background: linear-gradient(135deg, #f1c40f, #f39c12); color: white; padding: 20px; border-radius: 13px 13px 0 0; }\n");
-            html.append("        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }\n");
-            html.append("        .feature-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 10px; padding: 20px; transition: all 0.3s ease; }\n");
-            html.append("        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }\n");
-            html.append("        .btn-custom { background: linear-gradient(135deg, #f1c40f, #f39c12); border: none; color: white; }\n");
-            html.append("    </style>\n");
-            html.append("</head>\n");
-            html.append("<body>\n");
-            html.append("    <div class=\"container-fluid\">\n");
-            html.append("        <nav aria-label=\"breadcrumb\">\n");
-            html.append("            <ol class=\"breadcrumb\">\n");
-            html.append("                <li class=\"breadcrumb-item\"><a href=\"/\">首页</a></li>\n");
-            html.append("                <li class=\"breadcrumb-item active\">第三层模块</li>\n");
-            html.append("            </ol>\n");
-            html.append("        </nav>\n");
-            html.append("        <div class=\"module-card\">\n");
-            html.append("            <div class=\"module-header\">\n");
-            html.append("                <h2><i class=\"bi bi-search\"></i> 第三层模块 - 深度数据挖掘</h2>\n");
-            html.append("                <p class=\"mb-0\">对第二层的数据进行深度挖掘和分析</p>\n");
-            html.append("            </div>\n");
-            html.append("            <div class=\"p-4\">\n");
-            html.append("                <div class=\"feature-grid\">\n");
-            html.append("                    <div class=\"feature-card\">\n");
-            html.append("                        <h4><i class=\"bi bi-file-earmark-bar-graph\"></i> 税务银行报告</h4>\n");
-            html.append("                        <p>分析公司税务和银行报告中的关键数据</p>\n");
-            html.append("                        <a href=\"/layer3/tax-bank-report\" class=\"btn btn-custom\">\n");
-            html.append("                            <i class=\"bi bi-file-earmark-bar-graph\"></i> 查看税务银行报告\n");
-            html.append("                        </a>\n");
-            html.append("                    </div>\n");
-            html.append("                    <div class=\"feature-card\">\n");
-            html.append("                        <h4><i class=\"bi bi-file-earmark-spreadsheet\"></i> 财务报表</h4>\n");
-            html.append("                        <p>分析公司的财务报表数据</p>\n");
-            html.append("                        <a href=\"/layer3/financial-statements\" class=\"btn btn-custom\">\n");
-            html.append("                            <i class=\"bi bi-file-earmark-spreadsheet\"></i> 查看财务报表\n");
-            html.append("                        </a>\n");
-            html.append("                    </div>\n");
-            html.append("                    <div class=\"feature-card\">\n");
-            html.append("                        <h4><i class=\"bi bi-file-earmark-text\"></i> 工商数据</h4>\n");
-            html.append("                        <p>分析公司的工商数据</p>\n");
-            html.append("                        <a href=\"/layer3/qichacha-data\" class=\"btn btn-custom\">\n");
-            html.append("                            <i class=\"bi bi-file-earmark-text\"></i> 查看工商数据\n");
-            html.append("                        </a>\n");
-            html.append("                    </div>\n");
-            html.append("                    <div class=\"feature-card\">\n");
-            html.append("                        <h4><i class=\"bi bi-chat-left-text\"></i> 论坛数据</h4>\n");
-            html.append("                        <p>分析公司相关的论坛讨论数据</p>\n");
-            html.append("                        <a href=\"/layer3/forum-data\" class=\"btn btn-custom\">\n");
-            html.append("                            <i class=\"bi bi-chat-left-text\"></i> 查看论坛数据\n");
-            html.append("                        </a>\n");
-            html.append("                    </div>\n");
-            html.append("                </div>\n");
-            html.append("            </div>\n");
-            html.append("        </div>\n");
-            html.append("    </div>\n");
-            html.append("</body>\n");
-            html.append("</html>\n");
-            return html.toString();
-        }
+    // Generate main page HTML
+    private static String generateMainPage() {
+        return """
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>大势所趋风险框架 - PrevailingTrend Risk Framework</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+            <style>
+                body {
+                    font-family: 'Microsoft YaHei', sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                }
+                .main-container {
+                    background: rgba(255, 255, 255, 0.95);
+                    border-radius: 20px;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                    backdrop-filter: blur(10px);
+                    margin: 20px;
+                    padding: 40px;
+                }
+                .header-section {
+                    text-align: center;
+                    margin-bottom: 40px;
+                }
+                .header-title {
+                    font-size: 3rem;
+                    font-weight: 700;
+                    color: #2c3e50;
+                    margin-bottom: 10px;
+                }
+                .layer-card {
+                    background: white;
+                    border-radius: 15px;
+                    padding: 25px;
+                    margin-bottom: 25px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+                    border-left: 5px solid;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                }
+                .layer-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                }
+                .layer-1 { border-left-color: #e74c3c; }
+                .layer-2 { border-left-color: #f39c12; }
+                .layer-3 { border-left-color: #f1c40f; }
+                .layer-4 { border-left-color: #2ecc71; }
+                .layer-5 { border-left-color: #3498db; }
+                .layer-6 { border-left-color: #9b59b6; }
+                .layer-title {
+                    font-size: 1.5rem;
+                    font-weight: 600;
+                    margin-bottom: 15px;
+                    display: flex;
+                    align-items: center;
+                }
+                .layer-icon {
+                    margin-right: 15px;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 1.2rem;
+                }
+                .module-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 15px;
+                    margin-top: 15px;
+                }
+                .module-btn {
+                    padding: 15px;
+                    border: 2px solid #e9ecef;
+                    border-radius: 10px;
+                    background: #f8f9fa;
+                    text-decoration: none;
+                    color: #495057;
+                    font-weight: 500;
+                    text-align: center;
+                    transition: all 0.3s ease;
+                    display: block;
+                }
+                .module-btn:hover {
+                    border-color: #007bff;
+                    background: #007bff;
+                    color: white;
+                    text-decoration: none;
+                    transform: scale(1.05);
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container-fluid">
+                <div class="main-container">
+                    <div class="header-section">
+                        <h1 class="header-title">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            大势所趋风险框架
+                        </h1>
+                        <p class="text-muted">PrevailingTrend Risk Framework</p>
+                        <p class="text-muted">基于AI的智能风险分析框架 - 六层模块协同工作</p>
+                    </div>
+                    
+                    <!-- Layer 1 Module -->
+                    <div class="layer-card layer-1">
+                        <div class="layer-title">
+                            <div class="layer-icon bg-danger">
+                                <i class="bi bi-database"></i>
+                            </div>
+                            第一层模块 - 基础数据采集
+                        </div>
+                        <p class="text-muted">信息数据有严格的时间限制，要二次确认数据是指定日期之前的数据</p>
+                        <div class="module-grid">
+                            <a href="/layer1/company-list" class="module-btn">公司名字列表</a>
+                            <a href="/layer1/wind-industry" class="module-btn">万得行业分类</a>
+                            <a href="/layer1/domestic-hotspot" class="module-btn">国内热点数据</a>
+                            <a href="/layer1/international-hotspot" class="module-btn">国外热点数据</a>
+                            <a href="/layer1/forum-hotspot" class="module-btn">雪球等论坛热点数据</a>
+                            <a href="/layer1/tencent-index" class="module-btn">腾讯济安指数</a>
+                            <a href="/layer1/global-capital-flow" class="module-btn">全球资金流向</a>
+                            <a href="/layer1/internet-info" class="module-btn">其他互联网信息</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Layer 2 Module -->
+                    <div class="layer-card layer-2">
+                        <div class="layer-title">
+                            <div class="layer-icon bg-warning">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            第二层模块 - AI数据加工
+                        </div>
+                        <p class="text-muted">通过AI加工第一层数据，生成公司属性和热点分析</p>
+                        <div class="module-grid">
+                            <a href="/layer2/company-attributes" class="module-btn">公司属性表</a>
+                            <a href="/layer2/hotspot-data" class="module-btn">热点数据表</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Layer 3 Module -->
+                    <div class="layer-card layer-3">
+                        <div class="layer-title">
+                            <div class="layer-icon bg-warning">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            第三层模块 - 深度数据挖掘
+                        </div>
+                        <p class="text-muted">依赖第二层筛选出来的行业和公司，继续按照目标去排查以下数据</p>
+                        <div class="module-grid">
+                            <a href="/layer3/tax-bank-report" class="module-btn">税银报告</a>
+                            <a href="/layer3/financial-statements" class="module-btn">财务三表</a>
+                            <a href="/layer3/enterprise-check" class="module-btn">企查查数据</a>
+                            <a href="/layer3/forum-data" class="module-btn">雪球等论坛数据</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Layer 4 Module -->
+                    <div class="layer-card layer-4">
+                        <div class="layer-title">
+                            <div class="layer-icon bg-success">
+                                <i class="bi bi-calculator"></i>
+                            </div>
+                            第四层模块 - 智能评分算法
+                        </div>
+                        <p class="text-muted">依赖第三层的数据，通过AI找一个算法来计算</p>
+                        <div class="module-grid">
+                            <a href="/layer4/industry-score" class="module-btn">行业分值表</a>
+                            <a href="/layer4/company-score" class="module-btn">公司分值表</a>
+                            <a href="/layer4/industry-company-score" class="module-btn">行业+公司分值表</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Layer 5 Module -->
+                    <div class="layer-card layer-5">
+                        <div class="layer-title">
+                            <div class="layer-icon bg-info">
+                                <i class="bi bi-sliders"></i>
+                            </div>
+                            第五层模块 - 因子权重分析
+                        </div>
+                        <p class="text-muted">通过因子权重，预测行业或公司业绩历史数据曲线，或二级市场曲线原始数据</p>
+                        <div class="module-grid">
+                            <a href="/layer5/factor-weights" class="module-btn">对象因子权重表</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Layer 6 Module -->
+                    <div class="layer-card layer-6">
+                        <div class="layer-title">
+                            <div class="layer-icon bg-primary">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            第六层模块 - 曲线预测分析
+                        </div>
+                        <p class="text-muted">类似chatBI的能力，把数据曲线化。能够通过调整因子权重输出对比的曲线</p>
+                        <div class="module-grid">
+                            <a href="/layer6/curve-prediction" class="module-btn">曲线预测分析</a>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted">
+                            <i class="bi bi-shield-check"></i>
+                            大势所趋风险框架 v1.0 | MySQL数据库 | AI智能分析
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """;
+    }
+}
         
         private String generateTaxBankReportPage() {
             StringBuilder html = new StringBuilder();
@@ -1826,4 +1500,4 @@ static void sendResponse(HttpExchange exchange, int statusCode, String response,
         os.write(responseBytes);
     }
 }
-
+}
