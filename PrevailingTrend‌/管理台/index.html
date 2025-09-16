@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理台 - 大势所趋风险框架</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .layout-container {
+            display: flex;
+            min-height: 100vh;
+            gap: 10px;
+            padding: 15px;
+        }
+        .left-nav {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 3px solid #e74c3c;
+        }
+        .main-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .nav-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #e74c3c;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .layer-nav-item {
+            margin-bottom: 15px;
+            border: 2px solid;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .layer-nav-item.layer-1 { border-color: #e74c3c; }
+        .layer-nav-item.layer-2 { border-color: #f39c12; }
+        .layer-nav-item.layer-3 { border-color: #f1c40f; }
+        .layer-nav-item.layer-4 { border-color: #2ecc71; }
+        .layer-nav-item.layer-5 { border-color: #3498db; }
+        .layer-nav-item.layer-6 { border-color: #9b59b6; }
+        .layer-header {
+            padding: 12px 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .layer-header:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .layer-modules {
+            padding: 10px;
+            background: #f8f9fa;
+            display: none;
+        }
+        .layer-modules.show {
+            display: block;
+        }
+        .module-item {
+            display: block;
+            padding: 8px 12px;
+            margin: 3px 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #495057;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .module-item:hover {
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            transform: translateX(5px);
+        }
+        .header-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .content-area {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 2px dashed #dee2e6;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .content-message {
+            font-size: 1.5rem;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+        .expand-icon.rotated {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="layout-container">
+        <div class="left-nav">
+            <div class="nav-header">
+                目录导航栏
+            </div>
+            <div class="layer-nav-item layer-1">
+                <div class="layer-header" onclick="toggleLayer('layer1')">
+                    <span><i class="bi bi-database"></i> 第一层模块 - 基础数据采集</span>
+                    <i class="bi bi-chevron-right expand-icon" id="icon-layer1"></i>
+                </div>
+                <div class="layer-modules" id="modules-layer1">
+                    <div class="module-item" onclick="loadModule('公司名字列表')">公司名字列表</div>
+                    <div class="module-item" onclick="loadModule('万得行业分类')">万得行业分类</div>
+                    <div class="module-item" onclick="loadModule('国内热点数据')">国内热点数据</div>
+                    <div class="module-item" onclick="loadModule('国外热点数据')">国外热点数据</div>
+                    <div class="module-item" onclick="loadModule('雪球等论坛热点数据')">雪球等论坛热点数据</div>
+                    <div class="module-item" onclick="loadModule('腾讯济安指数')">腾讯济安指数</div>
+                    <div class="module-item" onclick="loadModule('全球资金流向')">全球资金流向</div>
+                    <div class="module-item" onclick="loadModule('其他互联网信息')">其他互联网信息</div>
+                </div>
+            </div>
+            <div class="layer-nav-item layer-2">
+                <div class="layer-header" onclick="toggleLayer('layer2')">
+                    <span><i class="bi bi-gear"></i> 第二层模块 - AI数据加工</span>
+                    <i class="bi bi-chevron-right expand-icon" id="icon-layer2"></i>
+                </div>
+                <div class="layer-modules" id="modules-layer2">
+                    <div class="module-item" onclick="loadModule('公司属性表')">公司属性表</div>
+                    <div class="module-item" onclick="loadModule('热点数据表')">热点数据表</div>
+                </div>
+            </div>
+            <div class="layer-nav-item layer-3">
+                <div class="layer-header" onclick="toggleLayer('layer3')">
+                    <span><i class="bi bi-search"></i> 第三层模块 - 深度数据挖掘</span>
+                    <i class="bi bi-chevron-right expand-icon" id="icon-layer3"></i>
+                </div>
+                <div class="layer-modules" id="modules-layer3">
+                    <div class="module-item" onclick="loadModule('税银报告')">税银报告</div>
+                    <div class="module-item" onclick="loadModule('财务三表')">财务三表</div>
+                    <div class="module-item" onclick="loadModule('企查查数据')">企查查数据</div>
+                    <div class="module-item" onclick="loadModule('雪球等论坛数据')">雪球等论坛数据</div>
+                </div>
+            </div>
+            <div class="layer-nav-item layer-4">
+                <div class="layer-header" onclick="toggleLayer('layer4')">
+                    <span><i class="bi bi-calculator"></i> 第四层模块 - 智能评分算法</span>
+                    <i class="bi bi-chevron-right expand-icon" id="icon-layer4"></i>
+                </div>
+                <div class="layer-modules" id="modules-layer4">
+                    <div class="module-item" onclick="loadModule('行业分值表')">行业分值表</div>
+                    <div class="module-item" onclick="loadModule('公司分值表')">公司分值表</div>
+                    <div class="module-item" onclick="loadModule('行业+公司分值表')">行业+公司分值表</div>
+                </div>
+            </div>
+            <div class="layer-nav-item layer-5">
+                <div class="layer-header" onclick="toggleLayer('layer5')">
+                    <span><i class="bi bi-sliders"></i> 第五层模块 - 因子权重分析</span>
+                    <i class="bi bi-chevron-right expand-icon" id="icon-layer5"></i>
+                </div>
+                <div class="layer-modules" id="modules-layer5">
+                    <div class="module-item" onclick="loadModule('对象因子权重表')">对象因子权重表</div>
+                </div>
+            </div>
+            <div class="layer-nav-item layer-6">
+                <div class="layer-header" onclick="toggleLayer('layer6')">
+                    <span><i class="bi bi-graph-up"></i> 第六层模块 - 曲线预测分析</span>
+                    <i class="bi bi-chevron-right expand-icon" id="icon-layer6"></i>
+                </div>
+                <div class="layer-modules" id="modules-layer6">
+                    <div class="module-item" onclick="loadModule('曲线预测分析')">曲线预测分析</div>
+                </div>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="header-title">
+                <i class="bi bi-graph-up-arrow"></i>
+                大势所趋风险框架管理台
+            </div>
+
+            <div class="content-area">
+                <div class="content-message">
+                    这里是左边点击后，显示的子页面。
+                </div>
+                <div class="text-muted">
+                    <i class="bi bi-arrow-left"></i> 请从左侧导航栏选择模块查看详细内容
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleLayer(layerId) {
+            const modules = document.getElementById('modules-' + layerId);
+            const icon = document.getElementById('icon-' + layerId);
+            
+            if (modules.classList.contains('show')) {
+                modules.classList.remove('show');
+                icon.classList.remove('rotated');
+            } else {
+                modules.classList.add('show');
+                icon.classList.add('rotated');
+            }
+        }
+
+        function loadModule(moduleName) {
+            const contentArea = document.querySelector('.content-area');
+            
+            // 根据模块名称生成相应的内容
+            let moduleContent = '';
+            
+            switch(moduleName) {
+                case '公司名字列表':
+                    moduleContent = `
+                        <div class="content-header">
+                            <h2><i class="bi bi-list"></i> 公司名字列表</h2>
+                            <p class="text-muted">第一层模块 - 基础数据采集</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>序号</th>
+                                        <th>公司名称</th>
+                                        <th>股票代码</th>
+                                        <th>上市日期</th>
+                                        <th>行业分类</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>中国平安</td>
+                                        <td>601318</td>
+                                        <td>2007-03-01</td>
+                                        <td>金融保险</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>贵州茅台</td>
+                                        <td>600519</td>
+                                        <td>2001-08-27</td>
+                                        <td>食品饮料</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>腾讯控股</td>
+                                        <td>00700</td>
+                                        <td>2004-06-16</td>
+                                        <td>信息技术</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4</td>
+                                        <td>比亚迪</td>
+                                        <td>002594</td>
+                                        <td>2011-06-30</td>
+                                        <td>汽车制造</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>宁德时代</td>
+                                        <td>300750</td>
+                                        <td>2018-06-11</td>
+                                        <td>电气设备</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            数据更新时间：2023-10-15 14:30:25
+                        </div>
+                    `;
+                    break;
+                    
+                case '万得行业分类':
+                    moduleContent = `
+                        <div class="content-header">
+                            <h2><i class="bi bi-diagram-3"></i> 万得行业分类</h2>
+                            <p class="text-muted">第一层模块 - 基础数据采集</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        一级行业分类
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group">
+                                            <li class="list-group-item">金融保险</li>
+                                            <li class="list-group-item">食品饮料</li>
+                                            <li class="list-group-item">信息技术</li>
+                                            <li class="list-group-item">汽车制造</li>
+                                            <li class="list-group-item">电气设备</li>
+                                            <li class="list-group-item">生物医药</li>
+                                            <li class="list-group-item">房地产</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        二级行业分类示例
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group">
+                                            <li class="list-group-item">银行</li>
+                                            <li class="list-group-item">保险</li>
+                                            <li class="list-group-item">白酒</li>
+                                            <li class="list-group-item">软饮料</li>
+                                            <li class="list-group-item">互联网</li>
+                                            <li class="list-group-item">通信设备</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle"></i>
+                            分类标准基于万得行业分类体系 V2023
+                        </div>
+                    `;
+                    break;
+                    
+                case '国内热点数据':
+                    moduleContent = `
+                        <div class="content-header">
+                            <h2><i class="bi bi-fire"></i> 国内热点数据</h2>
+                            <p class="text-muted">第一层模块 - 基础数据采集</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-warning text-dark">
+                                        <i class="bi bi-graph-up"></i> 热点趋势
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>人工智能</span>
+                                            <span class="badge bg-primary">热度: 95</span>
+                                        </div>
+                                        <div class="progress mb-3">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 95%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>新能源汽车</span>
+                                            <span class="badge bg-success">热度: 88</span>
+                                        </div>
+                                        <div class="progress mb-3">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 88%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>生物医药</span>
+                                            <span class="badge bg-info">热度: 82</span>
+                                        </div>
+                                        <div class="progress mb-3">
+                                            <div class="progress-bar bg-info" role="progressbar" style="width: 82%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-danger text-white">
+                                        <i class="bi bi-lightning"></i> 实时热点
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="list-group">
+                                            <a href="#" class="list-group-item list-group-item-action">
+                                                <div class="d-flex justify-content-between">
+                                                    <h6>ChatGPT技术突破引发AI投资热潮</h6>
+                                                    <small class="text-muted">2小时前</small>
+                                                </div>
+                                                <p class="mb-1">相关概念股集体上涨，科大讯飞涨停...</p>
+                                                <small class="text-muted">来源：财经新闻</small>
+                                            </a>
+                                            <a href="#" class="list-group-item list-group-item-action">
+                                                <div class="d-flex justify-content-between">
+                                                    <h6>新能源汽车销量再创新高</h6>
+                                                    <small class="text-muted">4小时前</small>
+                                                </div>
+                                                <p class="mb-1">比亚迪9月销量突破20万辆，市场占有率持续提升...</p>
+                                                <small class="text-muted">来源：行业报告</small>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case '税银报告':
+                    moduleContent = `
+                        <div class="content-header">
+                            <h2><i class="bi bi-file-earmark-text"></i> 税银报告</h2>
+                            <p class="text-muted">第三层模块 - 深度数据挖掘</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        企业税务银行数据综合分析
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>企业名称</th>
+                                                        <th>税务评级</th>
+                                                        <th>信用评级</th>
+                                                        <th>风险等级</th>
+                                                        <th>合规率</th>
+                                                        <th>更新时间</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>中国平安</td>
+                                                        <td><span class="badge bg-success">税收健康</span></td>
+                                                        <td><span class="badge bg-primary">AAA</span></td>
+                                                        <td><span class="badge bg-success">低风险</span></td>
+                                                        <td><span class="text-success">98.5%</span></td>
+                                                        <td>2023-10-15</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>贵州茅台</td>
+                                                        <td><span class="badge bg-success">税收健康</span></td>
+                                                        <td><span class="badge bg-primary">AA+</span></td>
+                                                        <td><span class="badge bg-success">低风险</span></td>
+                                                        <td><span class="text-success">97.2%</span></td>
+                                                        <td>2023-10-15</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>腾讯控股</td>
+                                                        <td><span class="badge bg-success">税收健康</span></td>
+                                                        <td><span class="badge bg-primary">AA</span></td>
+                                                        <td><span class="badge bg-warning">中风险</span></td>
+                                                        <td><span class="text-warning">95.8%</span></td>
+                                                        <td>2023-10-14</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>比亚迪</td>
+                                                        <td><span class="badge bg-success">税收正常</span></td>
+                                                        <td><span class="badge bg-primary">A+</span></td>
+                                                        <td><span class="badge bg-warning">中风险</span></td>
+                                                        <td><span class="text-warning">89.3%</span></td>
+                                                        <td>2023-10-14</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle"></i>
+                            数据来源：国家税务总局、中国人民银行征信中心
+                        </div>
+                    `;
+                    break;
+                    
+                case '对象因子权重表':
+                    moduleContent = `
+                        <div class="content-header">
+                            <h2><i class="bi bi-bar-chart"></i> 对象因子权重表</h2>
+                            <p class="text-muted">第五层模块 - 因子权重分析</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        人工智能行业因子权重分析
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>因子名称</th>
+                                                        <th>权重值</th>
+                                                        <th>影响程度</th>
+                                                        <th>趋势分析</th>
+                                                        <th>调整建议</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>技术创新</td>
+                                                        <td><span class="text-primary fw-bold">0.35</span></td>
+                                                        <td>高</td>
+                                                        <td>上升</td>
+                                                        <td>保持权重</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>市场需求</td>
+                                                        <td><span class="text-primary fw-bold">0.25</span></td>
+                                                        <td>高</td>
+                                                        <td>稳定</td>
+                                                        <td>适度增加</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>政策支持</td>
+                                                        <td><span class="text-primary fw-bold">0.20</span></td>
+                                                        <td>中</td>
+                                                        <td>上升</td>
+                                                        <td>适当增加</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>资本投入</td>
+                                                        <td><span class="text-primary fw-bold">0.15</span></td>
+                                                        <td>中</td>
+                                                        <td>稳定</td>
+                                                        <td>维持现状</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>人才储备</td>
+                                                        <td><span class="text-primary fw-bold">0.05</span></td>
+                                                        <td>低</td>
+                                                        <td>上升</td>
+                                                        <td>显著增加</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        权重分布图
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <div class="text-center">
+                                                <i class="bi bi-pie-chart" style="font-size: 4rem;"></i>
+                                                <p class="mt-2">因子权重分布可视化图表</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-warning text-dark">
+                                        调整建议
+                                    </div>
+                                    <div class="card-body">
+                                        <ul>
+                                            <li>技术创新仍是核心驱动因子，建议保持高权重</li>
+                                            <li>人才储备权重偏低，建议增加投入</li>
+                                            <li>市场需求稳定，可适度增加权重</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case '曲线预测分析':
+                    moduleContent = `
+                        <div class="content-header">
+                            <h2><i class="bi bi-graph-up-arrow"></i> 曲线预测分析</h2>
+                            <p class="text-muted">第六层模块 - 曲线预测分析</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        行业趋势预测
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>行业名称</th>
+                                                        <th>预测趋势</th>
+                                                        <th>置信度</th>
+                                                        <th>时间范围</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>人工智能</td>
+                                                        <td><span class="text-success fw-bold">持续增长</span></td>
+                                                        <td>92%</td>
+                                                        <td>未来6个月</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>新能源汽车</td>
+                                                        <td><span class="text-success fw-bold">稳定增长</span></td>
+                                                        <td>88%</td>
+                                                        <td>未来6个月</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>生物医药</td>
+                                                        <td><span class="text-success fw-bold">快速增长</span></td>
+                                                        <td>85%</td>
+                                                        <td>未来6个月</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>房地产</td>
+                                                        <td><span class="text-danger fw-bold">缓慢下降</span></td>
+                                                        <td>75%</td>
+                                                        <td>未来6个月</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        风险预警与投资机会
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="alert alert-warning">
+                                                    <h5><i class="bi bi-exclamation-triangle"></i> 高风险预警</h5>
+                                                    <ul>
+                                                        <li>房地产行业政策调整风险</li>
+                                                        <li>部分消费电子企业供应链风险</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="alert alert-success">
+                                                    <h5><i class="bi bi-stars"></i> 投资机会</h5>
+                                                    <ul>
+                                                        <li>人工智能与新能源结合领域</li>
+                                                        <li>生物医药创新研发企业</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mt-3">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-bar-chart"></i> 趋势预测图表
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-center" style="height: 300px;">
+                                    <div class="text-center">
+                                        <i class="bi bi-graph-up" style="font-size: 6rem;"></i>
+                                        <p class="mt-3">趋势预测可视化图表</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                default:
+                    moduleContent = `
+                        <div class="content-header">
+                            <h2><i class="bi bi-folder"></i> ${moduleName}</h2>
+                        </div>
+                        <div class="text-center py-5">
+                            <i class="bi bi-cone-striped" style="font-size: 3rem; color: #6c757d;"></i>
+                            <p class="mt-3 fs-5">模块 "${moduleName}" 正在开发中</p>
+                            <p class="text-muted">敬请期待更多功能</p>
+                        </div>
+                    `;
+            }
+            
+            contentArea.innerHTML = moduleContent;
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('大势所趋风险框架管理台已加载');
+        });
+    </script>
+</body>
+</html>
