@@ -1,25 +1,26 @@
 @echo off
-chcp 65001
+echo 启动大势所趋风险框架管理台...
+echo.
+
+echo 启动管理台HTTP服务器...
+start "管理台服务器" cmd /k "cd /d \"%~dp0\" && python -m http.server 8090"
+
+echo 等待管理台服务器启动...
+timeout /t 3 /nobreak >nul
+
+echo.
 echo ========================================
-echo 大势所趋风险框架 - 管理台启动中...
+echo 大势所趋风险框架管理台启动完成！
 echo ========================================
+echo.
+echo 访问地址：
+echo   管理台: http://localhost:8090/index.html
+echo.
+echo 按任意键打开浏览器...
+pause >nul
 
-REM 设置Java环境
-set JAVA_HOME=C:\Program Files\Java\jdk-17
-set PATH=%JAVA_HOME%\bin;%PATH%
+start http://localhost:8090/index.html
 
-REM 进入项目目录
-cd /d "%~dp0"
-
-echo 正在启动管理台...
-echo 服务端口: 8090
-echo 访问地址: http://localhost:8090/管理台/
-echo ========================================
-
-REM 自动打开浏览器
-start http://localhost:8090/管理台/
-
-REM 使用Python启动HTTP服务器
-python -m http.server 8090
-
-pause
+echo.
+echo 管理台已启动，按任意键退出...
+pause >nul

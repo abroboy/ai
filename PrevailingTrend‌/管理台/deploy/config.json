@@ -1,0 +1,18 @@
+{
+  "environment": "local",
+  "apiEndpoint": "http://localhost:3000",
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "prevailing_trend_dev"
+  },
+  "logging": {
+    "level": "debug",
+    "path": "/var/log/prevailing_trend"
+  },
+  "features": {
+    "authentication": true,
+    "dataExport": true,
+    "scheduledTasks": true
+  }
+}
