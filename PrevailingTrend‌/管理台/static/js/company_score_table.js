@@ -98,60 +98,37 @@ function loadCompanyScoreTable() {
 
 // 渲染公司分值表模块内容
 function renderCompanyScoreTableModule(container) {
-  // 模拟公司分值数据
-  const scoreData = {
-    updateTime: "2025-09-25 14:30:00",
-    totalCompanies: 3500,
-    averageScore: 68.5,
-    scoreDistribution: {
-      "90-100": 320,
-      "80-89": 680,
-      "70-79": 950,
-      "60-69": 780,
-      "50-59": 420,
-      "0-49": 350
-    },
-    topCompanies: [
-      { rank: 1, code: "600519", name: "贵州茅台", industry: "白酒", score: 96.8, change: 0.5 },
-      { rank: 2, code: "000858", name: "五粮液", industry: "白酒", score: 94.2, change: 0.3 },
-      { rank: 3, code: "601318", name: "中国平安", industry: "保险", score: 93.5, change: -0.2 },
-      { rank: 4, code: "600036", name: "招商银行", industry: "银行", score: 92.7, change: 0.8 },
-      { rank: 5, code: "000333", name: "美的集团", industry: "家电", score: 91.9, change: 1.2 }
-    ],
-    bottomCompanies: [
-      { rank: 3496, code: "002456", name: "某某科技", industry: "电子", score: 32.5, change: -2.8 },
-      { rank: 3497, code: "600123", name: "某某股份", industry: "制造", score: 31.8, change: -1.5 },
-      { rank: 3498, code: "300789", name: "某某生物", industry: "医药", score: 30.2, change: -3.2 },
-      { rank: 3499, code: "002789", name: "某某通信", industry: "通信", score: 28.5, change: -4.5 },
-      { rank: 3500, code: "600321", name: "某某能源", industry: "能源", score: 25.3, change: -5.2 }
-    ],
-    biggestGainers: [
-      { code: "300059", name: "某某电子", industry: "电子", score: 78.5, change: 8.7 },
-      { code: "002230", name: "某某科技", industry: "计算机", score: 75.2, change: 7.9 },
-      { code: "600882", name: "某某汽车", industry: "汽车", score: 82.3, change: 7.5 },
-      { code: "300750", name: "某某医疗", industry: "医疗", score: 79.8, change: 7.2 },
-      { code: "002415", name: "某某材料", industry: "材料", score: 76.5, change: 6.8 }
-    ],
-    biggestLosers: [
-      { code: "002789", name: "某某通信", industry: "通信", score: 28.5, change: -4.5 },
-      { code: "600321", name: "某某能源", industry: "能源", score: 25.3, change: -5.2 },
-      { code: "300125", name: "某某网络", industry: "传媒", score: 35.8, change: -5.5 },
-      { code: "002156", name: "某某金融", industry: "金融", score: 42.3, change: -6.2 },
-      { code: "600721", name: "某某地产", industry: "房地产", score: 38.7, change: -7.5 }
-    ],
-    scoreFactors: [
-      { factor: "财务状况", weight: 30 },
-      { factor: "市场表现", weight: 25 },
-      { factor: "行业地位", weight: 20 },
-      { factor: "风险因素", weight: 15 },
-      { factor: "社会评价", weight: 10 }
-    ]
-  };
+  // 从API获取公司分值表数据
+  fetch('/api/company-score-table')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const scoreData = data.data;
+        renderCompanyScoreTableContent(container, scoreData);
+      } else {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载公司分值表数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
+}
+
+// 渲染公司分值表内容
+function renderCompanyScoreTableContent(container, scoreData) {
   
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">公司分值表</h4>
+      <h4 class="fw-bold text-primary mb-3">公司分值表 <span class="badge bg-danger">实时</span></h4>
       <div class="d-flex justify-content-between align-items-center mb-4">
         <p class="text-muted mb-0">最后更新时间: ${scoreData.updateTime}</p>
         <div class="btn-group">

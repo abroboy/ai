@@ -35,39 +35,42 @@ async function loadEnhancedDomesticHotspotData() {
         let statsData = {};
         
         if (response.ok) {
-            const result = await response.json();
-            console.log("API返回数据:", result);
-            if (result.success && result.data) {
-                hotspotData = result.data;
-                console.log("成功获取热点数据，数量:", hotspotData.length);
-            }
-        } else {
+                const result = await response.json();
+                console.log("API返回数据:", result);
+                if (result.success && result.data) {
+                    // 将API返回的数据格式映射到代码期望的格式
+                    hotspotData = result.data.map(item => ({
+                        ...item,
+                        content: item.description,  // 将description映射到content
+                        publishTime: item.date,     // 将date映射到publishTime
+                        heatScore: item.importance  // 将importance映射到heatScore
+                    }));
+                    console.log("成功获取热点数据，数量:", hotspotData.length);
+                }
+            } else {
             console.log("API响应错误:", response.status, response.statusText);
         }
         
-        // 获取统计数据
-        try {
-            const statsResponse = await fetch("/api/domestic-hotspot/stats", {
-                method: "GET",
-                headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json"
-                }
-            });
-            
-            if (statsResponse.ok) {
-                const statsResult = await statsResponse.json();
-                if (statsResult.success && statsResult.data) {
-                    statsData = statsResult.data;
-                    console.log("成功获取统计数据:", statsData);
-                }
-            }
-        } catch (statsError) {
-            console.log("获取统计数据失败:", statsError);
-        }
-        
-        // 如果API不可用，使用模拟数据
-        if (hotspotData.length === 0) {
+        // 如果API返回了数据，根据返回的数据生成统计信息
+        if (hotspotData.length > 0) {
+            // 生成统计数据
+            statsData = {
+                total_hotspots: hotspotData.length,
+                finance_hotspots: hotspotData.filter(item => item.category === "财经热点").length,
+                policy_hotspots: hotspotData.filter(item => item.category === "政策动态" || item.category === "货币政策" || item.category === "产业政策").length,
+                market_hotspots: hotspotData.filter(item => item.category === "市场新闻").length,
+                industry_hotspots: hotspotData.filter(item => item.category === "行业资讯").length,
+                company_hotspots: hotspotData.filter(item => item.category === "公司热点").length,
+                macro_hotspots: hotspotData.filter(item => item.category === "宏观经济").length,
+                investment_hotspots: hotspotData.filter(item => item.category === "投资热点").length,
+                positive_count: hotspotData.filter(item => item.sentiment === "积极").length,
+                neutral_count: hotspotData.filter(item => item.sentiment === "中性").length,
+                negative_count: hotspotData.filter(item => item.sentiment === "消极").length,
+                market_sentiment: calculateMarketSentiment(hotspotData),
+                last_update: new Date().toLocaleString()
+            };
+        } else {
+            // 如果API不可用或返回空数据，使用模拟数据
             console.log("API数据为空，使用模拟数据");
             hotspotData = generateMockHotspotData();
             statsData = generateMockStatsData();
@@ -376,6 +379,15 @@ async function loadEnhancedDomesticHotspotData() {
 }
 
 // 辅助函数
+function calculateMarketSentiment(hotspotData) {
+    const positiveCount = hotspotData.filter(item => item.sentiment === "积极").length;
+    const negativeCount = hotspotData.filter(item => item.sentiment === "消极").length;
+    
+    if (positiveCount > negativeCount + 2) return "积极";
+    if (negativeCount > positiveCount + 2) return "消极";
+    return "中性";
+}
+
 function getSentimentColor(sentiment) {
     switch(sentiment) {
         case "积极": return "success";
@@ -394,6 +406,10 @@ function getCategoryColor(category) {
         case "公司热点": return "secondary";
         case "宏观经济": return "dark";
         case "投资热点": return "danger";
+        case "货币政策": return "primary";
+        case "产业政策": return "success";
+        case "科技动态": return "info";
+        case "环保政策": return "success";
         default: return "light";
     }
 }
@@ -407,6 +423,10 @@ function getCategoryIcon(category) {
         case "公司热点": return "briefcase";
         case "宏观经济": return "graph-up";
         case "投资热点": return "trending-up";
+        case "货币政策": return "coin";
+        case "产业政策": return "file-lines";
+        case "科技动态": return "cpu";
+        case "环保政策": return "leaf";
         default: return "circle";
     }
 }

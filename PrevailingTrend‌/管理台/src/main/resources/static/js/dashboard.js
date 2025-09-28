@@ -48,7 +48,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // Fetch statistics data
     async function fetchStats() {
         try {
-            const response = await fetch("/api/stats");
+            // 添加时间戳确保获取最新数据
+            const response = await fetch(`/api/stats?_t=${new Date().getTime()}`);
             const data = await response.json();
             
             if (data.success) {
@@ -56,6 +57,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById("total-stocks").textContent = data.data.total_stocks;
                 document.getElementById("level-1-count").textContent = data.data.level_1_count;
                 document.getElementById("level-2-count").textContent = data.data.level_2_count;
+                
+                // 更新最后更新时间
+                document.getElementById("last-update").textContent = new Date().toLocaleString();
             } else {
                 console.error("Error fetching stats:", data.error);
             }
@@ -67,7 +71,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // Fetch industries data
     async function fetchIndustries(page = 1) {
         try {
-            const response = await fetch("/api/industries");
+            // 添加时间戳确保获取最新数据
+            const response = await fetch(`/api/industries?_t=${new Date().getTime()}`);
             const data = await response.json();
             
             if (data.success) {
@@ -86,7 +91,8 @@ document.addEventListener("DOMContentLoaded", function() {
             const sortBy = document.getElementById("sort-field")?.value || "stock_code";
             const sortOrder = document.getElementById("sort-order")?.value || "asc";
             
-            const response = await fetch(`/api/stocks?page=${page}&sort_by=${sortBy}&sort_order=${sortOrder}`);
+            // 添加时间戳确保获取最新数据
+            const response = await fetch(`/api/stocks?page=${page}&sort_by=${sortBy}&sort_order=${sortOrder}&_t=${new Date().getTime()}`);
             const data = await response.json();
             
             if (data.success) {
@@ -289,30 +295,47 @@ doughnut,
 
     window.refreshData = async function() {
         try {
+            // 显示刷新状态
+            const refreshBtn = document.querySelector('.btn-success[onclick="refreshData()"]');
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 刷新中...';
+            refreshBtn.disabled = true;
+            
             const response = await fetch("/api/refresh", {
-                method: POST,
+                method: "POST",
                 headers: {
-                    Content-Type: application/json
+                    "Content-Type": "application/json"
                 }
             });
             const data = await response.json();
             
             if (data.success) {
-                alert(数据刷新成功);
-                // Refresh current section
+                // 显示成功消息
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+                alertDiv.innerHTML = `
+                    数据刷新成功！
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.querySelector('.main-content').prepend(alertDiv);
+                
+                // 刷新当前部分
                 const activeSection = document.querySelector(".content-section.active");
                 if (activeSection) {
-                    const sectionId = activeSection.id.replace(-section, ');
+                    const sectionId = activeSection.id.replace("-section", "");
                     showSection(sectionId);
                 }
             } else {
-                alert(数据刷新失败:
- + data.error);
+                alert("数据刷新失败: " + data.error);
             }
+            
+            // 恢复按钮状态
+            setTimeout(() => {
+                refreshBtn.innerHTML = originalText;
+                refreshBtn.disabled = false;
+            }, 1000);
         } catch (error) {
-            alert(
-数据刷新失败:
- + error.message);
+            alert("数据刷新失败: " + error.message);
         }
     };
 

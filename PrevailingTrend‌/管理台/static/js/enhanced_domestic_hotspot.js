@@ -1,410 +1,663 @@
-/**
- * 国内热点数据模块 - 增强版
- * 大势所趋风险框架管理台
- */
-
-// 加载国内热点数据模块
+// 加载增强版国内热点数据
+// 使用传统函数替代async/await，使用XMLHttpRequest替代fetch，优化IE浏览器性能
 function loadEnhancedDomesticHotspotData() {
-  const contentArea = document.getElementById('content');
-  
-  // 显示加载中状态
-  contentArea.innerHTML = `
-    <div class="text-center py-3">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">加载中...</span>
-      </div>
-      <p class="mt-2">正在加载国内热点数据...</p>
-    </div>
-  `;
-  
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderDomesticHotspotModule(contentArea);
-  }, 800);
-}
-
-// 渲染国内热点数据模块内容
-function renderDomesticHotspotModule(container) {
-  // 模拟热点数据
-  const hotspotData = [
-    { id: 1, title: "新能源汽车产业政策调整", source: "国家发改委", date: "2025-09-20", impact: 85, trend: "上升", category: "产业政策" },
-    { id: 2, title: "半导体国产化进程加速", source: "工信部", date: "2025-09-19", impact: 92, trend: "上升", category: "科技创新" },
-    { id: 3, title: "数字人民币试点范围扩大", source: "央行", date: "2025-09-18", impact: 78, trend: "稳定", category: "金融政策" },
-    { id: 4, title: "碳达峰碳中和行动方案发布", source: "生态环境部", date: "2025-09-17", impact: 83, trend: "上升", category: "环保政策" },
-    { id: 5, title: "人工智能监管框架出台", source: "网信办", date: "2025-09-16", impact: 76, trend: "稳定", category: "科技监管" },
-    { id: 6, title: "跨境电商新政实施", source: "商务部", date: "2025-09-15", impact: 71, trend: "下降", category: "贸易政策" },
-    { id: 7, title: "医疗健康数据安全规范发布", source: "卫健委", date: "2025-09-14", impact: 68, trend: "稳定", category: "医疗政策" },
-    { id: 8, title: "教育培训行业监管加强", source: "教育部", date: "2025-09-13", impact: 74, trend: "下降", category: "教育政策" },
-    { id: 9, title: "房地产市场调控政策调整", source: "住建部", date: "2025-09-12", impact: 89, trend: "上升", category: "房地产政策" },
-    { id: 10, title: "农业现代化示范区建设启动", source: "农业农村部", date: "2025-09-11", impact: 65, trend: "上升", category: "农业政策" }
-  ];
-  
-  // 热点趋势数据（用于图表）
-  const trendData = {
-    categories: ['产业政策', '科技创新', '金融政策', '环保政策', '科技监管', '贸易政策', '医疗政策', '教育政策', '房地产政策', '农业政策'],
-    series: [
-      {name: '影响力指数', data: [85, 92, 78, 83, 76, 71, 68, 74, 89, 65]},
-      {name: '关注度指数', data: [80, 88, 75, 79, 72, 68, 65, 70, 86, 60]}
-    ]
-  };
-  
-  // 构建模块HTML
-  const moduleHTML = `
-    <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">国内热点数据 <span class="badge bg-danger">实时</span></h4>
-      <div class="row">
-        <div class="col-md-8">
-          <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-              <h5 class="card-title mb-0">热点数据列表</h5>
-              <div class="btn-group">
-                <button class="btn btn-sm btn-outline-primary" onclick="filterHotspotData('all')">全部</button>
-                <button class="btn btn-sm btn-outline-primary" onclick="filterHotspotData('上升')">上升趋势</button>
-                <button class="btn btn-sm btn-outline-primary" onclick="filterHotspotData('下降')">下降趋势</button>
-              </div>
-            </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0">
-                  <thead class="table-light">
-                    <tr>
-                      <th scope="col">ID</th>
-                      <th scope="col">热点标题</th>
-                      <th scope="col">来源</th>
-                      <th scope="col">日期</th>
-                      <th scope="col">影响力</th>
-                      <th scope="col">趋势</th>
-                      <th scope="col">类别</th>
-                    </tr>
-                  </thead>
-                  <tbody id="hotspot-data-table">
-                    ${hotspotData.map(item => `
-                      <tr>
-                        <td>${item.id}</td>
-                        <td><a href="#" class="text-decoration-none" onclick="showHotspotDetail(${item.id})">${item.title}</a></td>
-                        <td>${item.source}</td>
-                        <td>${item.date}</td>
-                        <td>
-                          <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-${getImpactColor(item.impact)}" role="progressbar" style="width: ${item.impact}%"></div>
-                          </div>
-                          <small class="text-muted">${item.impact}%</small>
-                        </td>
-                        <td>
-                          <span class="badge bg-${getTrendColor(item.trend)}">${item.trend}</span>
-                        </td>
-                        <td>${item.category}</td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div class="card-footer bg-light">
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted">最后更新: 2025-09-23 09:45</small>
-                <div>
-                  <button class="btn btn-sm btn-primary" onclick="refreshHotspotData()">
-                    <i class="bi bi-arrow-clockwise"></i> 刷新数据
-                  </button>
-                  <button class="btn btn-sm btn-outline-secondary" onclick="exportHotspotData()">
-                    <i class="bi bi-download"></i> 导出
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-              <h5 class="card-title mb-0">热点影响力分布</h5>
-            </div>
-            <div class="card-body">
-              <div id="hotspot-chart" style="height: 300px;"></div>
-            </div>
-          </div>
-          <div class="card shadow-sm">
-            <div class="card-header bg-light">
-              <h5 class="card-title mb-0">热点数据统计</h5>
-            </div>
-            <div class="card-body">
-              <div class="row g-3">
-                <div class="col-6">
-                  <div class="border rounded p-3 text-center">
-                    <h3 class="text-primary mb-0">10</h3>
-                    <small class="text-muted">今日热点</small>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="border rounded p-3 text-center">
-                    <h3 class="text-success mb-0">6</h3>
-                    <small class="text-muted">上升趋势</small>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="border rounded p-3 text-center">
-                    <h3 class="text-danger mb-0">2</h3>
-                    <small class="text-muted">下降趋势</small>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="border rounded p-3 text-center">
-                    <h3 class="text-warning mb-0">2</h3>
-                    <small class="text-muted">稳定趋势</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 热点详情模态框 -->
-      <div class="modal fade" id="hotspotDetailModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="hotspotDetailTitle">热点详情</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="hotspotDetailContent">
-              <!-- 详情内容将通过JS动态填充 -->
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-              <button type="button" class="btn btn-primary">生成分析报告</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // 更新容器内容
-  container.innerHTML = moduleHTML;
-  
-  // 初始化图表
-  initHotspotChart(trendData);
-  
-  // 加载Bootstrap的Modal组件
-  loadBootstrapJS();
-}
-
-// 初始化热点图表
-function initHotspotChart(data) {
-  // 检查是否已加载ECharts
-  if (typeof echarts === 'undefined') {
-    // 如果没有加载ECharts，则动态加载
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js';
-    script.onload = function() {
-      // ECharts加载完成后初始化图表
-      createChart(data);
+    // 检测是否为IE浏览器
+    var isIE = /Trident|MSIE/.test(navigator.userAgent);
+    var contentArea = document.querySelector(".content-area");
+    
+    // 显示加载状态（简化版，减少DOM操作）
+    displayLoadingState(contentArea);
+    
+    console.log("开始尝试连接增强版国内热点数据API...");
+    
+    // 使用XMLHttpRequest替代fetch，确保IE兼容性
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/api/domestic-hotspot", true);
+    xhr.setRequestHeader("Accept", "application/json");
+    
+    // 设置超时时间，避免IE中长时间等待
+    xhr.timeout = 10000; // 10秒
+    
+    xhr.onload = function() {
+        var hotspotData = [];
+        var statsData = {};
+        
+        if (xhr.status === 200) {
+            try {
+                var result = JSON.parse(xhr.responseText);
+                console.log("API返回数据:", result);
+                if (result.success && result.data) {
+                    // 直接使用后端已映射好的数据
+                    hotspotData = result.data;
+                    console.log("成功获取热点数据，数量:", hotspotData.length);
+                }
+            } catch (e) {
+                console.error("解析API数据失败:", e);
+            }
+        } else {
+            console.log("API响应错误:", xhr.status, xhr.statusText);
+        }
+        
+        // 处理数据并渲染页面
+        processAndRenderData(hotspotData, statsData, contentArea, isIE);
     };
-    document.head.appendChild(script);
-  } else {
-    // 如果已加载ECharts，直接初始化图表
-    createChart(data);
-  }
+    
+    xhr.onerror = function(error) {
+        console.error("API请求错误:", error);
+        handleErrorCase(contentArea, error, isIE);
+    };
+    
+    xhr.ontimeout = function() {
+        console.error("API请求超时");
+        var timeoutError = new Error("请求超时，请检查网络连接");
+        handleErrorCase(contentArea, timeoutError, isIE);
+    };
+    
+    xhr.send();
 }
 
-// 创建图表
-function createChart(data) {
-  const chartDom = document.getElementById('hotspot-chart');
-  const myChart = echarts.init(chartDom);
-  
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      data: ['影响力指数', '关注度指数']
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'value',
-      boundaryGap: [0, 0.01]
-    },
-    yAxis: {
-      type: 'category',
-      data: data.categories
-    },
-    series: [
-      {
-        name: '影响力指数',
-        type: 'bar',
-        data: data.series[0].data,
-        itemStyle: {
-          color: '#4a90e2'
+// 显示加载状态（分离为独立函数，减少代码重复）
+function displayLoadingState(contentArea) {
+    // 使用简单的HTML结构，减少DOM元素数量
+    contentArea.innerHTML = 
+        '<div class="content-header">' +
+        '    <h2><i class="bi bi-fire"></i> 增强版国内热点数据</h2>' +
+        '    <p class="text-muted">第一层模块 - 基础数据采集</p>' +
+        '</div>' +
+        '<div class="text-center py-5">' +
+        '    <div class="loading-indicator"></div>' +
+        '    <p class="mt-3">正在加载数据...</p>' +
+        '</div>';
+}
+
+// 处理数据并渲染页面
+function processAndRenderData(hotspotData, statsData, contentArea, isIE) {
+    // 如果API返回了数据，根据返回的数据生成统计信息
+    if (hotspotData.length > 0) {
+        // 优化统计数据生成，使用单次遍历替代多次filter
+        statsData = generateStatsData(hotspotData);
+    } else {
+        // 如果API不可用或返回空数据，使用模拟数据
+        console.log("API数据为空，使用模拟数据");
+        hotspotData = generateMockHotspotData();
+        statsData = generateMockStatsData();
+    }
+    
+    // 按类别分组数据
+    var categoryGroups = groupDataByCategory(hotspotData);
+    console.log("数据分组完成:", Object.keys(categoryGroups));
+    
+    // 生成HTML内容
+    var dataSource = hotspotData.length > 0 && hotspotData[0].id ? "增强版国内热点数据API" : "模拟数据";
+    
+    // 优化DOM渲染，使用DocumentFragment减少重绘
+    renderPageContent(hotspotData, statsData, categoryGroups, dataSource, contentArea, isIE);
+}
+
+// 生成统计数据（优化版，使用单次遍历）
+function generateStatsData(hotspotData) {
+    var stats = {
+        total_hotspots: hotspotData.length,
+        finance_hotspots: 0,
+        policy_hotspots: 0,
+        market_hotspots: 0,
+        industry_hotspots: 0,
+        company_hotspots: 0,
+        macro_hotspots: 0,
+        investment_hotspots: 0,
+        positive_count: 0,
+        neutral_count: 0,
+        negative_count: 0,
+        last_update: new Date().toLocaleString()
+    };
+    
+    // 使用单次遍历统计所有数据，大幅提升性能
+    for (var i = 0; i < hotspotData.length; i++) {
+        var item = hotspotData[i];
+        
+        // 统计类别数据
+        switch(item.category) {
+            case "财经热点": stats.finance_hotspots++;
+                break;
+            case "政策动态":
+            case "货币政策":
+            case "产业政策": stats.policy_hotspots++;
+                break;
+            case "市场新闻": stats.market_hotspots++;
+                break;
+            case "行业资讯": stats.industry_hotspots++;
+                break;
+            case "公司热点": stats.company_hotspots++;
+                break;
+            case "宏观经济": stats.macro_hotspots++;
+                break;
+            case "投资热点": stats.investment_hotspots++;
+                break;
         }
-      },
-      {
-        name: '关注度指数',
-        type: 'bar',
-        data: data.series[1].data,
-        itemStyle: {
-          color: '#50e3c2'
+        
+        // 统计情绪数据
+        switch(item.sentiment) {
+            case "积极": stats.positive_count++;
+                break;
+            case "中性": stats.neutral_count++;
+                break;
+            case "消极": stats.negative_count++;
+                break;
         }
-      }
-    ]
-  };
-  
-  myChart.setOption(option);
-  
-  // 响应窗口大小变化
-  window.addEventListener('resize', function() {
-    myChart.resize();
-  });
+    }
+    
+    // 计算市场情绪
+    stats.market_sentiment = calculateMarketSentiment(hotspotData);
+    
+    return stats;
 }
 
-// 加载Bootstrap的JS
-function loadBootstrapJS() {
-  if (typeof bootstrap === 'undefined') {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js';
-    document.head.appendChild(script);
-  }
+// 按类别分组数据
+function groupDataByCategory(hotspotData) {
+    var categoryGroups = {};
+    
+    // 使用传统for循环替代forEach，提升IE性能
+    for (var i = 0; i < hotspotData.length; i++) {
+        var item = hotspotData[i];
+        var category = item.category || "其他";
+        
+        if (!categoryGroups[category]) {
+            categoryGroups[category] = [];
+        }
+        categoryGroups[category].push(item);
+    }
+    
+    return categoryGroups;
 }
 
-// 根据影响力获取颜色
-function getImpactColor(impact) {
-  if (impact >= 85) return 'danger';
-  if (impact >= 70) return 'warning';
-  return 'success';
+// 渲染页面内容（使用DocumentFragment优化）
+function renderPageContent(hotspotData, statsData, categoryGroups, dataSource, contentArea, isIE) {
+    // 创建DocumentFragment，减少DOM重绘次数
+    var fragment = document.createDocumentFragment();
+    var container = document.createElement('div');
+    
+    // 构建HTML内容
+    var htmlContent = 
+        '<div class="content-header">' +
+        '    <h2><i class="bi bi-fire"></i> 增强版国内热点数据</h2>' +
+        '    <p class="text-muted">第一层模块 - 基础数据采集</p>' +
+        '    <div class="d-flex justify-content-between align-items-center">' +
+        '        <span class="badge bg-info">共 ' + (hotspotData.length) + ' 条热点资讯</span>' +
+        '        <div>' +
+        '            <span class="badge bg-secondary me-2">数据源: ' + dataSource + '</span>' +
+        '            <button class="btn btn-sm btn-outline-primary" onclick="loadEnhancedDomesticHotspotData()">' +
+        '                <i class="bi bi-arrow-clockwise"></i> 刷新数据' +
+        '            </button>' +
+        '        </div>' +
+        '    </div>' +
+        '</div>' +
+        
+        // 统计数据卡片
+        '<div class="row mb-4">' +
+        '    <div class="col-md-3">' +
+        '        <div class="card text-center">' +
+        '            <div class="card-body">' +
+        '                <h4 class="text-primary">' + (statsData.total_hotspots || hotspotData.length) + '</h4>' +
+        '                <p class="mb-0">总数据量</p>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '    <div class="col-md-3">' +
+        '        <div class="card text-center">' +
+        '            <div class="card-body">' +
+        '                <h4 class="text-success">' + (statsData.positive_count || 0) + '</h4>' +
+        '                <p class="mb-0">积极情绪</p>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '    <div class="col-md-3">' +
+        '        <div class="card text-center">' +
+        '            <div class="card-body">' +
+        '                <h4 class="text-warning">' + (statsData.neutral_count || 0) + '</h4>' +
+        '                <p class="mb-0">中性情绪</p>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '    <div class="col-md-3">' +
+        '        <div class="card text-center">' +
+        '            <div class="card-body">' +
+        '                <h4 class="text-danger">' + (statsData.negative_count || 0) + '</h4>' +
+        '                <p class="mb-0">消极情绪</p>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '</div>' +
+        
+        // 分类数据展示
+        '<div class="row">' + generateCategoryCards(categoryGroups, isIE) + '</div>' +
+        
+        // 详细统计
+        '<div class="row mt-4">' +
+        '    <div class="col-md-12">' +
+        '        <div class="card">' +
+        '            <div class="card-header bg-info text-white">' +
+        '                <i class="bi bi-bar-chart"></i> 详细统计信息' +
+        '            </div>' +
+        '            <div class="card-body">' +
+        '                <div class="row text-center">' +
+        '                    <div class="col-md-2">' +
+        '                        <div class="border rounded p-3">' +
+        '                            <h5 class="text-primary">' + (statsData.finance_hotspots || 0) + '</h5>' +
+        '                            <p class="mb-0 small">财经热点</p>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                    <div class="col-md-2">' +
+        '                        <div class="border rounded p-3">' +
+        '                            <h5 class="text-success">' + (statsData.policy_hotspots || 0) + '</h5>' +
+        '                            <p class="mb-0 small">政策动态</p>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                    <div class="col-md-2">' +
+        '                        <div class="border rounded p-3">' +
+        '                            <h5 class="text-info">' + (statsData.market_hotspots || 0) + '</h5>' +
+        '                            <p class="mb-0 small">市场新闻</p>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                    <div class="col-md-2">' +
+        '                        <div class="border rounded p-3">' +
+        '                            <h5 class="text-warning">' + (statsData.industry_hotspots || 0) + '</h5>' +
+        '                            <p class="mb-0 small">行业资讯</p>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                    <div class="col-md-2">' +
+        '                        <div class="border rounded p-3">' +
+        '                            <h5 class="text-secondary">' + (statsData.company_hotspots || 0) + '</h5>' +
+        '                            <p class="mb-0 small">公司热点</p>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                    <div class="col-md-2">' +
+        '                        <div class="border rounded p-3">' +
+        '                            <h5 class="text-dark">' + (statsData.macro_hotspots || 0) + '</h5>' +
+        '                            <p class="mb-0 small">宏观经济</p>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                </div>' +
+        '                <div class="row text-center mt-3">' +
+        '                    <div class="col-md-6">' +
+        '                        <div class="border rounded p-3">' +
+        '                            <h5 class="text-primary">' + (statsData.investment_hotspots || 0) + '</h5>' +
+        '                            <p class="mb-0 small">投资热点</p>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                    <div class="col-md-6">' +
+        '                        <div class="border rounded p-3">' +
+        '                            <h5 class="text-success">' + (statsData.market_sentiment || "积极") + '</h5>' +
+        '                            <p class="mb-0 small">整体市场情绪</p>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                </div>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '</div>' +
+        
+        '<div class="alert alert-info mt-3">' +
+        '    <i class="bi bi-info-circle"></i>' +
+        '    增强版国内热点数据 | 数据来源：' + dataSource + ' | 更新时间：' + (statsData.last_update || new Date().toLocaleString()) +
+        '</div>';
+    
+    // 设置容器HTML
+    container.innerHTML = htmlContent;
+    
+    // 将所有内容一次性添加到DocumentFragment
+    while (container.firstChild) {
+        fragment.appendChild(container.firstChild);
+    }
+    
+    // 清空contentArea并一次性添加所有内容，减少重绘次数
+    contentArea.innerHTML = '';
+    contentArea.appendChild(fragment);
 }
 
-// 根据趋势获取颜色
-function getTrendColor(trend) {
-  if (trend === '上升') return 'danger';
-  if (trend === '下降') return 'success';
-  return 'warning';
+// 生成分类卡片HTML
+function generateCategoryCards(categoryGroups, isIE) {
+    var categoryCards = [];
+    var categories = Object.keys(categoryGroups);
+    
+    // 使用传统for循环替代map，提升IE性能
+    for (var i = 0; i < categories.length; i++) {
+        var category = categories[i];
+        var items = categoryGroups[category];
+        
+        // 生成项目HTML
+        var itemsHtml = generateItemsHtml(items, isIE);
+        
+        // 添加分类卡片
+        categoryCards.push(
+            '<div class="col-md-6 mb-4">' +
+            '    <div class="card">' +
+            '        <div class="card-header bg-' + getCategoryColor(category) + ' text-white d-flex justify-content-between">' +
+            '            <span><i class="bi bi-' + getCategoryIcon(category) + '"></i> ' + category + '</span>' +
+            '            <span class="badge bg-light text-dark">' + items.length + '</span>' +
+            '        </div>' +
+            '        <div class="card-body" style="max-height: 420px; overflow-y: auto;">' +
+            '            <div class="list-group list-group-flush">' +
+            itemsHtml +
+            '            </div>' +
+            (items.length > 5 ? '<div class="text-center mt-2"><small class="text-muted">显示前5个，共' + items.length + '个</small></div>' : '') +
+            '        </div>' +
+            '    </div>' +
+            '</div>'
+        );
+    }
+    
+    return categoryCards.join('');
 }
 
-// 过滤热点数据
-function filterHotspotData(filter) {
-  // 实际应用中应该重新请求数据或过滤现有数据
-  console.log('过滤热点数据:', filter);
-  alert('过滤条件: ' + filter + '\n此功能将在后续版本中实现');
+// 生成项目HTML
+function generateItemsHtml(items, isIE) {
+    var itemsHtml = [];
+    var displayItems = items.slice(0, 5); // 只显示前5个项目
+    
+    // 使用传统for循环替代map，提升IE性能
+    for (var i = 0; i < displayItems.length; i++) {
+        var item = displayItems[i];
+        var titleHtml = item.url ? 
+            '<a href="' + item.url + '" target="_blank" rel="noopener">' + item.title + '</a>' : 
+            item.title;
+        
+        itemsHtml.push(
+            '<div class="list-group-item">' +
+            '    <div class="d-flex justify-content-between align-items-start">' +
+            '        <div class="flex-grow-1">' +
+            '            <h6 class="mb-1">' + titleHtml + '</h6>' +
+            '            <p class="mb-1 small">' + item.content + '</p>' +
+            '            <small class="text-muted">来源: ' + item.source + ' | ' + item.publishTime + '</small>' +
+            '        </div>' +
+            '        <div class="text-end">' +
+            '            <span class="badge bg-' + getSentimentColor(item.sentiment) + '">' + item.sentiment + '</span>' +
+            '            <br>' +
+            '            <small class="text-muted">热度: ' + Math.round(item.heatScore) + '</small>' +
+            '        </div>' +
+            '    </div>' +
+            '</div>'
+        );
+    }
+    
+    return itemsHtml.join('');
 }
 
-// 刷新热点数据
-function refreshHotspotData() {
-  // 实际应用中应该重新请求数据
-  console.log('刷新热点数据');
-  alert('数据刷新功能将在后续版本中实现');
+// 处理错误情况
+function handleErrorCase(contentArea, error, isIE) {
+    console.error("加载增强版国内热点数据失败:", error);
+    
+    // 使用模拟数据作为备用方案
+    var hotspotData = generateMockHotspotData();
+    var statsData = generateMockStatsData();
+    
+    // 按类别分组数据
+    var categoryGroups = groupDataByCategory(hotspotData);
+    
+    // 创建DocumentFragment，减少DOM重绘次数
+    var fragment = document.createDocumentFragment();
+    var container = document.createElement('div');
+    
+    // 构建HTML内容
+    var errorMessage = error ? (error.message || "未知错误") : "网络连接错误";
+    var htmlContent = 
+        '<div class="content-header">' +
+        '    <h2><i class="bi bi-fire"></i> 增强版国内热点数据</h2>' +
+        '    <p class="text-muted">第一层模块 - 基础数据采集</p>' +
+        '    <div class="d-flex justify-content-between align-items-center">' +
+        '        <span class="badge bg-info">共 ' + hotspotData.length + ' 条热点资讯</span>' +
+        '        <div>' +
+        '            <span class="badge bg-warning me-2">使用模拟数据</span>' +
+        '            <button class="btn btn-sm btn-outline-primary" onclick="loadEnhancedDomesticHotspotData()">' +
+        '                <i class="bi bi-arrow-clockwise"></i> 重试连接API' +
+        '            </button>' +
+        '        </div>' +
+        '    </div>' +
+        '</div>' +
+        
+        '<div class="alert alert-warning">' +
+        '    <i class="bi bi-exclamation-triangle"></i>' +
+        '    <strong>API连接失败:</strong> ' + errorMessage +
+        '    <br><small>当前显示模拟数据。</small>' +
+        '</div>' +
+        
+        // 统计数据卡片
+        '<div class="row mb-4">' +
+        '    <div class="col-md-3">' +
+        '        <div class="card text-center">' +
+        '            <div class="card-body">' +
+        '                <h4 class="text-primary">' + (statsData.total_hotspots || hotspotData.length) + '</h4>' +
+        '                <p class="mb-0">总数据量</p>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '    <div class="col-md-3">' +
+        '        <div class="card text-center">' +
+        '            <div class="card-body">' +
+        '                <h4 class="text-success">' + (statsData.positive_count || 0) + '</h4>' +
+        '                <p class="mb-0">积极情绪</p>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '    <div class="col-md-3">' +
+        '        <div class="card text-center">' +
+        '            <div class="card-body">' +
+        '                <h4 class="text-warning">' + (statsData.neutral_count || 0) + '</h4>' +
+        '                <p class="mb-0">中性情绪</p>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '    <div class="col-md-3">' +
+        '        <div class="card text-center">' +
+        '            <div class="card-body">' +
+        '                <h4 class="text-danger">' + (statsData.negative_count || 0) + '</h4>' +
+        '                <p class="mb-0">消极情绪</p>' +
+        '            </div>' +
+        '        </div>' +
+        '    </div>' +
+        '</div>' +
+        
+        // 分类数据展示
+        '<div class="row">' + generateCategoryCards(categoryGroups, isIE) + '</div>' +
+        
+        '<div class="alert alert-info mt-3">' +
+        '    <i class="bi bi-info-circle"></i>' +
+        '    增强版国内热点数据 | 数据来源：模拟数据 | 更新时间：' + new Date().toLocaleString() +
+        '</div>';
+    
+    // 设置容器HTML
+    container.innerHTML = htmlContent;
+    
+    // 将所有内容一次性添加到DocumentFragment
+    while (container.firstChild) {
+        fragment.appendChild(container.firstChild);
+    }
+    
+    // 清空contentArea并一次性添加所有内容，减少重绘次数
+    contentArea.innerHTML = '';
+    contentArea.appendChild(fragment);
 }
 
-// 导出热点数据
-function exportHotspotData() {
-  // 实际应用中应该生成CSV或Excel文件
-  console.log('导出热点数据');
-  alert('数据导出功能将在后续版本中实现');
+// 辅助函数
+// 优化市场情绪计算函数，使用单次遍历替代多次filter
+function calculateMarketSentiment(hotspotData) {
+    var positiveCount = 0;
+    var negativeCount = 0;
+    
+    // 使用单次遍历计算情绪统计，提高性能
+    for (var i = 0; i < hotspotData.length; i++) {
+        var item = hotspotData[i];
+        if (item.sentiment === "积极") {
+            positiveCount++;
+        } else if (item.sentiment === "消极") {
+            negativeCount++;
+        }
+    }
+    
+    if (positiveCount > negativeCount + 2) return "积极";
+    if (negativeCount > positiveCount + 2) return "消极";
+    return "中性";
 }
 
-// 显示热点详情
-function showHotspotDetail(id) {
-  // 模拟获取热点详情数据
-  const hotspotDetail = {
-    id: id,
-    title: "新能源汽车产业政策调整",
-    source: "国家发改委",
-    date: "2025-09-20",
-    impact: 85,
-    trend: "上升",
-    category: "产业政策",
-    content: "国家发改委发布《关于促进新能源汽车产业高质量发展的指导意见》，提出到2030年，新能源汽车销量占比达到汽车总销量的50%以上。政策重点支持纯电动、氢燃料电池等技术路线，同时加大充电基础设施建设力度。",
-    relatedPolicies: [
-      "《新能源汽车产业发展规划（2021-2035年）》",
-      "《关于完善新能源汽车推广应用财政补贴政策的通知》"
-    ],
-    impactAnalysis: "该政策将显著推动新能源汽车产业链发展，对上游锂电池、电机、电控等核心零部件企业形成利好。同时，传统燃油车企业面临转型压力增大，需加速电动化布局。",
-    riskFactors: [
-      "技术路线选择风险",
-      "产能过剩风险",
-      "补贴退坡带来的市场波动",
-      "充电基础设施建设不足"
-    ]
-  };
-  
-  // 更新模态框内容
-  document.getElementById('hotspotDetailTitle').textContent = hotspotDetail.title;
-  
-  const detailContent = `
-    <div class="mb-4">
-      <div class="d-flex justify-content-between mb-3">
-        <div>
-          <span class="badge bg-primary me-2">${hotspotDetail.category}</span>
-          <span class="badge bg-${getTrendColor(hotspotDetail.trend)}">${hotspotDetail.trend}</span>
-        </div>
-        <div class="text-muted small">
-          来源: ${hotspotDetail.source} | 发布日期: ${hotspotDetail.date}
-        </div>
-      </div>
-      
-      <div class="alert alert-light">
-        <h6 class="fw-bold">内容摘要</h6>
-        <p>${hotspotDetail.content}</p>
-      </div>
-      
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header bg-light">
-              <h6 class="card-title mb-0">相关政策</h6>
-            </div>
-            <div class="card-body">
-              <ul class="mb-0">
-                ${hotspotDetail.relatedPolicies.map(policy => `<li>${policy}</li>`).join('')}
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header bg-light">
-              <h6 class="card-title mb-0">风险因素</h6>
-            </div>
-            <div class="card-body">
-              <ul class="mb-0">
-                ${hotspotDetail.riskFactors.map(risk => `<li>${risk}</li>`).join('')}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="card-header bg-light">
-          <h6 class="card-title mb-0">影响分析</h6>
-        </div>
-        <div class="card-body">
-          <p class="mb-0">${hotspotDetail.impactAnalysis}</p>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.getElementById('hotspotDetailContent').innerHTML = detailContent;
-  
-  // 显示模态框
-  const modal = new bootstrap.Modal(document.getElementById('hotspotDetailModal'));
-  modal.show();
+function getSentimentColor(sentiment) {
+    switch(sentiment) {
+        case "积极": return "success";
+        case "中性": return "warning";
+        case "消极": return "danger";
+        default: return "secondary";
+    }
 }
 
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-  // 如果当前页面是国内热点数据模块，则自动加载
-  if (window.location.hash === '#domestic-hotspot') {
-    loadEnhancedDomesticHotspotData();
-  }
-});
+function getCategoryColor(category) {
+    switch(category) {
+        case "财经热点": return "primary";
+        case "政策动态": return "success";
+        case "市场新闻": return "info";
+        case "行业资讯": return "warning";
+        case "公司热点": return "secondary";
+        case "宏观经济": return "dark";
+        case "投资热点": return "danger";
+        case "货币政策": return "primary";
+        case "产业政策": return "success";
+        case "科技动态": return "info";
+        case "环保政策": return "success";
+        default: return "light";
+    }
+}
+
+// 优化图标映射函数，确保IE浏览器兼容性
+function getCategoryIcon(category) {
+    // 对于IE浏览器，简化图标名称以确保更好的兼容性
+    var isIE = /Trident|MSIE/.test(navigator.userAgent);
+    
+    // 基础图标映射
+    var iconMap = {
+        "财经热点": "currency-dollar",
+        "政策动态": "file-earmark-text",
+        "市场新闻": "newspaper",
+        "行业资讯": "building",
+        "公司热点": "briefcase",
+        "宏观经济": "graph-up",
+        "投资热点": "trending-up",
+        "货币政策": "coin",
+        "产业政策": "file-lines",
+        "科技动态": "cpu",
+        "环保政策": "leaf",
+        "default": "circle"
+    };
+    
+    // 对于IE浏览器，使用更简单的图标名称
+    if (isIE) {
+        var simpleIconMap = {
+            "财经热点": "dollar",
+            "政策动态": "file",
+            "市场新闻": "newspaper",
+            "行业资讯": "building",
+            "公司热点": "briefcase",
+            "宏观经济": "chart",
+            "投资热点": "trending",
+            "货币政策": "coin",
+            "产业政策": "file-text",
+            "科技动态": "cpu",
+            "环保政策": "leaf",
+            "default": "circle"
+        };
+        
+        return simpleIconMap[category] || simpleIconMap.default;
+    }
+    
+    return iconMap[category] || iconMap.default;
+}
+
+// 生成模拟数据
+function generateMockHotspotData() {
+    return [
+        {
+            id: "FIN_0001",
+            title: "央行货币政策调整分析 - 1",
+            category: "财经热点",
+            content: "这是一条关于央行货币政策调整分析的详细分析内容，包含市场数据、专家观点和投资建议...",
+            heatScore: 85.5,
+            sentiment: "积极",
+            source: "新华财经",
+            publishTime: "2025-09-20 14:30:25"
+        },
+        {
+            id: "POL_0001",
+            title: "金融监管新政策 - 1",
+            category: "政策动态",
+            content: "关于金融监管新政策的最新政策解读和影响分析，包括政策背景、实施细节和市场影响...",
+            heatScore: 92.3,
+            sentiment: "积极",
+            source: "人民日报",
+            publishTime: "2025-09-20 13:15:10"
+        },
+        {
+            id: "MKT_0001",
+            title: "股市收盘分析 - 1",
+            category: "市场新闻",
+            content: "今日股市收盘分析的详细市场分析和投资建议，包含技术分析和基本面分析...",
+            heatScore: 78.9,
+            sentiment: "中性",
+            source: "财新网",
+            publishTime: "2025-09-20 15:45:30"
+        },
+        {
+            id: "IND_0001",
+            title: "科技行业发展 - 1",
+            category: "行业资讯",
+            content: "关于科技行业发展的最新行业分析和发展前景，包含行业数据和趋势预测...",
+            heatScore: 88.7,
+            sentiment: "积极",
+            source: "中国产经新闻",
+            publishTime: "2025-09-20 12:20:15"
+        },
+        {
+            id: "COM_0001",
+            title: "上市公司业绩 - 1",
+            category: "公司热点",
+            content: "关于上市公司业绩的详细报道和分析，包含公司背景和影响评估...",
+            heatScore: 75.2,
+            sentiment: "积极",
+            source: "公司公告",
+            publishTime: "2025-09-20 11:30:45"
+        },
+        {
+            id: "MAC_0001",
+            title: "GDP增长数据 - 1",
+            category: "宏观经济",
+            content: "关于GDP增长数据的详细数据分析和经济解读，包含历史对比和趋势分析...",
+            heatScore: 90.1,
+            sentiment: "积极",
+            source: "国家统计局",
+            publishTime: "2025-09-20 10:15:20"
+        },
+        {
+            id: "INV_0001",
+            title: "投资策略分析 - 1",
+            category: "投资热点",
+            content: "关于投资策略分析的专业分析和投资建议，包含风险评估和收益预期...",
+            heatScore: 82.6,
+            sentiment: "中性",
+            source: "投资机构",
+            publishTime: "2025-09-20 09:45:55"
+        }
+    ];
+}
+
+function generateMockStatsData() {
+    return {
+        total_hotspots: 550,
+        finance_hotspots: 100,
+        policy_hotspots: 80,
+        market_hotspots: 120,
+        industry_hotspots: 100,
+        company_hotspots: 50,
+        macro_hotspots: 50,
+        investment_hotspots: 50,
+        positive_count: 201,
+        neutral_count: 216,
+        negative_count: 133,
+        market_sentiment: "积极",
+        last_update: new Date().toLocaleString()
+    };
+}

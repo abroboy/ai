@@ -17,59 +17,36 @@ function loadForumDataAnalysis() {
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderForumDataAnalysisModule(contentArea);
-  }, 800);
+  // 从API获取论坛数据分析数据
+  fetch('/api/forum-data-analysis')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const forumData = data.data;
+        renderForumDataAnalysisModule(contentArea, forumData);
+      } else {
+        contentArea.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载论坛数据分析数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      contentArea.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
 }
 
 // 渲染雪球等论坛数据模块内容
-function renderForumDataAnalysisModule(container) {
-  // 模拟论坛数据
-  const forumData = {
-    period: "2025年9月20日-2025年9月25日",
-    summary: {
-      totalPosts: 12458,
-      totalComments: 87654,
-      totalUsers: 5432,
-      sentimentScore: 0.65
-    },
-    topStocks: [
-      { code: "600519", name: "贵州茅台", mentions: 1245, sentiment: 0.82 },
-      { code: "000858", name: "五粮液", mentions: 987, sentiment: 0.75 },
-      { code: "601318", name: "中国平安", mentions: 876, sentiment: 0.45 },
-      { code: "600036", name: "招商银行", mentions: 765, sentiment: 0.62 },
-      { code: "000333", name: "美的集团", mentions: 654, sentiment: 0.58 }
-    ],
-    topTopics: [
-      { topic: "新能源", mentions: 2345, sentiment: 0.78 },
-      { topic: "半导体", mentions: 1876, sentiment: 0.72 },
-      { topic: "人工智能", mentions: 1654, sentiment: 0.85 },
-      { topic: "医药", mentions: 1432, sentiment: 0.65 },
-      { topic: "消费", mentions: 1321, sentiment: 0.58 }
-    ],
-    sentimentTrend: [
-      { date: "09-20", score: 0.62 },
-      { date: "09-21", score: 0.65 },
-      { date: "09-22", score: 0.68 },
-      { date: "09-23", score: 0.64 },
-      { date: "09-24", score: 0.63 },
-      { date: "09-25", score: 0.65 }
-    ],
-    hotPosts: [
-      { title: "新能源汽车行业深度分析", author: "价值投资者", views: 12500, comments: 876, sentiment: 0.75 },
-      { title: "半导体产业链全景图", author: "芯片研究", views: 10200, comments: 765, sentiment: 0.82 },
-      { title: "人工智能应用场景展望", author: "科技前沿", views: 9800, comments: 654, sentiment: 0.88 },
-      { title: "医药行业投资机会", author: "医药研究员", views: 8500, comments: 543, sentiment: 0.65 },
-      { title: "消费升级趋势分析", author: "消费洞察", views: 7800, comments: 432, sentiment: 0.72 }
-    ]
-  };
-  
+function renderForumDataAnalysisModule(container, forumData) {
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">雪球等论坛数据分析</h4>
+      <h4 class="fw-bold text-primary mb-3">雪球等论坛数据分析 <span class="badge bg-danger">实时</span></h4>
       <p class="text-muted mb-4">分析周期: ${forumData.period}</p>
       
       <div class="row mb-4">

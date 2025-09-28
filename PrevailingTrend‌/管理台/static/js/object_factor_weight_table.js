@@ -1,6 +1,6 @@
 /**
  * 对象因子权重表模块
- * 大势所趋风险框架管理台 - 第五层模块
+ * 大势所趋风险框架管理台 - 第五行模块
  */
 
 // 从评分系统导入数据
@@ -85,119 +85,35 @@ function loadObjectFactorWeightTable() {
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderObjectFactorWeightTableModule(contentArea);
-  }, 800);
+  // 从API获取对象因子权重表数据
+  fetch('/api/object-factor-weight-table')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        renderObjectFactorWeightTableModule(contentArea, data.data);
+      } else {
+        contentArea.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载对象因子权重表数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      contentArea.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
 }
 
 // 渲染对象因子权重表模块内容
-function renderObjectFactorWeightTableModule(container) {
-  // 模拟权重数据
-  const weightData = {
-    updateTime: "2025-09-25 14:30:00",
-    objectTypes: ["公司", "行业", "市场"],
-    currentObjectType: "公司",
-    factorCategories: [
-      {
-        name: "财务因子",
-        factors: [
-          { id: "F001", name: "净利润增长率", weight: 25, description: "反映公司盈利能力的增长情况" },
-          { id: "F002", name: "资产负债率", weight: 15, description: "反映公司的负债水平和偿债能力" },
-          { id: "F003", name: "ROE", weight: 20, description: "反映公司的净资产收益率" },
-          { id: "F004", name: "毛利率", weight: 10, description: "反映公司的盈利能力" },
-          { id: "F005", name: "经营现金流", weight: 15, description: "反映公司的现金流状况" },
-          { id: "F006", name: "营收增长率", weight: 15, description: "反映公司的业务增长情况" }
-        ],
-        totalWeight: 100
-      },
-      {
-        name: "市场因子",
-        factors: [
-          { id: "M001", name: "市盈率", weight: 20, description: "反映公司的估值水平" },
-          { id: "M002", name: "市净率", weight: 15, description: "反映公司的净资产估值水平" },
-          { id: "M003", name: "股价波动率", weight: 25, description: "反映公司股价的波动情况" },
-          { id: "M004", name: "相对大盘表现", weight: 20, description: "反映公司相对于大盘的表现" },
-          { id: "M005", name: "成交量变化", weight: 20, description: "反映公司股票的交易活跃度" }
-        ],
-        totalWeight: 100
-      },
-      {
-        name: "行业因子",
-        factors: [
-          { id: "I001", name: "行业景气度", weight: 30, description: "反映行业的整体发展状况" },
-          { id: "I002", name: "行业竞争格局", weight: 25, description: "反映行业的竞争情况" },
-          { id: "I003", name: "政策支持度", weight: 20, description: "反映行业的政策支持情况" },
-          { id: "I004", name: "行业成长性", weight: 25, description: "反映行业的未来发展潜力" }
-        ],
-        totalWeight: 100
-      },
-      {
-        name: "风险因子",
-        factors: [
-          { id: "R001", name: "流动性风险", weight: 20, description: "反映公司的短期偿债能力" },
-          { id: "R002", name: "经营风险", weight: 25, description: "反映公司的经营稳定性" },
-          { id: "R003", name: "财务风险", weight: 20, description: "反映公司的财务健康状况" },
-          { id: "R004", name: "市场风险", weight: 15, description: "反映公司面临的市场环境风险" },
-          { id: "R005", name: "政策风险", weight: 20, description: "反映公司面临的政策变动风险" }
-        ],
-        totalWeight: 100
-      },
-      {
-        name: "社会评价因子",
-        factors: [
-          { id: "S001", name: "媒体评价", weight: 25, description: "反映公司在媒体中的评价情况" },
-          { id: "S002", name: "社交媒体情绪", weight: 30, description: "反映公司在社交媒体中的情绪倾向" },
-          { id: "S003", name: "分析师评级", weight: 25, description: "反映专业分析师对公司的评级" },
-          { id: "S004", name: "ESG评分", weight: 20, description: "反映公司的环境、社会和治理表现" }
-        ],
-        totalWeight: 100
-      }
-    ],
-    objectWeights: {
-      "公司": [
-        { category: "财务因子", weight: 35 },
-        { category: "市场因子", weight: 25 },
-        { category: "行业因子", weight: 15 },
-        { category: "风险因子", weight: 15 },
-        { category: "社会评价因子", weight: 10 }
-      ],
-      "行业": [
-        { category: "财务因子", weight: 20 },
-        { category: "市场因子", weight: 15 },
-        { category: "行业因子", weight: 40 },
-        { category: "风险因子", weight: 15 },
-        { category: "社会评价因子", weight: 10 }
-      ],
-      "市场": [
-        { category: "财务因子", weight: 15 },
-        { category: "市场因子", weight: 40 },
-        { category: "行业因子", weight: 20 },
-        { category: "风险因子", weight: 15 },
-        { category: "社会评价因子", weight: 10 }
-      ]
-    },
-    presetTemplates: [
-      { id: "T001", name: "成长型", description: "适合评估高成长性公司" },
-      { id: "T002", name: "价值型", description: "适合评估稳定价值型公司" },
-      { id: "T003", name: "防御型", description: "适合评估抗风险能力强的公司" },
-      { id: "T004", name: "周期型", description: "适合评估周期性行业公司" }
-    ],
-    simulationResults: {
-      beforeScore: 85.2,
-      afterScore: 82.7,
-      changedFactors: [
-        { id: "F001", name: "净利润增长率", oldWeight: 25, newWeight: 20, impact: -1.5 },
-        { id: "M003", name: "股价波动率", oldWeight: 25, newWeight: 30, impact: -1.0 }
-      ]
-    }
-  };
-  
+function renderObjectFactorWeightTableModule(container, weightData) {
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">对象因子权重表</h4>
+      <h4 class="fw-bold text-primary mb-3">对象因子权重表 <span class="badge bg-danger">实时</span></h4>
       <div class="d-flex justify-content-between align-items-center mb-4">
         <p class="text-muted mb-0">最后更新时间: ${weightData.updateTime}</p>
         <div class="btn-group">

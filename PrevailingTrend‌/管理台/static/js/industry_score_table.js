@@ -17,70 +17,36 @@ function loadIndustryScoreTable() {
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderIndustryScoreTableModule(contentArea);
-  }, 800);
+  // 从API获取行业分值表数据
+  fetch('/api/industry-score-table')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const industryData = data.data;
+        renderIndustryScoreTableModule(contentArea, industryData);
+      } else {
+        contentArea.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载行业分值表数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      contentArea.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
 }
 
 // 渲染行业分值表模块内容
-function renderIndustryScoreTableModule(container) {
-  // 模拟行业分值数据
-  const industryData = {
-    updateTime: "2025-09-25 14:30:00",
-    totalIndustries: 28,
-    averageScore: 72.3,
-    scoreDistribution: {
-      "90-100": 3,
-      "80-89": 7,
-      "70-79": 10,
-      "60-69": 5,
-      "50-59": 2,
-      "0-49": 1
-    },
-    topIndustries: [
-      { rank: 1, code: "BK0438", name: "半导体", score: 94.5, change: 1.2, companies: 85, avgCompanyScore: 82.3 },
-      { rank: 2, code: "BK0475", name: "新能源", score: 92.8, change: 0.5, companies: 102, avgCompanyScore: 80.7 },
-      { rank: 3, code: "BK0428", name: "医疗器械", score: 91.2, change: 0.8, companies: 76, avgCompanyScore: 79.5 },
-      { rank: 4, code: "BK0447", name: "白酒", score: 90.5, change: -0.3, companies: 32, avgCompanyScore: 83.2 },
-      { rank: 5, code: "BK0451", name: "云计算", score: 89.7, change: 1.5, companies: 68, avgCompanyScore: 78.9 }
-    ],
-    bottomIndustries: [
-      { rank: 24, code: "BK0422", name: "煤炭", score: 58.5, change: -1.2, companies: 45, avgCompanyScore: 55.3 },
-      { rank: 25, code: "BK0478", name: "钢铁", score: 56.2, change: -0.8, companies: 38, avgCompanyScore: 54.1 },
-      { rank: 26, code: "BK0424", name: "航运", score: 52.8, change: -2.5, companies: 29, avgCompanyScore: 51.7 },
-      { rank: 27, code: "BK0456", name: "纺织服装", score: 48.5, change: -1.7, companies: 42, avgCompanyScore: 47.2 },
-      { rank: 28, code: "BK0476", name: "传统零售", score: 45.3, change: -3.2, companies: 36, avgCompanyScore: 44.8 }
-    ],
-    biggestGainers: [
-      { code: "BK0451", name: "云计算", score: 89.7, change: 1.5, companies: 68, avgCompanyScore: 78.9 },
-      { code: "BK0438", name: "半导体", score: 94.5, change: 1.2, companies: 85, avgCompanyScore: 82.3 },
-      { code: "BK0428", name: "医疗器械", score: 91.2, change: 0.8, companies: 76, avgCompanyScore: 79.5 },
-      { code: "BK0475", name: "新能源", score: 92.8, change: 0.5, companies: 102, avgCompanyScore: 80.7 },
-      { code: "BK0433", name: "人工智能", score: 88.5, change: 0.4, companies: 55, avgCompanyScore: 77.2 }
-    ],
-    biggestLosers: [
-      { code: "BK0476", name: "传统零售", score: 45.3, change: -3.2, companies: 36, avgCompanyScore: 44.8 },
-      { code: "BK0424", name: "航运", score: 52.8, change: -2.5, companies: 29, avgCompanyScore: 51.7 },
-      { code: "BK0456", name: "纺织服装", score: 48.5, change: -1.7, companies: 42, avgCompanyScore: 47.2 },
-      { code: "BK0422", name: "煤炭", score: 58.5, change: -1.2, companies: 45, avgCompanyScore: 55.3 },
-      { code: "BK0478", name: "钢铁", score: 56.2, change: -0.8, companies: 38, avgCompanyScore: 54.1 }
-    ],
-    scoreFactors: [
-      { factor: "行业景气度", weight: 25 },
-      { factor: "政策支持", weight: 20 },
-      { factor: "成长性", weight: 20 },
-      { factor: "竞争格局", weight: 15 },
-      { factor: "风险因素", weight: 10 },
-      { factor: "社会评价", weight: 10 }
-    ]
-  };
-  
+function renderIndustryScoreTableModule(container, industryData) {
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">行业分值表</h4>
+      <h4 class="fw-bold text-primary mb-3">行业分值表 <span class="badge bg-danger">实时</span></h4>
       <div class="d-flex justify-content-between align-items-center mb-4">
         <p class="text-muted mb-0">最后更新时间: ${industryData.updateTime}</p>
         <div class="btn-group">

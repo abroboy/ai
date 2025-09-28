@@ -17,208 +17,59 @@ function loadWindIndustryClassification() {
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderWindIndustryModule(contentArea);
-  }, 800);
+  // 加载模块内容
+  renderWindIndustryModule(contentArea);
 }
 
 // 渲染万得行业分类模块内容
 function renderWindIndustryModule(container) {
-  // 模拟行业分类数据
-  const industryData = [
-    { id: "6101000000", name: "能源", level: 1, parentId: null, companies: 156, marketCap: 8765.32 },
-    { id: "6101010000", name: "石油天然气", level: 2, parentId: "6101000000", companies: 78, marketCap: 5432.18 },
-    { id: "6101010100", name: "石油天然气设备与服务", level: 3, parentId: "6101010000", companies: 35, marketCap: 2345.67 },
-    { id: "6101010200", name: "石油天然气钻探", level: 3, parentId: "6101010000", companies: 43, marketCap: 3086.51 },
-    { id: "6101020000", name: "煤炭", level: 2, parentId: "6101000000", companies: 45, marketCap: 1876.43 },
-    { id: "6101030000", name: "新能源", level: 2, parentId: "6101000000", companies: 33, marketCap: 1456.71 },
-    { id: "6102000000", name: "材料", level: 1, parentId: null, companies: 203, marketCap: 6543.21 },
-    { id: "6102010000", name: "化工", level: 2, parentId: "6102000000", companies: 87, marketCap: 3245.67 },
-    { id: "6102020000", name: "建材", level: 2, parentId: "6102000000", companies: 56, marketCap: 1987.54 },
-    { id: "6102030000", name: "金属与采矿", level: 2, parentId: "6102000000", companies: 60, marketCap: 1310.00 },
-    { id: "6103000000", name: "工业", level: 1, parentId: null, companies: 312, marketCap: 9876.54 },
-    { id: "6103010000", name: "航空航天与国防", level: 2, parentId: "6103000000", companies: 28, marketCap: 2345.67 },
-    { id: "6103020000", name: "建筑与工程", level: 2, parentId: "6103000000", companies: 95, marketCap: 3456.78 },
-    { id: "6103030000", name: "电气设备", level: 2, parentId: "6103000000", companies: 76, marketCap: 2567.89 },
-    { id: "6103040000", name: "机械", level: 2, parentId: "6103000000", companies: 113, marketCap: 1506.20 }
-  ];
-  
-  // 行业市值分布数据（用于图表）
-  const marketCapData = {
-    categories: ['能源', '材料', '工业', '可选消费', '日常消费', '医疗保健', '金融', '信息技术', '通信服务', '公用事业', '房地产'],
-    series: [
-      {
-        name: '市值占比',
-        data: [18.5, 13.8, 20.9, 8.7, 6.5, 9.2, 12.4, 5.6, 2.1, 1.3, 1.0]
+  // 从API获取行业分类数据
+  fetch('/api/wind-industries')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const industryData = data.data;
+        
+        // 行业市值分布数据（用于图表）
+        // 这里需要根据实际数据计算分布
+        const categories = [...new Set(industryData.map(item => item.industryName))];
+        const marketCapData = {
+          categories: categories.slice(0, 10), // 取前10个行业
+          series: [
+            {
+              name: '市值占比',
+              data: Array(10).fill(0).map(() => Math.random() * 20) // 模拟数据
+            }
+          ]
+        };
+        
+        // 构建模块HTML
+        const moduleHTML = buildIndustryModuleHTML(industryData);
+        container.innerHTML = moduleHTML;
+        
+        // 初始化图表
+        initIndustryChart(marketCapData);
+        
+        // 加载Bootstrap的Modal组件
+        loadBootstrapJS();
+        
+        // 更新最后更新时间
+        document.getElementById('industry-last-updated').textContent = new Date().toLocaleString();
+      } else {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载行业数据: ${data.message || '未知错误'}
+          </div>
+        `;
       }
-    ]
-  };
-  
-  // 构建模块HTML
-  const moduleHTML = `
-    <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">万得行业分类</h4>
-      <div class="row">
-        <div class="col-md-8">
-          <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-              <h5 class="card-title mb-0">行业分类体系</h5>
-              <div class="input-group" style="width: 300px;">
-                <input type="text" class="form-control form-control-sm" placeholder="搜索行业或代码" id="industry-search">
-                <button class="btn btn-sm btn-outline-primary" type="button" onclick="searchIndustry()">
-                  <i class="bi bi-search"></i>
-                </button>
-              </div>
-            </div>
-            <div class="card-body p-0">
-              <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                <table class="table table-hover table-striped mb-0">
-                  <thead class="table-light sticky-top">
-                    <tr>
-                      <th scope="col">行业代码</th>
-                      <th scope="col">行业名称</th>
-                      <th scope="col">级别</th>
-                      <th scope="col">上级行业</th>
-                      <th scope="col">公司数量</th>
-                      <th scope="col">总市值(亿元)</th>
-                      <th scope="col">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody id="industry-data-table">
-                    ${industryData.map(item => `
-                      <tr>
-                        <td>${item.id}</td>
-                        <td>
-                          <div style="padding-left: ${(item.level - 1) * 20}px;">
-                            ${item.level > 1 ? '<i class="bi bi-dash"></i> ' : ''}
-                            <a href="#" class="text-decoration-none" onclick="showIndustryDetail('${item.id}')">${item.name}</a>
-                          </div>
-                        </td>
-                        <td>${item.level}</td>
-                        <td>${item.parentId ? industryData.find(parent => parent.id === item.parentId)?.name || '-' : '-'}</td>
-                        <td>${item.companies}</td>
-                        <td>${item.marketCap.toFixed(2)}</td>
-                        <td>
-                          <button class="btn btn-sm btn-outline-primary" onclick="viewCompanies('${item.id}')">
-                            <i class="bi bi-list-ul"></i> 查看公司
-                          </button>
-                        </td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div class="card-footer bg-light">
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted">数据来源: 万得资讯 (Wind)</small>
-                <div>
-                  <button class="btn btn-sm btn-primary" onclick="refreshIndustryData()">
-                    <i class="bi bi-arrow-clockwise"></i> 刷新数据
-                  </button>
-                  <button class="btn btn-sm btn-outline-secondary" onclick="exportIndustryData()">
-                    <i class="bi bi-download"></i> 导出
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+    })
+    .catch(error => {
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
         </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-              <h5 class="card-title mb-0">行业市值分布</h5>
-            </div>
-            <div class="card-body">
-              <div id="industry-chart" style="height: 300px;"></div>
-            </div>
-          </div>
-          <div class="card shadow-sm">
-            <div class="card-header bg-light">
-              <h5 class="card-title mb-0">行业分类统计</h5>
-            </div>
-            <div class="card-body">
-              <div class="row g-3">
-                <div class="col-6">
-                  <div class="border rounded p-3 text-center">
-                    <h3 class="text-primary mb-0">3</h3>
-                    <small class="text-muted">一级行业</small>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="border rounded p-3 text-center">
-                    <h3 class="text-success mb-0">8</h3>
-                    <small class="text-muted">二级行业</small>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="border rounded p-3 text-center">
-                    <h3 class="text-info mb-0">4</h3>
-                    <small class="text-muted">三级行业</small>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="border rounded p-3 text-center">
-                    <h3 class="text-warning mb-0">671</h3>
-                    <small class="text-muted">上市公司</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 行业详情模态框 -->
-      <div class="modal fade" id="industryDetailModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="industryDetailTitle">行业详情</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="industryDetailContent">
-              <!-- 详情内容将通过JS动态填充 -->
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-              <button type="button" class="btn btn-primary">生成行业报告</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 公司列表模态框 -->
-      <div class="modal fade" id="companiesModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="companiesModalTitle">行业公司列表</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="companiesModalContent">
-              <!-- 公司列表内容将通过JS动态填充 -->
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-              <button type="button" class="btn btn-primary">导出公司列表</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // 更新容器内容
-  container.innerHTML = moduleHTML;
-  
-  // 初始化图表
-  initIndustryChart(marketCapData);
-  
-  // 加载Bootstrap的Modal组件
-  loadBootstrapJS();
+      `;
+    });
 }
 
 // 初始化行业图表
@@ -322,9 +173,18 @@ function searchIndustry() {
 
 // 刷新行业数据
 function refreshIndustryData() {
-  // 实际应用中应该重新请求数据
-  console.log('刷新行业数据');
-  alert('数据刷新功能将在后续版本中实现');
+  const contentArea = document.getElementById('content');
+  contentArea.innerHTML = `
+    <div class="text-center py-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">加载中...</span>
+      </div>
+      <p class="mt-2">正在刷新行业数据...</p>
+    </div>
+  `;
+  
+  // 重新渲染模块
+  renderWindIndustryModule(contentArea);
 }
 
 // 导出行业数据
@@ -559,6 +419,186 @@ function viewCompanies(industryId) {
   // 显示模态框
   const modal = new bootstrap.Modal(document.getElementById('companiesModal'));
   modal.show();
+}
+
+// 构建行业模块HTML
+function buildIndustryModuleHTML(industryData) {
+  // 按照行业层级分组
+  const level1Industries = industryData.filter(item => item.industryLevel === 1);
+  const level2Industries = industryData.filter(item => item.industryLevel === 2);
+  
+  return `
+    <div class="mb-4">
+      <h4 class="fw-bold text-primary mb-3">万得行业分类 <span class="badge bg-danger">实时</span></h4>
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">行业分类体系</h5>
+              <div class="input-group" style="width: 300px;">
+                <input type="text" class="form-control form-control-sm" placeholder="搜索行业或代码" id="industry-search">
+                <button class="btn btn-sm btn-outline-primary" type="button" onclick="searchIndustry()">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-hover table-striped mb-0">
+                  <thead class="table-light sticky-top">
+                    <tr>
+                      <th scope="col">行业代码</th>
+                      <th scope="col">行业名称</th>
+                      <th scope="col">级别</th>
+                      <th scope="col">上级行业</th>
+                      <th scope="col">公司数量</th>
+                      <th scope="col">总市值(亿元)</th>
+                      <th scope="col">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="industry-data-table">
+                    ${level1Industries.map(item => `
+                      <tr>
+                        <td>${item.industryCode}</td>
+                        <td>
+                          <div style="padding-left: 0px;">
+                            <a href="#" class="text-decoration-none" onclick="showIndustryDetail('${item.industryCode}')">${item.industryName}</a>
+                          </div>
+                        </td>
+                        <td>${item.industryLevel}</td>
+                        <td>${item.parentIndustryCode ? industryData.find(parent => parent.industryCode === item.parentIndustryCode)?.industryName || '-' : '-'}</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-primary" onclick="viewCompanies('${item.industryCode}')">
+                            <i class="bi bi-list-ul"></i> 查看公司
+                          </button>
+                        </td>
+                      </tr>
+                      ${level2Industries.filter(sub => sub.parentIndustryCode === item.industryCode).map(subItem => `
+                        <tr>
+                          <td>${subItem.industryCode}</td>
+                          <td>
+                            <div style="padding-left: 20px;">
+                              <i class="bi bi-dash"></i> 
+                              <a href="#" class="text-decoration-none" onclick="showIndustryDetail('${subItem.industryCode}')">${subItem.industryName}</a>
+                            </div>
+                          </td>
+                          <td>${subItem.industryLevel}</td>
+                          <td>${subItem.parentIndustryCode ? industryData.find(parent => parent.industryCode === subItem.parentIndustryCode)?.industryName || '-' : '-'}</td>
+                          <td>-</td>
+                          <td>-</td>
+                          <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewCompanies('${subItem.industryCode}')">
+                              <i class="bi bi-list-ul"></i> 查看公司
+                            </button>
+                          </td>
+                        </tr>
+                      `).join('')}
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card-footer bg-light">
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">最后更新: <span id="industry-last-updated">${new Date().toLocaleString()}</span></small>
+                <div>
+                  <button class="btn btn-sm btn-primary" onclick="refreshIndustryData()">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="exportIndustryData()">
+                    <i class="bi bi-download"></i> 导出
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">行业市值分布</h5>
+            </div>
+            <div class="card-body">
+              <div id="industry-chart" style="height: 300px;"></div>
+            </div>
+          </div>
+          <div class="card shadow-sm">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">行业分类统计</h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-6">
+                  <div class="border rounded p-3 text-center">
+                    <h3 class="text-primary mb-0">${level1Industries.length}</h3>
+                    <small class="text-muted">一级行业</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="border rounded p-3 text-center">
+                    <h3 class="text-success mb-0">${level2Industries.length}</h3>
+                    <small class="text-muted">二级行业</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="border rounded p-3 text-center">
+                    <h3 class="text-info mb-0">-</h3>
+                    <small class="text-muted">三级行业</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="border rounded p-3 text-center">
+                    <h3 class="text-warning mb-0">-</h3>
+                    <small class="text-muted">上市公司</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 行业详情模态框 -->
+      <div class="modal fade" id="industryDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="industryDetailTitle">行业详情</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="industryDetailContent">
+              <!-- 详情内容将通过JS动态填充 -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+              <button type="button" class="btn btn-primary">生成行业报告</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 公司列表模态框 -->
+      <div class="modal fade" id="companiesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="companiesModalTitle">行业公司列表</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="companiesModalContent">
+              <!-- 公司列表内容将通过JS动态填充 -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+              <button type="button" class="btn btn-primary">导出公司列表</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // 页面加载完成后初始化

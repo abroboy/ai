@@ -92,9 +92,32 @@ function loadCurvePredictionAnalysis() {
 
 // 渲染曲线预测分析模块内容
 function renderCurvePredictionAnalysisModule(container) {
-  // 获取预测数据
-  const predictionData = getPredictionData();
-  
+  // 从API获取曲线预测分析数据
+  fetch('/api/curve-prediction-analysis')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const predictionData = data.data;
+        renderCurvePredictionAnalysisContent(container, predictionData);
+      } else {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载曲线预测分析数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
+}
+
+// 渲染曲线预测分析内容
+function renderCurvePredictionAnalysisContent(container, predictionData) {
   // 构建模块HTML
   const moduleHTML = buildPredictionModuleHTML(predictionData);
   
@@ -354,7 +377,7 @@ function buildPredictionModuleHTML(data) {
   return `
     <div class="card mb-4">
       <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">曲线预测分析</h5>
+        <h5 class="mb-0">曲线预测分析 <span class="badge bg-danger">实时</span></h5>
       </div>
       <div class="card-body">
         <div class="row mb-3">

@@ -26,6 +26,53 @@ function loadForeignHotspotData() {
 
 // 渲染国外热点数据模块内容
 function renderForeignHotspotModule(container) {
+  // 从API获取国外热点数据
+  fetch('/api/foreign-hotspot')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const hotspotData = data.data;
+        
+        // 区域分布数据（用于图表）
+        const regions = [...new Set(hotspotData.map(item => item.region))];
+        const regionCounts = regions.map(region => {
+          return hotspotData.filter(item => item.region === region).length;
+        });
+        
+        const regionData = {
+          regions: regions,
+          values: regionCounts
+        };
+        
+        // 构建模块HTML
+        const moduleHTML = buildForeignHotspotModuleHTML(hotspotData);
+        container.innerHTML = moduleHTML;
+        
+        // 初始化图表
+        initRegionChart(regionData);
+        
+        // 加载Bootstrap的Modal组件
+        loadBootstrapJS();
+        
+        // 更新最后更新时间
+        document.getElementById('foreign-hotspot-last-updated').textContent = new Date().toLocaleString();
+      } else {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载国外热点数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      // 如果API不可用，使用模拟数据
+      console.warn('API不可用，使用模拟数据:', error);
+      renderWithMockData(container);
+    });
+}
+
+// 使用模拟数据渲染
+function renderWithMockData(container) {
   // 模拟国外热点数据
   const hotspotData = [
     { id: 1, title: "美联储加息预期升温", source: "Bloomberg", date: "2025-09-20", impact: 92, region: "北美", category: "货币政策" },
@@ -47,9 +94,30 @@ function renderForeignHotspotModule(container) {
   };
   
   // 构建模块HTML
-  const moduleHTML = `
+  const moduleHTML = buildForeignHotspotModuleHTML(hotspotData);
+  container.innerHTML = moduleHTML;
+  
+  // 初始化图表
+  initRegionChart(regionData);
+  
+  // 加载Bootstrap的Modal组件
+  loadBootstrapJS();
+  
+  // 显示数据来源提示
+  const alertDiv = document.createElement('div');
+  alertDiv.className = 'alert alert-warning alert-dismissible fade show mt-3';
+  alertDiv.innerHTML = `
+    <i class="bi bi-exclamation-triangle-fill"></i> 当前显示为模拟数据，请连接真实数据源以获取最新信息。
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  container.insertBefore(alertDiv, container.firstChild);
+}
+
+// 构建国外热点模块HTML
+function buildForeignHotspotModuleHTML(hotspotData) {
+  return `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">国外热点数据</h4>
+      <h4 class="fw-bold text-primary mb-3">国外热点数据 <span class="badge bg-danger">实时</span></h4>
       <div class="row">
         <div class="col-md-8">
           <div class="card shadow-sm mb-4">
@@ -107,7 +175,7 @@ function renderForeignHotspotModule(container) {
             </div>
             <div class="card-footer bg-light">
               <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted">最后更新: 2025-09-23 10:15</small>
+                <small class="text-muted">最后更新: <span id="foreign-hotspot-last-updated">${new Date().toLocaleString()}</span></small>
                 <div>
                   <button class="btn btn-sm btn-primary" onclick="refreshForeignHotspotData()">
                     <i class="bi bi-arrow-clockwise"></i> 刷新数据
@@ -137,25 +205,25 @@ function renderForeignHotspotModule(container) {
               <div class="row g-3">
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-primary mb-0">10</h3>
+                    <h3 class="text-primary mb-0">${hotspotData.length}</h3>
                     <small class="text-muted">今日热点</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-success mb-0">6</h3>
+                    <h3 class="text-success mb-0">${[...new Set(hotspotData.map(item => item.region))].length}</h3>
                     <small class="text-muted">区域覆盖</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-danger mb-0">3</h3>
+                    <h3 class="text-danger mb-0">${hotspotData.filter(item => item.impact >= 85).length}</h3>
                     <small class="text-muted">高影响力</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-warning mb-0">7</h3>
+                    <h3 class="text-warning mb-0">${hotspotData.filter(item => item.category.includes('政策')).length}</h3>
                     <small class="text-muted">政策相关</small>
                   </div>
                 </div>
@@ -185,15 +253,6 @@ function renderForeignHotspotModule(container) {
       </div>
     </div>
   `;
-  
-  // 更新容器内容
-  container.innerHTML = moduleHTML;
-  
-  // 初始化图表
-  initRegionChart(regionData);
-  
-  // 加载Bootstrap的Modal组件
-  loadBootstrapJS();
 }
 
 // 初始化区域分布图表
@@ -311,9 +370,18 @@ function filterByRegion(region) {
 
 // 刷新国外热点数据
 function refreshForeignHotspotData() {
-  // 实际应用中应该重新请求数据
-  console.log('刷新国外热点数据');
-  alert('数据刷新功能将在后续版本中实现');
+  const contentArea = document.getElementById('content');
+  contentArea.innerHTML = `
+    <div class="text-center py-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">加载中...</span>
+      </div>
+      <p class="mt-2">正在刷新国外热点数据...</p>
+    </div>
+  `;
+  
+  // 重新渲染模块
+  renderForeignHotspotModule(contentArea);
 }
 
 // 导出国外热点数据

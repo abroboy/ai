@@ -17,70 +17,38 @@ function loadIndustryCompanyScoreTable() {
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderIndustryCompanyScoreTableModule(contentArea);
-  }, 800);
+  // 从API获取行业+公司分值表数据
+  fetch('/api/industry-company-score-table')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const industryData = data.data;
+        renderIndustryCompanyScoreTableModule(contentArea, industryData);
+      } else {
+        contentArea.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载行业+公司分值表数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      contentArea.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
 }
 
 // 渲染行业+公司分值表模块内容
-function renderIndustryCompanyScoreTableModule(container) {
-  // 模拟行业数据
-  const industries = [
-    { code: "BK0438", name: "半导体", score: 94.5, companies: 85 },
-    { code: "BK0475", name: "新能源", score: 92.8, companies: 102 },
-    { code: "BK0428", name: "医疗器械", score: 91.2, companies: 76 },
-    { code: "BK0447", name: "白酒", score: 90.5, companies: 32 },
-    { code: "BK0451", name: "云计算", score: 89.7, companies: 68 },
-    { code: "BK0433", name: "人工智能", score: 88.5, companies: 55 },
-    { code: "BK0465", name: "生物医药", score: 87.2, companies: 92 },
-    { code: "BK0422", name: "煤炭", score: 58.5, companies: 45 },
-    { code: "BK0478", name: "钢铁", score: 56.2, companies: 38 },
-    { code: "BK0424", name: "航运", score: 52.8, companies: 29 }
-  ];
-  
-  // 模拟当前选中行业的公司数据
-  const selectedIndustryCompanies = {
-    industryCode: "BK0438",
-    industryName: "半导体",
-    industryScore: 94.5,
-    updateTime: "2025-09-25 14:30:00",
-    companies: [
-      { rank: 1, code: "603501", name: "韦尔股份", score: 96.8, change: 0.5, marketCap: 1850.5, pe: 42.3, pbr: 8.5 },
-      { rank: 2, code: "688981", name: "中芯国际", score: 95.2, change: 0.8, marketCap: 2350.8, pe: 38.7, pbr: 7.2 },
-      { rank: 3, code: "002049", name: "紫光国微", score: 94.5, change: 1.2, marketCap: 1250.3, pe: 35.2, pbr: 6.8 },
-      { rank: 4, code: "002371", name: "北方华创", score: 93.7, change: 0.3, marketCap: 980.5, pe: 40.5, pbr: 7.8 },
-      { rank: 5, code: "300782", name: "卓胜微", score: 92.8, change: -0.2, marketCap: 850.2, pe: 36.8, pbr: 6.5 },
-      { rank: 6, code: "603986", name: "兆易创新", score: 91.5, change: 0.7, marketCap: 780.5, pe: 32.5, pbr: 5.8 },
-      { rank: 7, code: "688012", name: "中微公司", score: 90.8, change: 1.5, marketCap: 720.3, pe: 45.2, pbr: 8.2 },
-      { rank: 8, code: "300458", name: "全志科技", score: 89.5, change: 0.8, marketCap: 650.8, pe: 38.5, pbr: 6.2 },
-      { rank: 9, code: "688396", name: "华润微", score: 88.7, change: 0.5, marketCap: 620.5, pe: 35.8, pbr: 5.5 },
-      { rank: 10, code: "300223", name: "北京君正", score: 87.2, change: -0.3, marketCap: 580.2, pe: 42.5, pbr: 7.2 }
-    ],
-    scoreDistribution: {
-      "90-100": 8,
-      "80-89": 25,
-      "70-79": 32,
-      "60-69": 15,
-      "50-59": 4,
-      "0-49": 1
-    },
-    industryAvgFinancials: {
-      pe: 38.5,
-      pbr: 6.8,
-      roe: 18.2,
-      netProfitGrowth: 25.3,
-      revenueGrowth: 22.5
-    }
-  };
-  
+function renderIndustryCompanyScoreTableModule(container, industryData) {
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">行业+公司分值表</h4>
+      <h4 class="fw-bold text-primary mb-3">行业+公司分值表 <span class="badge bg-danger">实时</span></h4>
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <p class="text-muted mb-0">最后更新时间: ${selectedIndustryCompanies.updateTime}</p>
+        <p class="text-muted mb-0">最后更新时间: ${industryData.selectedIndustryCompanies.updateTime}</p>
         <div class="btn-group">
           <button class="btn btn-outline-primary btn-sm" onclick="exportIndustryCompanyScoreTable('excel')">
             <i class="bi bi-file-earmark-excel me-1"></i> 导出Excel
@@ -107,8 +75,8 @@ function renderIndustryCompanyScoreTableModule(container) {
                 </div>
               </div>
               <div class="list-group" id="industry-list" style="max-height: 400px; overflow-y: auto;">
-                ${industries.map(industry => `
-                  <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center ${industry.code === selectedIndustryCompanies.industryCode ? 'active' : ''}" 
+                ${industryData.industries.map(industry => `
+                  <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center ${industry.code === industryData.selectedIndustryCompanies.industryCode ? 'active' : ''}" 
                      onclick="selectIndustry('${industry.code}')">
                     <div>
                       <div class="fw-bold">${industry.name}</div>
@@ -128,8 +96,8 @@ function renderIndustryCompanyScoreTableModule(container) {
           <div class="card shadow-sm h-100">
             <div class="card-header bg-light">
               <div class="d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">${selectedIndustryCompanies.industryName} (${selectedIndustryCompanies.industryCode}) - 行业概览</h5>
-                <span class="badge bg-primary fs-5">${selectedIndustryCompanies.industryScore.toFixed(1)}</span>
+                <h5 class="card-title mb-0">${industryData.selectedIndustryCompanies.industryName} (${industryData.selectedIndustryCompanies.industryCode}) - 行业概览</h5>
+                <span class="badge bg-primary fs-5">${industryData.selectedIndustryCompanies.industryScore.toFixed(1)}</span>
               </div>
             </div>
             <div class="card-body">
@@ -144,23 +112,23 @@ function renderIndustryCompanyScoreTableModule(container) {
                       <tbody>
                         <tr>
                           <td>市盈率 (P/E)</td>
-                          <td class="fw-bold text-end">${selectedIndustryCompanies.industryAvgFinancials.pe.toFixed(1)}</td>
+                          <td class="fw-bold text-end">${industryData.selectedIndustryCompanies.industryAvgFinancials.pe.toFixed(1)}</td>
                         </tr>
                         <tr>
                           <td>市净率 (P/B)</td>
-                          <td class="fw-bold text-end">${selectedIndustryCompanies.industryAvgFinancials.pbr.toFixed(1)}</td>
+                          <td class="fw-bold text-end">${industryData.selectedIndustryCompanies.industryAvgFinancials.pbr.toFixed(1)}</td>
                         </tr>
                         <tr>
                           <td>净资产收益率 (ROE)</td>
-                          <td class="fw-bold text-end">${selectedIndustryCompanies.industryAvgFinancials.roe.toFixed(1)}%</td>
+                          <td class="fw-bold text-end">${industryData.selectedIndustryCompanies.industryAvgFinancials.roe.toFixed(1)}%</td>
                         </tr>
                         <tr>
                           <td>净利润增长率</td>
-                          <td class="fw-bold text-end">${selectedIndustryCompanies.industryAvgFinancials.netProfitGrowth.toFixed(1)}%</td>
+                          <td class="fw-bold text-end">${industryData.selectedIndustryCompanies.industryAvgFinancials.netProfitGrowth.toFixed(1)}%</td>
                         </tr>
                         <tr>
                           <td>营收增长率</td>
-                          <td class="fw-bold text-end">${selectedIndustryCompanies.industryAvgFinancials.revenueGrowth.toFixed(1)}%</td>
+                          <td class="fw-bold text-end">${industryData.selectedIndustryCompanies.industryAvgFinancials.revenueGrowth.toFixed(1)}%</td>
                         </tr>
                       </tbody>
                     </table>
@@ -175,7 +143,7 @@ function renderIndustryCompanyScoreTableModule(container) {
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-light">
           <div class="d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">${selectedIndustryCompanies.industryName}行业公司评分列表</h5>
+            <h5 class="card-title mb-0">${industryData.selectedIndustryCompanies.industryName}行业公司评分列表</h5>
             <div class="input-group" style="width: 300px;">
               <input type="text" class="form-control form-control-sm" placeholder="搜索公司" id="company-filter-input">
               <button class="btn btn-sm btn-primary" type="button" onclick="filterCompanies()">
@@ -201,7 +169,7 @@ function renderIndustryCompanyScoreTableModule(container) {
                 </tr>
               </thead>
               <tbody>
-                ${selectedIndustryCompanies.companies.map(company => `
+                ${industryData.selectedIndustryCompanies.companies.map(company => `
                   <tr>
                     <td>${company.rank}</td>
                     <td>${company.code}</td>
@@ -257,7 +225,7 @@ function renderIndustryCompanyScoreTableModule(container) {
   container.innerHTML = moduleHTML;
   
   // 初始化图表
-  initIndustryCompanyCharts(selectedIndustryCompanies);
+  initIndustryCompanyCharts(industryData.selectedIndustryCompanies);
   
   // 初始化交互功能
   initIndustryCompanyInteractions();

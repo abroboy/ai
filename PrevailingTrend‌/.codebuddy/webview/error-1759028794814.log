@@ -1,0 +1,4 @@
+Webview errors at url: http://localhost:8090/index.html
+error: 
+ [Window Error]: [javascript-error]: JavaScript Error: Uncaught SyntaxError: Unexpected token '}' | Url: http://localhost:8090/static/js/enhanced_domestic_hotspot.js | File: http://localhost:8090/static/js/enhanced_domestic_hotspot.js:221:1
+Uncaught SyntaxError: Unexpected token '}'

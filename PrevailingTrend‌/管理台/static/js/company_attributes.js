@@ -26,24 +26,37 @@ function loadCompanyAttributes() {
 
 // 渲染公司属性表模块内容
 function renderCompanyAttributesModule(container) {
-  // 模拟公司属性数据
-  const companies = [
-    { id: 1, name: "腾讯控股", industry: "互联网", region: "深圳", marketCap: 3500, employees: 108000, riskLevel: "中低" },
-    { id: 2, name: "阿里巴巴", industry: "互联网", region: "杭州", marketCap: 2800, employees: 254000, riskLevel: "中" },
-    { id: 3, name: "贵州茅台", industry: "白酒", region: "贵州", marketCap: 2200, employees: 42000, riskLevel: "低" },
-    { id: 4, name: "中国平安", industry: "金融", region: "深圳", marketCap: 1800, employees: 364000, riskLevel: "中高" },
-    { id: 5, name: "宁德时代", industry: "新能源", region: "福建", marketCap: 1200, employees: 88000, riskLevel: "中" },
-    { id: 6, name: "美团", industry: "互联网", region: "北京", marketCap: 950, employees: 92000, riskLevel: "中高" },
-    { id: 7, name: "京东", industry: "电商", region: "北京", marketCap: 850, employees: 460000, riskLevel: "中" },
-    { id: 8, name: "中国移动", industry: "通信", region: "北京", marketCap: 1500, employees: 456000, riskLevel: "低" },
-    { id: 9, name: "比亚迪", industry: "汽车", region: "深圳", marketCap: 1100, employees: 288000, riskLevel: "中" },
-    { id: 10, name: "拼多多", industry: "电商", region: "上海", marketCap: 900, employees: 12000, riskLevel: "高" }
-  ];
+  // 从API获取公司属性数据
+  fetch('/api/company-attributes')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const companies = data.data;
+        renderCompanyAttributesContent(container, companies);
+      } else {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载公司属性数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
+}
+
+// 渲染公司属性内容
+function renderCompanyAttributesContent(container, companies) {
   
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">公司属性表</h4>
+      <h4 class="fw-bold text-primary mb-3">公司属性表 <span class="badge bg-danger">实时</span></h4>
       
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -320,9 +333,20 @@ function filterCompanies(type) {
 
 // 刷新公司数据
 function refreshCompanyData() {
-  // 实际应用中应该重新请求数据
-  console.log('刷新公司数据');
-  alert('数据刷新功能将在后续版本中实现');
+  const contentArea = document.getElementById('content');
+  
+  // 显示加载中状态
+  contentArea.innerHTML = `
+    <div class="text-center py-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">加载中...</span>
+      </div>
+      <p class="mt-2">正在刷新公司属性数据...</p>
+    </div>
+  `;
+  
+  // 重新渲染模块
+  renderCompanyAttributesModule(contentArea);
 }
 
 // 导出公司数据

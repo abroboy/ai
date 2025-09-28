@@ -17,47 +17,36 @@ function loadTaxBankReport() {
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderTaxBankReportModule(contentArea);
-  }, 800);
+  // 从API获取税银报告数据
+  fetch('/api/tax-bank-report')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        // 加载模块内容
+        renderTaxBankReportModule(contentArea, data.data);
+      } else {
+        contentArea.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载税银报告数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      contentArea.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
 }
 
 // 渲染税银报告模块内容
-function renderTaxBankReportModule(container) {
-  // 模拟税银数据
-  const reportData = {
-    companyName: "示例科技有限公司",
-    period: "2025年第三季度",
-    taxInfo: {
-      totalTax: 45000000,
-      taxCompliance: "A级",
-      overdueTax: 0,
-      taxCredits: 120
-    },
-    bankInfo: {
-      creditRating: "AA+",
-      loanAmount: 200000000,
-      overdueLoan: 0,
-      creditLines: 500000000
-    },
-    riskAssessment: {
-      taxRisk: "低风险",
-      financialRisk: "中风险",
-      overallRisk: "中风险"
-    },
-    history: [
-      { period: "2025Q2", taxRisk: "低风险", financialRisk: "低风险", overallRisk: "低风险" },
-      { period: "2025Q1", taxRisk: "低风险", financialRisk: "中风险", overallRisk: "中风险" },
-      { period: "2024Q4", taxRisk: "中风险", financialRisk: "中风险", overallRisk: "中风险" }
-    ]
-  };
-  
+function renderTaxBankReportModule(container, reportData) {
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">税银报告分析 - ${reportData.companyName}</h4>
+      <h4 class="fw-bold text-primary mb-3">税银报告分析 - ${reportData.companyName} <span class="badge bg-danger">实时</span></h4>
       <p class="text-muted mb-4">${reportData.period}</p>
       
       <div class="row mb-4">

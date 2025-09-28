@@ -17,39 +17,64 @@ function loadForumHotspotData() {
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderForumHotspotModule(contentArea);
-  }, 800);
+  // 加载模块内容
+  renderForumHotspotModule(contentArea);
 }
 
 // 渲染雪球等论坛热点数据模块内容
 function renderForumHotspotModule(container) {
-  // 模拟论坛热点数据
-  const hotTopics = [
-    { id: 1, title: "新能源汽车行业未来发展前景如何？", platform: "雪球", author: "价值投资者", date: "2025-09-22", views: 12580, comments: 356, sentiment: 0.78 },
-    { id: 2, title: "半导体国产化进程加速，哪些公司将受益？", platform: "雪球", author: "科技研究员", date: "2025-09-21", views: 9876, comments: 245, sentiment: 0.85 },
-    { id: 3, title: "美联储加息对A股影响分析", platform: "东方财富网", author: "宏观经济学家", date: "2025-09-20", views: 15670, comments: 423, sentiment: -0.32 },
-    { id: 4, title: "医药板块估值修复，关注这些细分领域", platform: "雪球", author: "医药行业分析师", date: "2025-09-19", views: 7890, comments: 198, sentiment: 0.56 },
-    { id: 5, title: "ChatGPT-6发布，AI概念股再度爆发", platform: "集思录", author: "人工智能研究", date: "2025-09-18", views: 18920, comments: 567, sentiment: 0.92 },
-    { id: 6, title: "地产政策松绑，房地产股会否迎来转机？", platform: "东方财富网", author: "地产观察家", date: "2025-09-17", views: 11230, comments: 321, sentiment: 0.12 },
-    { id: 7, title: "新一轮稀土价格上涨，产业链全景梳理", platform: "雪球", author: "资源研究员", date: "2025-09-16", views: 6540, comments: 187, sentiment: 0.65 },
-    { id: 8, title: "光伏行业产能过剩担忧加剧", platform: "集思录", author: "能源分析师", date: "2025-09-15", views: 8760, comments: 234, sentiment: -0.45 },
-    { id: 9, title: "军工板块持续走强，关注这些细分龙头", platform: "雪球", author: "军工研究员", date: "2025-09-14", views: 9870, comments: 276, sentiment: 0.82 },
-    { id: 10, title: "消费电子行业复苏迹象明显", platform: "东方财富网", author: "科技消费分析", date: "2025-09-13", views: 7650, comments: 198, sentiment: 0.43 }
-  ];
-  
-  // 平台分布数据（用于图表）
-  const platformData = {
-    platforms: ['雪球', '东方财富网', '集思录', '股吧', '知乎财经', '其他'],
-    values: [45, 28, 12, 8, 5, 2]
-  };
-  
-  // 构建模块HTML
-  const moduleHTML = `
+  // 从API获取论坛热点数据
+  fetch('/api/forum-hotspot')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const hotTopics = data.data;
+        
+        // 平台分布数据（用于图表）
+        const platforms = [...new Set(hotTopics.map(item => item.platform))];
+        const platformCounts = platforms.map(platform => {
+          return hotTopics.filter(item => item.platform === platform).length;
+        });
+        
+        const platformData = {
+          platforms: platforms,
+          values: platformCounts
+        };
+        
+        // 构建模块HTML
+        const moduleHTML = buildForumHotspotModuleHTML(hotTopics);
+        container.innerHTML = moduleHTML;
+        
+        // 初始化图表
+        initPlatformChart(platformData);
+        
+        // 加载Bootstrap的Modal组件
+        loadBootstrapJS();
+        
+        // 更新最后更新时间
+        document.getElementById('forum-hotspot-last-updated').textContent = new Date().toLocaleString();
+      } else {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载论坛热点数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
+}
+
+// 构建雪球等论坛热点模块HTML
+function buildForumHotspotModuleHTML(hotTopics) {
+  return `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">雪球等论坛热点数据</h4>
+      <h4 class="fw-bold text-primary mb-3">雪球等论坛热点数据 <span class="badge bg-danger">实时</span></h4>
       <div class="row">
         <div class="col-md-8">
           <div class="card shadow-sm mb-4">
@@ -61,11 +86,9 @@ function renderForumHotspotModule(container) {
                 </button>
                 <ul class="dropdown-menu">
                   <li><a class="dropdown-item" href="#" onclick="filterByPlatform('all')">全部平台</a></li>
-                  <li><a class="dropdown-item" href="#" onclick="filterByPlatform('雪球')">雪球</a></li>
-                  <li><a class="dropdown-item" href="#" onclick="filterByPlatform('东方财富网')">东方财富网</a></li>
-                  <li><a class="dropdown-item" href="#" onclick="filterByPlatform('集思录')">集思录</a></li>
-                  <li><a class="dropdown-item" href="#" onclick="filterByPlatform('股吧')">股吧</a></li>
-                  <li><a class="dropdown-item" href="#" onclick="filterByPlatform('知乎财经')">知乎财经</a></li>
+                  ${[...new Set(hotTopics.map(item => item.platform))].map(platform => `
+                    <li><a class="dropdown-item" href="#" onclick="filterByPlatform('${platform}')">${platform}</a></li>
+                  `).join('')}
                 </ul>
               </div>
             </div>
@@ -111,7 +134,7 @@ function renderForumHotspotModule(container) {
             </div>
             <div class="card-footer bg-light">
               <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted">最后更新: 2025-09-23 10:30</small>
+                <small class="text-muted">最后更新: <span id="forum-hotspot-last-updated">${new Date().toLocaleString()}</span></small>
                 <div>
                   <button class="btn btn-sm btn-primary" onclick="refreshForumData()">
                     <i class="bi bi-arrow-clockwise"></i> 刷新数据
@@ -141,25 +164,25 @@ function renderForumHotspotModule(container) {
               <div class="row g-3">
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-primary mb-0">10</h3>
+                    <h3 class="text-primary mb-0">${hotTopics.length}</h3>
                     <small class="text-muted">热门话题</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-success mb-0">6</h3>
+                    <h3 class="text-success mb-0">${hotTopics.filter(item => item.sentiment >= 0.2).length}</h3>
                     <small class="text-muted">积极情绪</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-danger mb-0">2</h3>
+                    <h3 class="text-danger mb-0">${hotTopics.filter(item => item.sentiment < -0.2).length}</h3>
                     <small class="text-muted">消极情绪</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-warning mb-0">2</h3>
+                    <h3 class="text-warning mb-0">${hotTopics.filter(item => item.sentiment >= -0.2 && item.sentiment < 0.2).length}</h3>
                     <small class="text-muted">中性情绪</small>
                   </div>
                 </div>
@@ -189,15 +212,6 @@ function renderForumHotspotModule(container) {
       </div>
     </div>
   `;
-  
-  // 更新容器内容
-  container.innerHTML = moduleHTML;
-  
-  // 初始化图表
-  initPlatformChart(platformData);
-  
-  // 加载Bootstrap的Modal组件
-  loadBootstrapJS();
 }
 
 // 初始化平台分布图表
@@ -312,9 +326,18 @@ function filterByPlatform(platform) {
 
 // 刷新论坛热点数据
 function refreshForumData() {
-  // 实际应用中应该重新请求数据
-  console.log('刷新论坛热点数据');
-  alert('数据刷新功能将在后续版本中实现');
+  const contentArea = document.getElementById('content');
+  contentArea.innerHTML = `
+    <div class="text-center py-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">加载中...</span>
+      </div>
+      <p class="mt-2">正在刷新论坛热点数据...</p>
+    </div>
+  `;
+  
+  // 重新渲染模块
+  renderForumHotspotModule(contentArea);
 }
 
 // 导出论坛热点数据

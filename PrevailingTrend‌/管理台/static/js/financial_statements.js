@@ -26,42 +26,37 @@ function loadFinancialStatements() {
 
 // 渲染财务三表模块内容
 function renderFinancialStatementsModule(container) {
-  // 模拟财务数据
-  const financialData = {
-    companyName: "示例科技有限公司",
-    period: "2025年第三季度",
-    balanceSheet: {
-      assets: 1250000000,
-      liabilities: 750000000,
-      equity: 500000000
-    },
-    incomeStatement: {
-      revenue: 450000000,
-      cost: 280000000,
-      profit: 120000000
-    },
-    cashFlow: {
-      operating: 85000000,
-      investing: -35000000,
-      financing: 20000000
-    },
-    ratios: {
-      currentRatio: 1.8,
-      debtToEquity: 1.5,
-      grossMargin: 0.38,
-      roe: 0.24
-    },
-    history: [
-      { period: "2025Q2", revenue: 420000000, profit: 110000000, assets: 1200000000 },
-      { period: "2025Q1", revenue: 380000000, profit: 95000000, assets: 1150000000 },
-      { period: "2024Q4", revenue: 400000000, profit: 105000000, assets: 1100000000 }
-    ]
-  };
+  // 从API获取财务三表数据
+  fetch('/api/financial-statements')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const financialData = data.data;
+        renderFinancialStatementsContent(container, financialData);
+      } else {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载财务三表数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
+}
+
+// 渲染财务三表内容
+function renderFinancialStatementsContent(container, financialData) {
   
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">财务三表分析 - ${financialData.companyName}</h4>
+      <h4 class="fw-bold text-primary mb-3">财务三表分析 - ${financialData.companyName} <span class="badge bg-danger">实时</span></h4>
       <p class="text-muted mb-4">${financialData.period}</p>
       
       <div class="row mb-4">

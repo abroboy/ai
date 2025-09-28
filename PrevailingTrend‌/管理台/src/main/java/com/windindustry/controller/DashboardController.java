@@ -56,7 +56,8 @@ public class DashboardController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getStats() {
         try {
-            Map<String, Object> stats = stockService.getStatistics();
+            // 实时获取统计数据
+            Map<String, Object> stats = stockService.getRealTimeStatistics();
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", stats);
@@ -73,7 +74,8 @@ public class DashboardController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getIndustries() {
         try {
-            List<Map<String, Object>> industries = stockService.getIndustryStatistics();
+            // 实时获取行业统计数据
+            List<Map<String, Object>> industries = stockService.getRealTimeIndustryStatistics();
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", industries);
@@ -94,13 +96,14 @@ public class DashboardController {
             @RequestParam(defaultValue = "stock_code") String sort_by,
             @RequestParam(defaultValue = "asc") String sort_order) {
         try {
-            List<Map<String, Object>> stocks = stockService.getStocksWithFlowData(page, page_size, sort_by, sort_order);
+            // 实时获取股票数据
+            List<Map<String, Object>> stocks = stockService.getRealTimeStocksWithFlowData(page, page_size, sort_by, sort_order);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             
             Map<String, Object> data = new HashMap<>();
             data.put("stocks", stocks);
-            data.put("total", stockService.getStatistics().get("total_stocks"));
+            data.put("total", stockService.getRealTimeStatistics().get("total_stocks"));
             data.put("page", page);
             data.put("page_size", page_size);
             

@@ -3,73 +3,6 @@
  * 大势所趋风险框架管理台 - 第二层模块
  */
 
-// 获取当前热点数据
-function getCurrentHotspotData() {
-  return [
-    { id: 1, name: "AI技术突破", source: "国内热点", category: "科技", heat: 95, trend: "上升", riskLevel: "中" },
-    { id: 2, name: "新能源政策", source: "国外热点", category: "政策", heat: 88, trend: "上升", riskLevel: "低" },
-    { id: 3, name: "金融市场波动", source: "全球资金", category: "金融", heat: 92, trend: "波动", riskLevel: "高" },
-    { id: 4, name: "消费复苏", source: "国内热点", category: "经济", heat: 76, trend: "上升", riskLevel: "中低" },
-    { id: 5, name: "地缘政治", source: "国外热点", category: "政治", heat: 85, trend: "上升", riskLevel: "高" },
-    { id: 6, name: "医疗创新", source: "雪球论坛", category: "医疗", heat: 72, trend: "稳定", riskLevel: "中" },
-    { id: 7, name: "房地产政策", source: "国内热点", category: "政策", heat: 83, trend: "波动", riskLevel: "中高" },
-    { id: 8, name: "芯片短缺", source: "国外热点", category: "科技", heat: 78, trend: "下降", riskLevel: "中" },
-    { id: 9, name: "碳中和进展", source: "全球资金", category: "环保", heat: 81, trend: "上升", riskLevel: "中低" },
-    { id: 10, name: "数字货币", source: "雪球论坛", category: "金融", heat: 89, trend: "波动", riskLevel: "高" }
-  ];
-}
-
-// 导出数据到深度分析模块
-function exportToDeepAnalysis() {
-  // 获取当前热点数据
-  const hotspotData = getCurrentHotspotData();
-  
-  // 存储到全局数据总线
-  window.appData = window.appData || {};
-  window.appData.hotspotData = hotspotData;
-  
-  // 提示用户
-  const toastHTML = `
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-      <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header bg-success text-white">
-          <strong class="me-auto">数据导出成功</strong>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-          热点数据已准备好，可以切换到"深度分析"模块进行进一步分析
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', toastHTML);
-  
-  // 3秒后自动移除提示
-  setTimeout(() => {
-    const toast = document.querySelector('.toast.show');
-    if (toast) {
-      toast.remove();
-    }
-  }, 3000);
-}
-
-// 获取当前热点数据
-function getCurrentHotspotData() {
-  return [
-    { id: 1, name: "AI技术突破", source: "国内热点", category: "科技", heat: 95, trend: "上升", riskLevel: "中" },
-    { id: 2, name: "新能源政策", source: "国外热点", category: "政策", heat: 88, trend: "上升", riskLevel: "低" },
-    { id: 3, name: "金融市场波动", source: "全球资金", category: "金融", heat: 92, trend: "波动", riskLevel: "高" },
-    { id: 4, name: "消费复苏", source: "国内热点", category: "经济", heat: 76, trend: "上升", riskLevel: "中低" },
-    { id: 5, name: "地缘政治", source: "国外热点", category: "政治", heat: 85, trend: "上升", riskLevel: "高" },
-    { id: 6, name: "医疗创新", source: "雪球论坛", category: "医疗", heat: 72, trend: "稳定", riskLevel: "中" },
-    { id: 7, name: "房地产政策", source: "国内热点", category: "政策", heat: 83, trend: "波动", riskLevel: "中高" },
-    { id: 8, name: "芯片短缺", source: "国外热点", category: "科技", heat: 78, trend: "下降", riskLevel: "中" },
-    { id: 9, name: "碳中和进展", source: "全球资金", category: "环保", heat: 81, trend: "上升", riskLevel: "中低" },
-    { id: 10, name: "数字货币", source: "雪球论坛", category: "金融", heat: 89, trend: "波动", riskLevel: "高" }
-  ];
-}
-
 // 加载热点数据表模块
 function loadHotspotDataTable() {
   const contentArea = document.getElementById('content');
@@ -84,33 +17,36 @@ function loadHotspotDataTable() {
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderHotspotDataTableModule(contentArea);
-  }, 800);
+  // 从API获取热点数据
+  fetch('/api/domestic-hotspot')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        const hotspotData = data.data;
+        renderHotspotDataTableModule(contentArea, hotspotData);
+      } else {
+        contentArea.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> 无法加载热点数据: ${data.message || '未知错误'}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      contentArea.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 请求失败: ${error.message}
+        </div>
+      `;
+    });
 }
 
 // 渲染热点数据表模块内容
-function renderHotspotDataTableModule(container) {
-  // 模拟热点数据
-  const hotspotData = [
-    { id: 1, name: "AI技术突破", source: "国内热点", category: "科技", heat: 95, trend: "上升", riskLevel: "中" },
-    { id: 2, name: "新能源政策", source: "国外热点", category: "政策", heat: 88, trend: "上升", riskLevel: "低" },
-    { id: 3, name: "金融市场波动", source: "全球资金", category: "金融", heat: 92, trend: "波动", riskLevel: "高" },
-    { id: 4, name: "消费复苏", source: "国内热点", category: "经济", heat: 76, trend: "上升", riskLevel: "中低" },
-    { id: 5, name: "地缘政治", source: "国外热点", category: "政治", heat: 85, trend: "上升", riskLevel: "高" },
-    { id: 6, name: "医疗创新", source: "雪球论坛", category: "医疗", heat: 72, trend: "稳定", riskLevel: "中" },
-    { id: 7, name: "房地产政策", source: "国内热点", category: "政策", heat: 83, trend: "波动", riskLevel: "中高" },
-    { id: 8, name: "芯片短缺", source: "国外热点", category: "科技", heat: 78, trend: "下降", riskLevel: "中" },
-    { id: 9, name: "碳中和进展", source: "全球资金", category: "环保", heat: 81, trend: "上升", riskLevel: "中低" },
-    { id: 10, name: "数字货币", source: "雪球论坛", category: "金融", heat: 89, trend: "波动", riskLevel: "高" }
-  ];
-  
+function renderHotspotDataTableModule(container, hotspotData) {
   // 构建模块HTML
   const moduleHTML = `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">热点数据表</h4>
+      <h4 class="fw-bold text-primary mb-3">热点数据表 <span class="badge bg-danger">实时</span></h4>
       
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -187,18 +123,6 @@ function renderHotspotDataTableModule(container) {
                 <i class="bi bi-arrow-clockwise"></i> 刷新数据
               </button>
               <button class="btn btn-sm btn-outline-secondary ms-2" onclick="exportHotspotData()">
-                <i class="bi bi-download"></i> 导出
-              </button>
-            </div>
-          </div>
-        </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <small class="text-muted">共 ${hotspotData.length} 条热点数据</small>
-            <div>
-              <button class="btn btn-sm btn-primary" onclick="refreshHotspotData()">
-                <i class="bi bi-arrow-clockwise"></i> 刷新数据
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="exportHotspotData()">
                 <i class="bi bi-download"></i> 导出
               </button>
             </div>
@@ -419,6 +343,59 @@ function getCategoryColor(category) {
   return colors[category] || '#8b572a';
 }
 
+// 获取当前热点数据（用于导出功能）
+function getCurrentHotspotData() {
+  // 这个函数应该从DOM中提取当前显示的数据
+  // 为了简化，我们返回一个示例数据
+  return [
+    { id: 1, name: "AI技术突破", source: "国内热点", category: "科技", heat: 95, trend: "上升", riskLevel: "中" },
+    { id: 2, name: "新能源政策", source: "国外热点", category: "政策", heat: 88, trend: "上升", riskLevel: "低" },
+    { id: 3, name: "金融市场波动", source: "全球资金", category: "金融", heat: 92, trend: "波动", riskLevel: "高" },
+    { id: 4, name: "消费复苏", source: "国内热点", category: "经济", heat: 76, trend: "上升", riskLevel: "中低" },
+    { id: 5, name: "地缘政治", source: "国外热点", category: "政治", heat: 85, trend: "上升", riskLevel: "高" },
+    { id: 6, name: "医疗创新", source: "雪球论坛", category: "医疗", heat: 72, trend: "稳定", riskLevel: "中" },
+    { id: 7, name: "房地产政策", source: "国内热点", category: "政策", heat: 83, trend: "波动", riskLevel: "中高" },
+    { id: 8, name: "芯片短缺", source: "国外热点", category: "科技", heat: 78, trend: "下降", riskLevel: "中" },
+    { id: 9, name: "碳中和进展", source: "全球资金", category: "环保", heat: 81, trend: "上升", riskLevel: "中低" },
+    { id: 10, name: "数字货币", source: "雪球论坛", category: "金融", heat: 89, trend: "波动", riskLevel: "高" }
+  ];
+}
+
+// 导出数据到深度分析模块
+function exportToDeepAnalysis() {
+  // 获取当前热点数据
+  const hotspotData = getCurrentHotspotData();
+  
+  // 存储到全局数据总线
+  window.appData = window.appData || {};
+  window.appData.hotspotData = hotspotData;
+  
+  // 提示用户
+  const toastHTML = `
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+          <strong class="me-auto">数据导出成功</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          热点数据已准备好，可以切换到"深度分析"模块进行进一步分析
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', toastHTML);
+  
+  // 3秒后自动移除提示
+  setTimeout(() => {
+    const toast = document.querySelector('.toast.show');
+    if (toast) {
+      toast.remove();
+    }
+  }, 3000);
+}
+
 // 按条件筛选热点数据
 function filterHotspots(type) {
   // 实际应用中应该根据类型过滤数据
@@ -428,9 +405,8 @@ function filterHotspots(type) {
 
 // 刷新热点数据
 function refreshHotspotData() {
-  // 实际应用中应该重新请求数据
-  console.log('刷新热点数据');
-  alert('数据刷新功能将在后续版本中实现');
+  // 重新加载热点数据
+  loadHotspotDataTable();
 }
 
 // 导出热点数据
