@@ -344,3 +344,35 @@ body {
         border-radius: 0 0 var(--border-radius) var(--border-radius);
     }
 }
+
+/* 表格排序样式 */
+.sortable {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.sortable:hover {
+    background-color: rgba(26, 188, 156, 0.05);
+}
+
+.sortable::after {
+    content: '↕';
+    position: absolute;
+    right: 8px;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    opacity: 0.5;
+}
+
+.sortable.sort-asc::after {
+    content: '↑';
+    color: var(--secondary-color);
+    opacity: 1;
+}
+
+.sortable.sort-desc::after {
+    content: '↓';
+    color: var(--secondary-color);
+    opacity: 1;
+}
