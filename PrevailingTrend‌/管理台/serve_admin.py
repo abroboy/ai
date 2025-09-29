@@ -4,6 +4,97 @@
 import json
 import os
 import random
+import time
+from datetime import datetime
+import threading
+from database import init_db, update_stock_data, get_stocks, get_industries, get_db_tables, execute_db_query
+
+# 从新浪财经获取数据
+def fetch_from_sina():
+    try:
+        import requests
+        # 获取上证指数和深证成指
+        sina_url = "http://hq.sinajs.cn/list=s_sh000001,s_sz399001"
+        response = requests.get(sina_url, timeout=5)
+        response.raise_for_status()
+        
+        # 解析新浪数据格式
+        raw_text = response.text
+        stock_data = []
+        for line in raw_text.split(';'):
+            if not line.strip():
+                continue
+            
+            parts = line.split('=')
+            if len(parts) != 2:
+                continue
+            
+            code = parts[0].split('_')[-1]
+            values = parts[1].strip('"').split(',')
+            if len(values) < 6:
+                continue
+            
+            stock_data.append({
+                'code': code,
+                'name': values[0],
+                'price': float(values[1]),
+                'change_percent': float(values[3]),
+                'volume': int(float(values[4])),
+                'market_cap': 0,
+                'industry': '指数',
+                'heat_score': 100,
+                'sentiment': "积极" if float(values[3]) >= 0 else "消极"
+            })
+        
+        # 添加模拟A股数据
+        for i in range(50):
+            code = f"60{i:04d}"
+            stock_data.append({
+                'code': code,
+                'name': f"模拟股票{i}",
+                'price': random.uniform(5, 100),
+                'change_percent': random.uniform(-5, 5),
+                'volume': random.randint(10000, 1000000),
+                'market_cap': random.randint(1000000, 10000000000),
+                'industry': random.choice(['银行', '科技', '医药', '能源', '消费', '制造']),
+                'heat_score': random.uniform(10, 100),
+                'sentiment': random.choice(['积极', '中性', '消极'])
+            })
+        
+        return stock_data
+    except Exception as e:
+        print(f"获取新浪数据失败: {e}")
+        return []
+
+# 异步更新数据
+def async_update_data():
+    while True:
+        try:
+            # 获取数据并更新数据库
+            data = fetch_from_sina()
+            if data:
+                update_stock_data(data)
+                print(f"数据库更新成功，共{len(data)}条记录")
+            else:
+                print("获取数据失败，未更新数据库")
+        except Exception as e:
+            print(f"数据更新失败: {e}")
+        time.sleep(3600)  # 每小时更新一次
+
+# 立即执行一次数据更新
+try:
+    data = fetch_from_sina()
+    if data:
+        update_stock_data(data)
+        print(f"初始数据库更新成功，共{len(data)}条记录")
+except Exception as e:
+    print(f"初始数据更新失败: {e}")
+
+# 启动时开始异步更新
+update_thread = threading.Thread(target=async_update_data)
+update_thread.daemon = True
+update_thread.start()
+import requests
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 from datetime import datetime, timedelta
@@ -13,7 +104,7 @@ PORT = int(os.environ.get("PORT", "8090"))
 
 # 受限目录映射（避免任意访问）
 SAFE_KEYS = {
-    "wind": os.path.abspath(os.path.join(ROOT_DIR, "..", "第一层模块", "万得行业分类")),
+    "wind": os.path.abspath(os.path.join(ROOT_DIR, "..", "第一层模块", "上市公司或行业分类")),
 }
 
 class AdminHandler(SimpleHTTPRequestHandler):
@@ -58,7 +149,17 @@ class AdminHandler(SimpleHTTPRequestHandler):
             raise
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path == "/api/domestic-hotspot":
+        # 处理页面路由
+        if parsed.path == "/domestic_stocks":
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            with open(os.path.join(ROOT_DIR, "templates", "domestic_stocks.html"), "rb") as f:
+                self.wfile.write(f.read())
+            return
+            
+        # 处理API路由
+        if parsed.path == "/api/domestic/hotspots" or parsed.path == "/api/domestic-hotspot":
             self._send_json(self._generate_hotspots())
             return
         if parsed.path == "/api/domestic-hotspot/stats":
@@ -110,6 +211,18 @@ class AdminHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/object-factor-weight-table":
             self._send_json(self._generate_object_factor_weight_table())
             return
+        if parsed.path == "/api/db/tables":
+            self._send_json({"success": True, "data": get_db_tables()})
+            return
+        if parsed.path == "/api/db/query":
+            params = parse_qs(parsed.query or "")
+            query = (params.get("query") or [""])[0]
+            if query:
+                result = execute_db_query(query)
+                self._send_json(result)
+            else:
+                self._send_json({"success": False, "message": "查询语句不能为空"})
+            return
         if parsed.path == "/api/list-dir":
             params = parse_qs(parsed.query or "")
             key = (params.get("key") or [""])[0]
@@ -131,45 +244,179 @@ class AdminHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def _generate_hotspots(self):
-        # 移除缓存机制，确保每次请求都获取最新数据
         try:
-            # 从管理台目录下加载热点数据文件
-            data_file = os.path.join(ROOT_DIR, "hotspots.json")
-            # 使用 utf-8-sig 编码打开文件，避免BOM问题
-            with open(data_file, 'r', encoding='utf-8-sig') as f:
-                data = json.load(f)
+            stocks = get_stocks(100)
+            if stocks:
+                return {
+                    "success": True,
+                    "data": [{
+                        'id': stock['code'],
+                        'title': f"{stock['name']} ({stock['code']})",
+                        'category': stock['industry'],
+                        'content': f"价格: {stock['price']} 涨跌幅: {stock['change_percent']}%",
+                        'publishTime': stock['last_update'],
+                        'source': "数据库",
+                        'heatScore': stock['heat_score'],
+                        'sentiment': stock['sentiment'],
+                        'keywords': [stock['industry'], "A股"]
+                    } for stock in stocks]
+                }
+        except Exception as e:
+            print(f"从数据库获取数据失败: {str(e)}")
             
-            # 确保数据是最新的（今天的数据）
-            today = datetime.now().strftime("%Y-%m-%d")
-            
-            # 映射字段名以匹配前端期望的格式
-            mapped_data = []
-            for item in data:
-                # 只获取今天的数据，但如果今天没有数据，也返回所有数据（用于演示）
-                if item.get('date') == today or True:
+        # 如果数据库中没有数据或获取失败，尝试从API获取
+        try:
+            # 尝试从本地缓存文件读取
+            cache_file = os.path.join(ROOT_DIR, "domestic_stocks_cache.json")
+            if os.path.exists(cache_file):
+                with open(cache_file, 'r', encoding='utf-8') as f:
+                    cached_data = json.load(f)
+                    if cached_data.get("expire_time", 0) > time.time():
+                        return {"success": True, "data": cached_data["data"]}
+
+            # 尝试新浪财经免费API
+            try:
+                sina_url = "http://hq.sinajs.cn/list=s_sh000001,s_sz399001"
+                response = requests.get(sina_url, timeout=5)
+                response.raise_for_status()
+                
+                # 解析新浪数据格式
+                raw_text = response.text
+                stock_data = []
+                for line in raw_text.split(';'):
+                    if not line.strip():
+                        continue
+                    
+                    # 示例数据格式: var hq_str_s_sh000001="上证指数,3094.9209,3094.9209,3078.5500,3094.9209,3078.5500..."
+                    parts = line.split('=')
+                    if len(parts) != 2:
+                        continue
+                    
+                    code = parts[0].split('_')[-1]
+                    values = parts[1].strip('"').split(',')
+                    if len(values) < 6:
+                        continue
+                    
+                    stock_data.append({
+                        'code': code,
+                        'name': values[0],
+                        'price': values[1],
+                        'change_percent': str((float(values[2]) - float(values[1])) / float(values[1]) * 100),
+                        'volume': values[4],
+                        'industry': '指数'  # 新浪不提供行业信息，需要从其他接口获取
+                    })
+                
+                # 获取行业数据（从东方财富免费接口）
+                if stock_data:
+                    eastmoney_url = "http://push2.eastmoney.com/api/qt/ulist.np/get"
+                    params = {
+                        'fltt': '2',
+                        'fields': 'f2,f3,f12,f14,f100,f104,f105,f124',
+                        'secids': '1.000001,0.399001'
+                    }
+                    em_response = requests.get(eastmoney_url, params=params, timeout=5)
+                    if em_response.status_code == 200:
+                        em_data = em_response.json().get('data', {}).get('diff', [])
+                        for item in em_data:
+                            for stock in stock_data:
+                                if stock['code'] == item.get('f12', ''):
+                                    stock['industry'] = item.get('f100', '未知行业')
+                                    stock['heatScore'] = item.get('f104', 0)  # 热度评分
+                
+                # 转换数据格式
+                mapped_data = []
+                for item in stock_data:
                     mapped_item = {
-                        'id': item.get('id'),
-                        'title': item.get('title'),
-                        'category': item.get('category'),
-                        'content': item.get('description'),  # 将description映射到content
-                        'publishTime': item.get('date'),      # 将date映射到publishTime
-                        'source': item.get('source'),
-                        'heatScore': item.get('importance'),  # 将importance映射到heatScore
-                        'sentiment': item.get('sentiment'),
-                        'keywords': item.get('keywords')
+                        'id': item.get("code"),
+                        'title': f"{item.get('name')} ({item.get('code')})",
+                        'category': item.get("industry"),
+                        'content': f"当前价格: {item.get('price')} 涨跌幅: {item.get('change_percent')}%",
+                        'publishTime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'source': "市场数据API",
+                        'heatScore': item.get("volume", 0) / 1000000,
+                        'sentiment': "积极" if float(item.get("change_percent", 0)) >= 0 else "消极",
+                        'keywords': [item.get("industry"), "A股"]
                     }
                     mapped_data.append(mapped_item)
+                
+                if mapped_data:
+                    # 更新缓存
+                    with open(cache_file, 'w', encoding='utf-8') as f:
+                        json.dump({
+                            "data": mapped_data,
+                            "expire_time": int(time.time()) + 3600  # 1小时缓存
+                        }, f)
+                    return {"success": True, "data": mapped_data}
             
-            if not mapped_data:
-                raise ValueError("没有找到可用的国内热点数据")
+            except Exception as api_error:
+                print(f"主API调用失败: {str(api_error)}")
+                # 主API失败时尝试备用API
+
+            # 备用数据源 - 使用东方财富行业数据
+            try:
+                industry_url = "http://push2.eastmoney.com/api/qt/clist/get"
+                params = {
+                    'pn': '1',
+                    'pz': '20',
+                    'po': '1',
+                    'np': '1',
+                    'fltt': '2',
+                    'invt': '2',
+                    'fid': 'f3',
+                    'fs': 'm:90+t:2',
+                    'fields': 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f23,f24,f25,f26,f22,f33,f11,f62,f128,f136,f115,f152',
+                    '_': str(int(time.time()*1000))
+                }
+                response = requests.get(industry_url, params=params, timeout=5)
+                if response.status_code == 200:
+                    data = response.json().get('data', {}).get('diff', [])
+                    mapped_data = []
+                    for item in data:
+                        mapped_data.append({
+                            'id': item.get('f12'),
+                            'title': f"{item.get('f14')} ({item.get('f12')})",
+                            'category': item.get('f100', '未知行业'),
+                            'content': f"当前涨跌幅: {item.get('f3', 0)}%",
+                            'publishTime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            'source': "东方财富",
+                            'heatScore': item.get('f104', 0),
+                            'sentiment': "积极" if float(item.get('f3', 0)) >= 0 else "消极",
+                            'keywords': [item.get('f100', '未知行业'), "A股"]
+                        })
+                    if mapped_data:
+                        return {"success": True, "data": mapped_data}
             
-            return {"success": True, "data": mapped_data}
+            except Exception as e:
+                print(f"备用API调用失败: {str(e)}")
+
+            # 最终回退到本地缓存或模拟数据
+            backup_file = os.path.join(ROOT_DIR, "domestic_stocks_backup.json")
+            if os.path.exists(backup_file):
+                with open(backup_file, 'r', encoding='utf-8') as f:
+                    backup_data = json.load(f)
+                    return {"success": True, "data": backup_data.get("data", [])}
+
+            return {
+                "success": True,
+                "data": [
+                    {
+                        'id': "000001",
+                        'title': "上证指数 (000001)",
+                        'category': "指数",
+                        'content': "默认数据，请配置有效数据源",
+                        'publishTime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'source': "系统",
+                        'heatScore': 50,
+                        'sentiment': "中性",
+                        'keywords': ["指数", "A股"]
+                    }
+                ]
+            }
             
         except Exception as e:
-            # 如果获取真实数据失败，返回错误信息
             return {
                 "success": False,
-                "message": f"获取国内热点数据失败: {str(e)}",
+                "message": f"获取国内上市公司数据失败: {str(e)}",
                 "data": []
             }
 
@@ -317,7 +564,7 @@ class AdminHandler(SimpleHTTPRequestHandler):
             }
 
     def _generate_wind_industries(self):
-        # 模拟万得行业分类数据
+        # 模拟上市公司或行业分类数据
         # 在实际应用中，这里应该连接真实的数据源
         try:
             wind_industries_data = [
@@ -391,7 +638,7 @@ class AdminHandler(SimpleHTTPRequestHandler):
         except Exception as e:
             return {
                 "success": False,
-                "message": f"获取万得行业分类数据失败: {str(e)}",
+                "message": f"获取上市公司或行业分类数据失败: {str(e)}",
                 "data": []
             }
 

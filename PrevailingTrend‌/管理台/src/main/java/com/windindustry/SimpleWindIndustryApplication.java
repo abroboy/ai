@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * 万得行业分类应用启动类
+ * 上市公司或行业分类应用启动类
  * 简化版本，专注于核心功能
  */
 @SpringBootApplication
@@ -12,7 +12,7 @@ public class SimpleWindIndustryApplication {
     
     public static void main(String[] args) {
         System.out.println("========================================");
-        System.out.println("万得行业分类仪表盘启动中...");
+        System.out.println("上市公司或行业分类仪表盘启动中...");
         System.out.println("Java版本: " + System.getProperty("java.version"));
         System.out.println("工作目录: " + System.getProperty("user.dir"));
         System.out.println("========================================");

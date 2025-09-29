@@ -80,7 +80,7 @@ public class DataCollectionService {
     }
     
     public void collectWindIndustryData() {
-        System.out.println("正在获取万得行业分类数据...");
+        System.out.println("正在获取上市公司或行业分类数据...");
         
         try {
             List<WindIndustryClassification> industries = generateWindIndustryData();
@@ -268,9 +268,9 @@ public class DataCollectionService {
     }
     
     public void refreshWindIndustryData() {
-        System.out.println("刷新万得行业分类数据...");
+        System.out.println("刷新上市公司或行业分类数据...");
         collectWindIndustryData();
-        System.out.println("万得行业数据刷新完成");
+        System.out.println("上市公司或行业数据刷新完成");
     }
     
     /**

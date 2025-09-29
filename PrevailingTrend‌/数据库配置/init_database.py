@@ -48,7 +48,7 @@ def create_layer1_tables():
         connection = pymysql.connect(**db_config.get_connection_config())
         cursor = connection.cursor()
         
-        # 万得行业分类表
+        # 上市公司或行业分类表
         wind_industry_sql = """
         CREATE TABLE IF NOT EXISTS l1_wind_industry_classification (
             id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -75,7 +75,7 @@ def create_layer1_tables():
             KEY idx_status (status),
             KEY idx_source (source),
             KEY idx_update_date (update_date)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='万得行业分类表';
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='上市公司或行业分类表';
         """
         
         stock_industry_sql = """
@@ -175,7 +175,7 @@ def create_layer1_tables():
         
         # 执行SQL
         tables = [
-            ('万得行业分类表', wind_industry_sql),
+            ('上市公司或行业分类表', wind_industry_sql),
             ('股票行业映射表', stock_industry_sql),
             ('公司名字列表表', company_list_sql),
             ('国内热点数据表', domestic_hotspot_sql)
@@ -364,7 +364,7 @@ def insert_sample_data():
         
         # 插入示例模块状态数据
         module_status_data = [
-            ('万得行业分类', 'LAYER1', 'running', datetime.now(), datetime.now(), 10, 0, None, '{"interval": 3600}', datetime.now()),
+            ('上市公司或行业分类', 'LAYER1', 'running', datetime.now(), datetime.now(), 10, 0, None, '{"interval": 3600}', datetime.now()),
             ('公司名字列表', 'LAYER1', 'running', datetime.now(), datetime.now(), 8, 1, '数据源连接失败', '{"interval": 7200}', datetime.now()),
             ('国内热点数据', 'LAYER1', 'stopped', None, datetime.now(), 0, 0, None, '{"interval": 1800}', datetime.now())
         ]
@@ -416,7 +416,7 @@ def main():
         print("=" * 60)
         print("已创建的表:")
         print("  第一层模块:")
-        print("    - l1_wind_industry_classification (万得行业分类)")
+        print("    - l1_wind_industry_classification (上市公司或行业分类)")
         print("    - l1_wind_stock_industry_mapping (股票行业映射)")
         print("    - l1_company_list_info (公司名字列表)")
         print("    - l1_domestic_hotspot_data (国内热点数据)")

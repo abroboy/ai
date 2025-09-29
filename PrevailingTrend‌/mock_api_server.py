@@ -16,7 +16,7 @@ class MockAPIHandler(http.server.BaseHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             
-            # 完整的万得行业分类数据（基于二级市场标准）
+            # 完整的上市公司或行业分类数据（基于二级市场标准）
             mock_data = {
                 "success": True,
                 "data": [
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     
     with socketserver.TCPServer(("", PORT), MockAPIHandler) as httpd:
         print(f"========================================")
-        print(f"万得行业分类API模拟服务器启动中...")
+        print(f"上市公司或行业分类API模拟服务器启动中...")
         print(f"端口: {PORT}")
         print(f"API地址: http://localhost:{PORT}/api/wind-industries")
         print(f"统计数据: http://localhost:{PORT}/api/wind-industries/stats")

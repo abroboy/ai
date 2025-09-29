@@ -52,7 +52,7 @@
       <div class="fw-bold mb-2">目录导航栏</div>
       <div class="small text-muted mb-2">第一层模块 - 基础数据采集</div>
       <div class="module-item" onclick="loadModule('国内热点数据')">国内热点数据 <span class="enhanced-badge">增强版</span> <span class="realtime-badge">实时</span></div>
-      <div class="module-item" onclick="loadModule('万得行业分类')">万得行业分类 <span class="realtime-badge">实时</span></div>
+      <div class="module-item" onclick="loadModule('上市公司或行业分类')">上市公司或行业分类 <span class="realtime-badge">实时</span></div>
       <div class="module-item" onclick="loadModule('国外热点数据')">国外热点数据 <span class="realtime-badge">实时</span></div>
       <div class="module-item" onclick="loadModule('雪球等论坛热点数据')">雪球等论坛热点数据 <span class="realtime-badge">实时</span></div>
       <div class="module-item" onclick="loadModule('全球资金流向')">全球资金流向 <span class="realtime-badge">实时</span></div>
@@ -104,7 +104,7 @@
           return;
         }
       }
-      if(name==='万得行业分类' && typeof loadWindIndustryClassification==='function'){
+      if(name==='上市公司或行业分类' && typeof loadWindIndustryClassification==='function'){
         loadWindIndustryClassification();
         return;
       }
@@ -174,7 +174,28 @@
     
     // 基础模块加载函数
     function loadBasicModule(name) {
-      document.getElementById('content').innerHTML = '<div class="p-3">模块 '+name+' 正在建设中。</div>';
+      // 更友好的错误提示
+      var errorHtml = `
+      <div class="p-3">
+        <div class="alert alert-warning">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <div>
+              <h5 class="mb-1">模块 ${name} 正在升级中</h5>
+              <p class="mb-0">我们正在为您优化此模块，请稍后再试</p>
+              ${name === '国内热点数据' ? `
+              <div class="mt-2">
+                <button class="btn btn-sm btn-primary" onclick="window.loadEnhancedDomesticHotspotData && window.loadEnhancedDomesticHotspotData()">
+                  <i class="bi bi-arrow-clockwise"></i> 尝试重新加载
+                </button>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+      `;
+      document.getElementById('content').innerHTML = errorHtml;
     }
     
     // 页面加载完成后初始化

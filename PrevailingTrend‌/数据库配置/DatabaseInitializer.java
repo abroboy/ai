@@ -62,7 +62,7 @@ public class DatabaseInitializer {
             System.out.println("=" .repeat(60));
             System.out.println("已创建的表:");
             System.out.println("  第一层模块:");
-            System.out.println("    - " + TableNames.Layer1.WIND_INDUSTRY_CLASSIFICATION + " (万得行业分类)");
+            System.out.println("    - " + TableNames.Layer1.WIND_INDUSTRY_CLASSIFICATION + " (上市公司或行业分类)");
             System.out.println("    - " + TableNames.Layer1.WIND_STOCK_INDUSTRY_MAPPING + " (股票行业映射)");
             System.out.println("    - " + TableNames.Layer1.COMPANY_LIST_INFO + " (公司名字列表)");
             System.out.println("    - " + TableNames.Layer1.DOMESTIC_HOTSPOT_DATA + " (国内热点数据)");
@@ -230,7 +230,7 @@ public class DatabaseInitializer {
         
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             Object[][] moduleData = {
-                {"万得行业分类", "LAYER1", "running", Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now().plusHours(1)), 10, 0, null, "{\"interval\": 3600}"},
+                {"上市公司或行业分类", "LAYER1", "running", Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now().plusHours(1)), 10, 0, null, "{\"interval\": 3600}"},
                 {"公司名字列表", "LAYER1", "running", Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now().plusHours(2)), 8, 1, "数据源连接失败", "{\"interval\": 7200}"},
                 {"国内热点数据", "LAYER1", "stopped", null, Timestamp.valueOf(LocalDateTime.now().plusMinutes(30)), 0, 0, null, "{\"interval\": 1800}"}
             };
@@ -253,8 +253,8 @@ public class DatabaseInitializer {
     private List<TableDefinition> getLayer1TableDefinitions() {
         List<TableDefinition> tables = new ArrayList<>();
         
-        // 万得行业分类表
-        tables.add(new TableDefinition("万得行业分类表", String.format("""
+        // 上市公司或行业分类表
+        tables.add(new TableDefinition("上市公司或行业分类表", String.format("""
             CREATE TABLE IF NOT EXISTS %s (
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 industry_code VARCHAR(20) NOT NULL COMMENT '行业代码',
@@ -280,7 +280,7 @@ public class DatabaseInitializer {
                 KEY idx_status (status),
                 KEY idx_source (source),
                 KEY idx_update_date (update_date)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='万得行业分类表'
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='上市公司或行业分类表'
             """, TableNames.Layer1.WIND_INDUSTRY_CLASSIFICATION)));
         
         // 公司名字列表表

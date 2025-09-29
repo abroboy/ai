@@ -163,7 +163,7 @@ class TableNames {
     
     // 第一层模块 - 数据采集层
     public static class Layer1 {
-        // 万得行业分类
+        // 上市公司或行业分类
         public static final String WIND_INDUSTRY_CLASSIFICATION = "l1_wind_industry_classification";
         public static final String WIND_STOCK_INDUSTRY_MAPPING = "l1_wind_stock_industry_mapping";
         

@@ -218,7 +218,7 @@ public class DashboardController {
             dataCollectionService.refreshWindIndustryData();
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "万得行业数据刷新成功");
+            response.put("message", "上市公司或行业数据刷新成功");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
@@ -233,7 +233,7 @@ public class DashboardController {
     public ResponseEntity<Map<String, Object>> healthCheck() {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "ok");
-        response.put("message", "万得行业分类仪表盘运行正常");
+        response.put("message", "上市公司或行业分类仪表盘运行正常");
         return ResponseEntity.ok(response);
     }
     

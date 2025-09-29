@@ -1,9 +1,9 @@
 /**
- * 万得行业分类模块
+ * 上市公司或行业分类模块
  * 大势所趋风险框架管理台
  */
 
-// 加载万得行业分类模块
+// 加载上市公司或行业分类模块
 function loadWindIndustryClassification() {
   const contentArea = document.getElementById('content');
   
@@ -13,7 +13,7 @@ function loadWindIndustryClassification() {
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">加载中...</span>
       </div>
-      <p class="mt-2">正在加载万得行业分类数据...</p>
+      <p class="mt-2">正在加载上市公司或行业分类数据...</p>
     </div>
   `;
   
@@ -21,7 +21,7 @@ function loadWindIndustryClassification() {
   renderWindIndustryModule(contentArea);
 }
 
-// 渲染万得行业分类模块内容
+// 渲染上市公司或行业分类模块内容
 function renderWindIndustryModule(container) {
   // 从API获取行业分类数据
   fetch('/api/wind-industries')
@@ -429,7 +429,7 @@ function buildIndustryModuleHTML(industryData) {
   
   return `
     <div class="mb-4">
-      <h4 class="fw-bold text-primary mb-3">万得行业分类 <span class="badge bg-danger">实时</span></h4>
+      <h4 class="fw-bold text-primary mb-3">上市公司或行业分类 <span class="badge bg-danger">实时</span></h4>
       <div class="row">
         <div class="col-md-8">
           <div class="card shadow-sm mb-4">
@@ -603,7 +603,7 @@ function buildIndustryModuleHTML(industryData) {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-  // 如果当前页面是万得行业分类模块，则自动加载
+  // 如果当前页面是上市公司或行业分类模块，则自动加载
   if (window.location.hash === '#wind-industry') {
     loadWindIndustryClassification();
   }

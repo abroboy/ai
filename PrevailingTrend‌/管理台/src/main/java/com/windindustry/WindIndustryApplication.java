@@ -18,7 +18,7 @@ public class WindIndustryApplication implements CommandLineRunner {
     
     public static void main(String[] args) {
         System.out.println("========================================");
-        System.out.println("万得行业分类仪表盘启动中...");
+        System.out.println("上市公司或行业分类仪表盘启动中...");
         System.out.println("Java版本: " + System.getProperty("java.version"));
         System.out.println("工作目录: " + System.getProperty("user.dir"));
         System.out.println("========================================");

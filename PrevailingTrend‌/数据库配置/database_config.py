@@ -50,7 +50,7 @@ class TableNames:
     
     # 第一层模块 - 数据采集层
     LAYER1 = {
-        # 万得行业分类
+        # 上市公司或行业分类
         'wind_industry': {
             'industry_classification': 'l1_wind_industry_classification',
             'stock_industry_mapping': 'l1_wind_stock_industry_mapping'
