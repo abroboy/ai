@@ -5,49 +5,264 @@ import json
 import os
 import random
 import time
+import traceback
+import pandas as pd
 from datetime import datetime
 import threading
-from database import init_db, update_stock_data, get_stocks, get_industries, get_db_tables, execute_db_query
+from .database import init_db, update_stock_data, get_stocks, get_industries, get_db_tables, execute_db_query
 
-# 从新浪财经获取数据
+# 使用AKShare获取数据
 def fetch_from_sina():
     try:
-        import requests
-        # 获取上证指数和深证成指
-        sina_url = "http://hq.sinajs.cn/list=s_sh000001,s_sz399001"
-        response = requests.get(sina_url, timeout=5)
-        response.raise_for_status()
-        
-        # 解析新浪数据格式
-        raw_text = response.text
+        import akshare as ak
         stock_data = []
-        for line in raw_text.split(';'):
-            if not line.strip():
-                continue
-            
-            parts = line.split('=')
-            if len(parts) != 2:
-                continue
-            
-            code = parts[0].split('_')[-1]
-            values = parts[1].strip('"').split(',')
-            if len(values) < 6:
-                continue
-            
-            stock_data.append({
-                'code': code,
-                'name': values[0],
-                'price': float(values[1]),
-                'change_percent': float(values[3]),
-                'volume': int(float(values[4])),
-                'market_cap': 0,
-                'industry': '指数',
-                'heat_score': 100,
-                'sentiment': "积极" if float(values[3]) >= 0 else "消极"
-            })
         
-        # 添加模拟A股数据
-        for i in range(50):
+        max_retries = 3
+        retry_delay = 1  # 重试间隔(秒)
+        
+        for attempt in range(max_retries):
+            try:
+                # 获取所有A股实时数据
+                print(f"尝试第{attempt+1}次获取AKShare数据...")
+                all_stocks = ak.stock_zh_a_spot()
+                
+                # 记录响应类型和部分内容
+                response_type = type(all_stocks).__name__
+                sample_content = str(all_stocks)[:100] if not isinstance(all_stocks, pd.DataFrame) else "DataFrame"
+                print(f"响应类型: {response_type}, 示例内容: {sample_content}")
+                
+                # 检查返回数据是否为HTML(可能被拦截)
+                if isinstance(all_stocks, str):
+                    if all_stocks.startswith('<!DOCTYPE html>'):
+                        print(f"获取AKShare数据失败: 第{attempt+1}次尝试返回HTML内容")
+                        with open("akshare_error.html", "w", encoding="utf-8") as f:
+                            f.write(all_stocks)
+                        time.sleep(retry_delay)
+                        continue
+                    # 尝试解析可能的错误信息
+                    if "error" in all_stocks.lower():
+                        print(f"获取AKShare数据失败: 第{attempt+1}次尝试返回错误信息")
+                        time.sleep(retry_delay)
+                        continue
+                    
+                # 验证数据格式
+                if not isinstance(all_stocks, pd.DataFrame):
+                    print(f"获取AKShare数据失败: 第{attempt+1}次尝试返回非DataFrame格式")
+                    time.sleep(retry_delay)
+                    continue
+                    
+                if all_stocks.empty:
+                    print(f"获取AKShare数据失败: 第{attempt+1}次尝试返回空数据")
+                    time.sleep(retry_delay)
+                    continue
+                    
+                # 检查必要字段
+                required_columns = ['代码', '名称', '最新价', '涨跌幅', '成交量', '总市值', '所属行业', '量比']
+                column_mapping = {
+                    '代码': ['symbol', 'stock_code'],
+                    '名称': ['stock_name', 'name'],
+                    '最新价': ['price', 'current'],
+                    '涨跌幅': ['change_percent', 'pct_change'],
+                    '成交量': ['volume', 'turnover'],
+                    '总市值': ['market_cap', 'total_value'],
+                    '所属行业': ['industry', 'sector'],
+                    '量比': ['volume_ratio', 'turnover_ratio']
+                }
+                
+                # 尝试自动匹配字段名
+                missing_cols = [col for col in required_columns if col not in all_stocks.columns]
+                for col in missing_cols:
+                    for alias in column_mapping.get(col, []):
+                        if alias in all_stocks.columns:
+                            all_stocks.rename(columns={alias: col}, inplace=True)
+                            missing_cols.remove(col)
+                            break
+                
+                if missing_cols:
+                    print(f"获取AKShare数据失败: 缺少必要字段 {missing_cols}")
+                    time.sleep(retry_delay)
+                    continue
+                    
+                # 处理有效数据
+                break
+                    
+            except Exception as e:
+                error_msg = f"获取AKShare数据异常: {str(e)}
+{traceback.format_exc()}"
+                print(error_msg)
+                with open("akshare_error.log", "a", encoding="utf-8") as f:
+                    f.write(f"{datetime.now()}
+{error_msg}
+
+")
+
+")
+                time.sleep(retry_delay)
+                continue
+                
+        # 如果所有尝试都失败，使用模拟数据
+        if not stock_data:
+            print("使用模拟数据作为备用")
+            stock_data.extend([
+                {
+                    'code': '000001',
+                    'name': '上证指数',
+                    'price': 3200.45,
+                    'change_percent': 0.5,
+                    'volume': 1000000,
+                    'market_cap': 0,
+                    'industry': '指数',
+                    'heat_score': 80,
+                    'sentiment': "积极"
+                },
+                {
+                    'code': '399001',
+                    'name': '深证成指', 
+                    'price': 11000.23,
+                    'change_percent': -0.3,
+                    'volume': 800000,
+                    'market_cap': 0,
+                    'industry': '指数',
+                    'heat_score': 65,
+                    'sentiment': "消极"
+                }
+            ])
+            
+            # 确保关键字段存在
+            if 'all_stocks' not in locals() or not isinstance(all_stocks, pd.DataFrame):
+                print("获取AKShare数据失败: 数据格式无效")
+                return stock_data  # 返回模拟数据
+            
+            required_columns = ['代码', '名称', '最新价', '涨跌幅', '成交量', '总市值', '所属行业', '量比']
+            if not all(col in all_stocks.columns for col in required_columns):
+                print("获取AKShare数据失败: 缺少必要字段")
+                return stock_data  # 返回模拟数据
+            
+            # 动态获取前20只热门股票
+            top_stocks = all_stocks.sort_values(by='成交量', ascending=False).head(20)
+            
+            for _, row in top_stocks.iterrows():
+                try:
+                    # 确保所有字段都存在且有效
+                    code = str(row['代码']) if pd.notna(row['代码']) else ''
+                    name = str(row['名称']) if pd.notna(row['名称']) else ''
+                    price = float(row['最新价']) if pd.notna(row['最新价']) else 0
+                    change = float(row['涨跌幅']) if pd.notna(row['涨跌幅']) else 0
+                    volume = int(float(row['成交量'])) if pd.notna(row['成交量']) else 0
+                    market_cap = float(row['总市值']) if pd.notna(row['总市值']) else 0
+                    industry = str(row['所属行业']) if pd.notna(row['所属行业']) else '未知'
+                    liangbi = float(row['量比']) if pd.notna(row['量比']) else 1
+                    
+                    stock_data.append({
+                        'code': code,
+                        'name': name,
+                        'price': price,
+                        'change_percent': change,
+                        'volume': volume,
+                        'market_cap': market_cap,
+                        'industry': industry,
+                        'heat_score': liangbi * 100,
+                        'sentiment': "积极" if change >= 0 else "消极"
+                    })
+                except Exception as e:
+                    print(f"处理股票数据时出错: {str(e)}")
+                    continue
+                    
+            try:
+                # 检查数据有效性
+                if 'all_stocks' not in locals() or not isinstance(all_stocks, pd.DataFrame):
+                    print("获取AKShare数据失败: 数据格式无效")
+                    return stock_data  # 返回模拟数据
+                
+                # 增强字段验证和错误处理
+                required_columns = ['代码', '名称', '最新价', '涨跌幅', '成交量', '总市值', '所属行业', '量比']
+                if not all(col in all_stocks.columns for col in required_columns):
+                    missing = [col for col in required_columns if col not in all_stocks.columns]
+                    print(f"获取AKShare数据失败: 缺少必要字段 {missing}")
+                    # 尝试使用备用字段名
+                    column_mapping = {
+                        '代码': ['symbol', 'stock_code'],
+                        '名称': ['stock_name', 'name'],
+                        '最新价': ['price', 'current'],
+                        '涨跌幅': ['change_percent', 'pct_change'],
+                        '成交量': ['volume', 'turnover'],
+                        '总市值': ['market_cap', 'total_value'],
+                        '所属行业': ['industry', 'sector'],
+                        '量比': ['volume_ratio', 'turnover_ratio']
+                    }
+                    
+                    # 尝试映射字段
+                    for col in missing:
+                        for alias in column_mapping.get(col, []):
+                            if alias in all_stocks.columns:
+                                all_stocks.rename(columns={alias: col}, inplace=True)
+                                missing.remove(col)
+                                break
+                    
+                    if missing:
+                        return stock_data  # 返回模拟数据
+                
+                # 动态获取前20只热门股票（增加数据有效性检查）
+                top_stocks = all_stocks.sort_values(by='成交量', ascending=False).head(20)
+                if len(top_stocks) == 0:
+                    print("获取AKShare数据失败: 无有效股票数据")
+                    return []
+                
+                for _, row in top_stocks.iterrows():
+                    try:
+                        # 确保所有字段都存在且有效
+                        code = str(row['代码']) if pd.notna(row['代码']) else ''
+                        name = str(row['名称']) if pd.notna(row['名称']) else ''
+                        price = float(row['最新价']) if pd.notna(row['最新价']) else 0
+                        change = float(row['涨跌幅']) if pd.notna(row['涨跌幅']) else 0
+                        volume = int(float(row['成交量'])) if pd.notna(row['成交量']) else 0
+                        market_cap = float(row['总市值']) if pd.notna(row['总市值']) else 0
+                        industry = str(row['所属行业']) if pd.notna(row['所属行业']) else '未知'
+                        liangbi = float(row['量比']) if pd.notna(row['量比']) else 1
+                        
+                        stock_data.append({
+                            'code': code,
+                            'name': name,
+                            'price': price,
+                            'change_percent': change,
+                            'volume': volume,
+                            'market_cap': market_cap,
+                            'industry': industry,
+                            'heat_score': liangbi * 100,
+                            'sentiment': "积极" if change >= 0 else "消极"
+                        })
+                    except Exception as e:
+                        print(f"处理股票数据时出错: {str(e)}")
+                        continue
+                    
+            except Exception as e:
+                print(f"获取AKShare数据失败: {str(e)}")
+                return []
+        
+        # 获取示例股票代码
+        example_stocks = [
+            {'code': '000001', 'name': '上证指数'},
+            {'code': '399001', 'name': '深证成指'}
+        ]
+        for item in example_stocks:
+            symbol = item['code']
+            stock = all_stocks[all_stocks['代码'] == symbol]
+            if not stock.empty:
+                row = stock.iloc[0]
+                stock_data.append({
+                    'code': item['code'],
+                    'name': item['name'],  # 使用预定义的名称确保准确性
+                    'price': float(row['最新价']),
+                    'change_percent': float(row['涨跌幅']),
+                    'volume': int(float(row['成交量'])),
+                    'market_cap': float(row['总市值']),
+                    'industry': row['所属行业'],
+                    'heat_score': float(row['量比'])*100 if row['量比'] else 50,
+                    'sentiment': "积极" if float(row['涨跌幅']) >= 0 else "消极"
+                })
+        
+        # 添加其他随机数据(保留原有逻辑)
+        for i in range(20):
             code = f"60{i:04d}"
             stock_data.append({
                 'code': code,
@@ -63,7 +278,7 @@ def fetch_from_sina():
         
         return stock_data
     except Exception as e:
-        print(f"获取新浪数据失败: {e}")
+        print(f"获取AKShare数据失败: {e}")
         return []
 
 # 异步更新数据
@@ -77,6 +292,8 @@ def async_update_data():
                 print(f"数据库更新成功，共{len(data)}条记录")
             else:
                 print("获取数据失败，未更新数据库")
+        except Exception as e:
+            print(f"数据更新失败: {e}")
         except Exception as e:
             print(f"数据更新失败: {e}")
         time.sleep(3600)  # 每小时更新一次
@@ -160,7 +377,17 @@ class AdminHandler(SimpleHTTPRequestHandler):
             
         # 处理API路由
         if parsed.path == "/api/domestic/hotspots" or parsed.path == "/api/domestic-hotspot":
-            self._send_json(self._generate_hotspots())
+            try:
+                data = self._generate_hotspots()
+                if not data.get("data"):
+                    data["data"] = []
+                self._send_json(data)
+            except Exception as e:
+                self._send_json({
+                    "success": False,
+                    "message": f"获取热点数据失败: {str(e)}",
+                    "data": []
+                }, status=500)
             return
         if parsed.path == "/api/domestic-hotspot/stats":
             data = self._generate_hotspots()
@@ -179,7 +406,17 @@ class AdminHandler(SimpleHTTPRequestHandler):
             self._send_json(self._generate_tencent_jian_index())
             return
         if parsed.path == "/api/wind-industries":
-            self._send_json(self._generate_wind_industries())
+            try:
+                data = self._generate_wind_industries()
+                if not data.get("data"):
+                    data["data"] = []
+                self._send_json(data)
+            except Exception as e:
+                self._send_json({
+                    "success": False,
+                    "message": f"获取行业分类数据失败: {str(e)}",
+                    "data": []
+                }, status=500)
             return
         if parsed.path == "/api/company-attributes":
             self._send_json(self._generate_company_attributes())
