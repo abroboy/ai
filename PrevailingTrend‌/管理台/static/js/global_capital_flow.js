@@ -28,7 +28,7 @@ function renderGlobalCapitalFlowModule(container) {
     .then(response => {
       if (!response.ok) {
         throw new Error('API请求失败，状态码: ' + response.status);
-      }
+    }
       return response.json();
     })
     .then(data => {
@@ -59,192 +59,199 @@ function renderGlobalCapitalFlowModule(container) {
 
   // 渲染数据的函数
   function renderData(container, capitalFlowData) {
-        
-        // 处理历史资金流向数据（用于图表）
-        // 为了简化，我们从现有数据中提取一些用于图表展示
-        const historicalData = {
-          dates: ['2025-09-16', '2025-09-17', '2025-09-18', '2025-09-19', '2025-09-20', '2025-09-21', '2025-09-22'],
-          regions: ['北美', '欧洲', '亚太', '中国', '日本', '印度'],
-          series: [
-            { name: '北美', data: [480.5, 495.2, 510.8, 502.3, 515.7, 508.4, 510.9] },
-            { name: '欧洲', data: [-145.7, -158.3, -172.5, -165.8, -160.2, -172.6, -169.1] },
-            { name: '亚太', data: [345.2, 352.8, 360.5, 372.1, 365.8, 370.2, 368.7] },
-            { name: '中国', data: [310.5, 318.7, 325.4, 330.2, 328.7, 335.6, 333.3] },
-            { name: '日本', data: [-52.3, -48.7, -45.2, -50.8, -52.1, -49.5, -47.2] },
-            { name: '印度', data: [120.8, 125.3, 128.7, 130.5, 132.8, 134.6, 135.2] }
-          ]
-        };
-        
-        // 计算概览数据
-        const inflowRegions = capitalFlowData.filter(item => item.netFlow >= 0).length;
-        const outflowRegions = capitalFlowData.filter(item => item.netFlow < 0).length;
-        const totalInflow = capitalFlowData.filter(item => item.netFlow >= 0).reduce((sum, item) => sum + item.netFlow, 0);
-        const totalOutflow = capitalFlowData.filter(item => item.netFlow < 0).reduce((sum, item) => sum + Math.abs(item.netFlow), 0);
-        
-        // 构建模块HTML
-        const moduleHTML = `
-          <div class="mb-4">
-            <h4 class="fw-bold text-primary mb-3">全球资金流向 <span class="badge bg-danger">实时</span></h4>
-            <div class="row">
-              <div class="col-md-8">
-                <div class="card shadow-sm mb-4">
-                  <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">全球资金流向表</h5>
-                    <div class="btn-group">
-                      <button class="btn btn-sm btn-outline-primary" onclick="filterCapitalFlow('all')">全部</button>
-                      <button class="btn btn-sm btn-outline-success" onclick="filterCapitalFlow('inflow')">净流入</button>
-                      <button class="btn btn-sm btn-outline-danger" onclick="filterCapitalFlow('outflow')">净流出</button>
-                    </div>
+    // 处理历史资金流向数据（用于图表）
+    // 为了简化，我们从现有数据中提取一些用于图表展示
+    const historicalData = {
+      dates: ['2025-09-16', '2025-09-17', '2025-09-18', '2025-09-19', '2025-09-20', '2025-09-21', '2025-09-22'],
+      regions: ['北美', '欧洲', '亚太', '中国', '日本', '印度'],
+      series: [
+        { name: '北美', data: [480.5, 495.2, 510.8, 502.3, 515.7, 508.4, 510.9] },
+        { name: '欧洲', data: [-145.7, -158.3, -172.5, -165.8, -160.2, -172.6, -169.1] },
+        { name: '亚太', data: [345.2, 352.8, 360.5, 372.1, 365.8, 370.2, 368.7] },
+        { name: '中国', data: [310.5, 318.7, 325.4, 330.2, 328.7, 335.6, 333.3] },
+        { name: '日本', data: [-52.3, -48.7, -45.2, -50.8, -52.1, -49.5, -47.2] },
+        { name: '印度', data: [120.8, 125.3, 128.7, 130.5, 132.8, 134.6, 135.2] }
+      ]
+    };
+    
+    try {
+      // 计算概览数据
+      const inflowRegions = capitalFlowData.filter(item => item.netFlow >= 0).length;
+      const outflowRegions = capitalFlowData.filter(item => item.netFlow < 0).length;
+      const totalInflow = capitalFlowData.filter(item => item.netFlow >= 0).reduce((sum, item) => sum + item.netFlow, 0);
+      const totalOutflow = capitalFlowData.filter(item => item.netFlow < 0).reduce((sum, item) => sum + Math.abs(item.netFlow), 0);
+      
+      // 构建模块HTML
+      const moduleHTML = `
+        <div class="mb-4">
+          <h4 class="fw-bold text-primary mb-3">全球资金流向 <span class="badge bg-danger">实时</span></h4>
+          <div class="row">
+            <div class="col-md-8">
+              <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                  <h5 class="card-title mb-0">全球资金流向表</h5>
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="filterCapitalFlow('all')">全部</button>
+                    <button class="btn btn-sm btn-outline-success" onclick="filterCapitalFlow('inflow')">净流入</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="filterCapitalFlow('outflow')">净流出</button>
                   </div>
-                  <div class="card-body p-0">
-                    <div class="table-responsive">
-                      <table class="table table-hover table-striped mb-0">
-                        <thead class="table-light">
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th scope="col">ID</th>
+                          <th scope="col">地区</th>
+                          <th scope="col">资金流入(亿美元)</th>
+                          <th scope="col">资金流出(亿美元)</th>
+                          <th scope="col">净流入(亿美元)</th>
+                          <th scope="col">变化率(%)</th>
+                          <th scope="col">日期</th>
+                        </tr>
+                      </thead>
+                      <tbody id="capital-flow-table">
+                        ${capitalFlowData.map(item => `
                           <tr>
-                            <th scope="col">ID</th>
-                            <th scope="col">地区</th>
-                            <th scope="col">资金流入(亿美元)</th>
-                            <th scope="col">资金流出(亿美元)</th>
-                            <th scope="col">净流入(亿美元)</th>
-                            <th scope="col">变化率(%)</th>
-                            <th scope="col">日期</th>
+                            <td>${item.id}</td>
+                            <td><a href="#" class="text-decoration-none" onclick="showRegionDetail('${item.region}')">${item.region}</a></td>
+                            <td>${item.inflow.toFixed(1)}</td>
+                            <td>${item.outflow.toFixed(1)}</td>
+                            <td class="${item.netFlow >= 0 ? 'text-success' : 'text-danger'} fw-bold">${item.netFlow.toFixed(1)}</td>
+                            <td>
+                              <div class="d-flex align-items-center">
+                                <span class="${item.change >= 0 ? 'text-success' : 'text-danger'}">
+                                  ${item.change >= 0 ? '+' : ''}${item.change.toFixed(1)}%
+                                  <i class="bi bi-${item.change >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
+                                </span>
+                              </div>
+                            </td>
+                            <td>${item.date}</td>
                           </tr>
-                        </thead>
-                        <tbody id="capital-flow-table">
-                          ${capitalFlowData.map(item => `
-                            <tr>
-                              <td>${item.id}</td>
-                              <td><a href="#" class="text-decoration-none" onclick="showRegionDetail('${item.region}')">${item.region}</a></td>
-                              <td>${item.inflow.toFixed(1)}</td>
-                              <td>${item.outflow.toFixed(1)}</td>
-                              <td class="${item.netFlow >= 0 ? 'text-success' : 'text-danger'} fw-bold">${item.netFlow.toFixed(1)}</td>
-                              <td>
-                                <div class="d-flex align-items-center">
-                                  <span class="${item.change >= 0 ? 'text-success' : 'text-danger'}">
-                                    ${item.change >= 0 ? '+' : ''}${item.change.toFixed(1)}%
-                                    <i class="bi bi-${item.change >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
-                                  </span>
-                                </div>
-                              </td>
-                              <td>${item.date}</td>
-                            </tr>
-                          `).join('')}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <div class="card-footer bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <small class="text-muted">最后更新: <span id="capital-flow-last-updated">${new Date().toLocaleString()}</span></small>
-                      <div>
-                        <button class="btn btn-sm btn-primary" onclick="refreshCapitalFlowData()">
-                          <i class="bi bi-arrow-clockwise"></i> 刷新数据
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="exportCapitalFlowData()">
-                          <i class="bi bi-download"></i> 导出
-                        </button>
-                      </div>
-                    </div>
+                        `).join('')}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </div>
-              <div class="col-md-4">
-                <div class="card shadow-sm mb-4">
-                  <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">资金流向概览</h5>
-                  </div>
-                  <div class="card-body">
-                    <div class="row g-3">
-                      <div class="col-6">
-                        <div class="border rounded p-3 text-center">
-                          <h3 class="text-success mb-0">${inflowRegions}</h3>
-                          <small class="text-muted">净流入地区</small>
-                        </div>
-                      </div>
-                      <div class="col-6">
-                        <div class="border rounded p-3 text-center">
-                          <h3 class="text-danger mb-0">${outflowRegions}</h3>
-                          <small class="text-muted">净流出地区</small>
-                        </div>
-                      </div>
-                      <div class="col-6">
-                        <div class="border rounded p-3 text-center">
-                          <h3 class="text-primary mb-0">${totalInflow.toFixed(1)}</h3>
-                          <small class="text-muted">净流入总额(亿美元)</small>
-                        </div>
-                      </div>
-                      <div class="col-6">
-                        <div class="border rounded p-3 text-center">
-                          <h3 class="text-primary mb-0">${totalOutflow.toFixed(1)}</h3>
-                          <small class="text-muted">净流出总额(亿美元)</small>
-                        </div>
-                      </div>
+                <div class="card-footer bg-light">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">最后更新: <span id="capital-flow-last-updated">${new Date().toLocaleString()}</span></small>
+                    <div>
+                      <button class="btn btn-sm btn-primary" onclick="refreshCapitalFlowData()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                      </button>
+                      <button class="btn btn-sm btn-outline-secondary" onclick="exportCapitalFlowData()">
+                        <i class="bi bi-download"></i> 导出
+                      </button>
                     </div>
-                  </div>
-                </div>
-                <div class="card shadow-sm">
-                  <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">历史资金流向趋势</h5>
-                  </div>
-                  <div class="card-body">
-                    <div id="capital-flow-chart" style="height: 300px;"></div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- 地区详情模态框 -->
-            <div class="modal fade" id="regionDetailModal" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="regionDetailTitle">地区资金流向详情</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body" id="regionDetailContent">
-                    <!-- 详情内容将通过JS动态填充 -->
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                    <button type="button" class="btn btn-primary">生成分析报告</button>
+            <div class="col-md-4">
+              <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                  <h5 class="card-title mb-0">资金流向概览</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-6">
+                      <div class="border rounded p-3 text-center">
+                        <h3 class="text-success mb-0">${inflowRegions}</h3>
+                        <small class="text-muted">净流入地区</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="border rounded p-3 text-center">
+                        <h3 class="text-danger mb-0">${outflowRegions}</h3>
+                        <small class="text-muted">净流出地区</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="border rounded p-3 text-center">
+                        <h3 class="text-primary mb-0">${totalInflow.toFixed(1)}</h3>
+                        <small class="text-muted">净流入总额(亿美元)</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="border rounded p-3 text-center">
+                        <h3 class="text-primary mb-0">${totalOutflow.toFixed(1)}</h3>
+                        <small class="text-muted">净流出总额(亿美元)</small>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <!-- 全球资金流向地图 -->
-            <div class="card shadow-sm mt-4">
-              <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">全球资金流向地图</h5>
-                <div class="btn-group">
-                  <button class="btn btn-sm btn-outline-primary" onclick="switchMapView('net')">净流入</button>
-                  <button class="btn btn-sm btn-outline-primary" onclick="switchMapView('inflow')">流入</button>
-                  <button class="btn btn-sm btn-outline-primary" onclick="switchMapView('outflow')">流出</button>
+              <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                  <h5 class="card-title mb-0">历史资金流向趋势</h5>
                 </div>
-              </div>
-              <div class="card-body">
-                <div id="global-capital-map" style="height: 500px;">
-                  <div class="text-center py-5">
-                    <p class="text-muted">全球资金流向地图将在后续版本中实现</p>
-                    <button class="btn btn-outline-primary" onclick="alert('地图功能将在后续版本中实现')">
-                      <i class="bi bi-globe"></i> 加载地图
-                    </button>
-                  </div>
+                <div class="card-body">
+                  <div id="capital-flow-chart" style="height: 300px;"></div>
                 </div>
               </div>
             </div>
           </div>
-        `;
-        
-        // 更新容器内容
-        container.innerHTML = moduleHTML;
-        
-        // 初始化图表
-        initCapitalFlowChart(historicalData);
-        
-        // 加载Bootstrap的Modal组件
-        loadBootstrapJS();
-    };
+          
+          <!-- 地区详情模态框 -->
+          <div class="modal fade" id="regionDetailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="regionDetailTitle">地区资金流向详情</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="regionDetailContent">
+                  <!-- 详情内容将通过JS动态填充 -->
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                  <button type="button" class="btn btn-primary">生成分析报告</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 全球资金流向地图 -->
+          <div class="card shadow-sm mt-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">全球资金流向地图</h5>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" onclick="switchMapView('net')">净流入</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="switchMapView('inflow')">流入</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="switchMapView('outflow')">流出</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="global-capital-map" style="height: 500px;">
+                <div class="text-center py-5">
+                  <p class="text-muted">全球资金流向地图将在后续版本中实现</p>
+                  <button class="btn btn-outline-primary" onclick="alert('地图功能将在后续版本中实现')">
+                    <i class="bi bi-globe"></i> 加载地图
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // 更新容器内容
+      container.innerHTML = moduleHTML;
+      
+      // 初始化图表
+      initCapitalFlowChart(historicalData);
+      
+      // 加载Bootstrap的Modal组件
+      loadBootstrapJS();
+    } catch (error) {
+      console.error('渲染数据时出错:', error);
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i> 渲染数据时出错: ${error.message}
+        </div>
+      `;
+    }
   }
 }
 

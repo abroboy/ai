@@ -13,8 +13,9 @@ from database import init_db, get_stocks, get_industries, get_db_tables, execute
 
 # 模块化API导入
 from api.csv_data_reader import build_csv_based_response, build_industry_statistics_response
-from api.hotspots import generate_hotspots, calc_stats, generate_foreign_hotspots, generate_forum_hotspots, generate_global_capital_flow, generate_tencent_jian_index
+
 from api.wind import generate_wind_industries
+from api.domestic_hotspots import generate_domestic_hotspots
 # 公司数据结构导入
 from api.company import StockCompany, create_company_from_akshare_data
 
@@ -81,25 +82,7 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(f.read())
             return
         
-        # API路由 - 热点数据
-        if parsed.path in ["/api/domestic/hotspots", "/api/domestic-hotspot"]:
-            try:
-                data = generate_hotspots(ROOT_DIR)
-                if not data.get("data"):
-                    data["data"] = []
-                self._send_json(data)
-            except Exception as e:
-                self._send_json({
-                    "success": False,
-                    "message": f"获取热点数据失败: {str(e)}",
-                    "data": []
-                }, status=500)
-            return
-        
-        if parsed.path == "/api/domestic-hotspot/stats":
-            data = generate_hotspots(ROOT_DIR)
-            self._send_json(calc_stats(data.get("data", [])))
-            return
+        # 国内热点数据模块已删除
         
         # API路由 - 上市公司数据（新的CSV数据源）
         if parsed.path == "/api/listed-companies":
@@ -155,10 +138,7 @@ class AdminHandler(SimpleHTTPRequestHandler):
         
         # API路由 - 基本功能路由
         api_routes = {
-            "/api/foreign-hotspot": generate_foreign_hotspots,
-            "/api/forum-hotspot": generate_forum_hotspots,
-            "/api/global-capital-flow": generate_global_capital_flow,
-            "/api/tencent-jian-index": generate_tencent_jian_index,
+            "/api/domestic-hotspot": generate_domestic_hotspots,
             "/api/wind-industries": generate_wind_industries,
         }
         
@@ -270,11 +250,8 @@ def main():
     print(f"端口: {PORT}")
     print("静态根目录:", ROOT_DIR)
     print("访问地址: http://localhost:%d/index.html" % PORT)
-    print("API接口: /api/domestic-hotspot, /api/domestic-hotspot/stats")
-    print("         /api/listed-companies, /api/db/query")
-    print("         /api/foreign-hotspot, /api/forum-hotspot")
-    print("         /api/global-capital-flow, /api/tencent-jian-index")
-    print("         /api/wind-industries")
+    print("API接口: /api/listed-companies, /api/db/query")
+    print("         /api/domestic-hotspot, /api/wind-industries")
     print("========================================")
     print("按 Ctrl+C 停止服务器")
     

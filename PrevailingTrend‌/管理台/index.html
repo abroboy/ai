@@ -53,6 +53,7 @@
     <div class="left" id="sidebar">
       <div class="fw-bold mb-2">目录导航栏</div>
       <div class="small text-muted mb-2">第一层模块 - 基础数据采集</div>
+
       <div class="module-item" onclick="loadModule('国内热点数据')">国内热点数据 <span class="enhanced-badge">增强版</span> <span class="realtime-badge">实时</span></div>
       <div class="module-item" onclick="loadModule('上市公司或行业分类')">上市公司或行业分类 <span class="realtime-badge">实时</span></div>
       <div class="module-item" onclick="loadModule('国外热点数据')">国外热点数据 <span class="realtime-badge">实时</span></div>
@@ -95,17 +96,9 @@
 
   <script>
     function loadModule(name){
-      // 添加对国内热点数据模块的处理
-      if(name==='国内热点数据'){
-        // 确保增强版国内热点数据模块已加载
-        if(typeof loadEnhancedDomesticHotspotData==='function'){
-          loadEnhancedDomesticHotspotData();
-          return;
-        } else {
-          // 如果增强版未加载，尝试加载基础版本
-          loadBasicModule(name);
-          return;
-        }
+      if(name==='国内热点数据' && typeof loadDomesticHotspotData==='function'){
+        loadDomesticHotspotData();
+        return;
       }
       if(name==='上市公司或行业分类' && typeof loadWindIndustryClassification==='function'){
         loadWindIndustryClassification();
@@ -186,13 +179,7 @@
             <div>
               <h5 class="mb-1">模块 ${name} 正在升级中</h5>
               <p class="mb-0">我们正在为您优化此模块，请稍后再试</p>
-              ${name === '国内热点数据' ? `
-              <div class="mt-2">
-                <button class="btn btn-sm btn-primary" onclick="window.loadEnhancedDomesticHotspotData && window.loadEnhancedDomesticHotspotData()">
-                  <i class="bi bi-arrow-clockwise"></i> 尝试重新加载
-                </button>
-              </div>
-              ` : ''}
+
             </div>
           </div>
         </div>
@@ -270,61 +257,32 @@
     });
   </script>
   <!-- 核心模块优先加载 -->
-  <script src="static/js/enhanced_domestic_hotspot.js?v=v20250928"></script>
   <script src="static/js/global_capital_flow.js"></script>
+  <script src="static/js/domestic_hotspot_data.js"></script>
+  <script src="static/js/domestic_hotspot_ui.js"></script>
+  <script src="static/js/domestic_hotspot_utils.js"></script>
   
   <!-- 延迟加载其他非关键模块，提升IE浏览器性能 -->
   <script>
-    // 检测IE浏览器
-    var isIE = /Trident|MSIE/.test(navigator.userAgent);
-    
-    // 延迟加载函数
+    // 简化脚本加载，提高性能
     function lazyLoadScripts() {
-      // 添加版本号参数，强制浏览器重新加载优化后的文件
-      var version = 'v20250930';
       var scripts = [
-        'static/js/listed_companies_module_csv.js?v=' + version,
-        'static/js/foreign_hotspot_data.js?v=' + version,
-        'static/js/forum_hotspot_data.js?v=' + version,
-        'static/js/tencent_jian_index.js?v=' + version,
-        'static/js/company_attributes.js?v=' + version,
-        'static/js/hotspot_data_table.js?v=' + version,
-        'static/js/qichacha_data.js?v=' + version,
-        'static/js/financial_statements.js?v=' + version,
-        'static/js/tax_bank_report.js?v=' + version,
-        'static/js/forum_data_analysis.js?v=' + version,
-        'static/js/company_score_table.js?v=' + version,
-        'static/js/industry_score_table.js?v=' + version,
-        'static/js/industry_company_score_table.js?v=' + version,
-        'static/js/object_factor_weight_table.js?v=' + version,
-        'static/js/curve_prediction_analysis.js?v=' + version
+        'static/js/listed_companies_module_csv.js',
+        'static/js/foreign_hotspot_data.js',
+        'static/js/company_attributes.js'
       ];
       
-      // IE浏览器使用更慢的加载间隔，减少性能压力
-      var delay = isIE ? 300 : 100;
-      
-      function loadScript(index) {
-        if (index >= scripts.length) return;
-        
-        var script = document.createElement('script');
-        script.src = scripts[index];
-        script.onload = function() {
-          setTimeout(function() { loadScript(index + 1); }, delay);
-        };
-        document.body.appendChild(script);
-      }
-      
-      // 开始加载
-      setTimeout(function() { loadScript(0); }, 1000);
+      scripts.forEach(function(src, index) {
+        setTimeout(function() {
+          var script = document.createElement('script');
+          script.src = src;
+          document.body.appendChild(script);
+        }, index * 200);
+      });
     }
     
-    // 在页面加载完成后开始延迟加载
-    if (window.addEventListener) {
-      window.addEventListener('load', lazyLoadScripts);
-    } else {
-      // IE8及以下兼容
-      window.attachEvent('onload', lazyLoadScripts);
-    }
+    // 页面加载完成后延迟加载
+    setTimeout(lazyLoadScripts, 500);
   </script>
 </body>
 </html>
