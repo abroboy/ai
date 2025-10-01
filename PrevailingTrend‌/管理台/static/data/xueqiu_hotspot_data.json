@@ -1,0 +1,177 @@
+{
+  "success": true,
+  "message": "雪球论坛热点数据获取成功",
+  "timestamp": "2025-10-01T12:00:00",
+  "data": {
+    "hot_topics": [
+      {
+        "id": 1,
+        "title": "A股三季度收官：科技股领涨，新能源板块分化明显",
+        "content": "随着三季度结束，A股市场呈现结构性行情。科技股在政策利好推动下表现强劲，特别是人工智能、芯片设计等细分领域。新能源板块出现分化，光伏产业链受益于海外需求复苏，而锂电池板块则面临产能过剩压力。",
+        "author": "投资达人小李",
+        "publish_time": "2025-10-01 09:30:00",
+        "view_count": 15420,
+        "comment_count": 328,
+        "like_count": 892,
+        "tags": ["A股", "科技股", "新能源", "三季度"],
+        "sentiment": "positive",
+        "heat_score": 95.2,
+        "related_stocks": ["000001.SZ", "000002.SZ", "300750.SZ"]
+      },
+      {
+        "id": 2,
+        "title": "央行降准释放流动性，房地产板块迎来反弹机会",
+        "content": "央行宣布降准0.5个百分点，释放长期流动性约1.2万亿元。这一政策利好直接刺激了房地产板块的反弹，多只地产股涨停。分析师认为，在政策底部确认的背景下，优质房企有望迎来估值修复机会。",
+        "author": "地产观察员",
+        "publish_time": "2025-10-01 10:15:00",
+        "view_count": 12350,
+        "comment_count": 256,
+        "like_count": 678,
+        "tags": ["央行", "降准", "房地产", "流动性"],
+        "sentiment": "positive",
+        "heat_score": 88.7,
+        "related_stocks": ["000002.SZ", "001979.SZ", "600048.SH"]
+      },
+      {
+        "id": 3,
+        "title": "美联储加息预期降温，外资加速流入A股市场",
+        "content": "美国通胀数据低于预期，市场对美联储进一步加息的预期大幅降温。受此影响，国际资金重新配置新兴市场资产，北向资金连续5日净流入，累计流入超过200亿元。外资重点关注消费、医药等防御性板块。",
+        "author": "国际资本观察",
+        "publish_time": "2025-10-01 11:00:00",
+        "view_count": 9876,
+        "comment_count": 189,
+        "like_count": 445,
+        "tags": ["美联储", "外资", "北向资金", "消费"],
+        "sentiment": "positive",
+        "heat_score": 82.3,
+        "related_stocks": ["000858.SZ", "600519.SH", "000001.SZ"]
+      },
+      {
+        "id": 4,
+        "title": "新能源汽车销量创新高，产业链公司业绩分化",
+        "content": "9月新能源汽车销量同比增长35%，创历史新高。但产业链上下游公司业绩出现明显分化：整车厂盈利能力提升，电池材料企业面临价格压力，充电桩运营商受益于渗透率提升。投资者需要精选个股。",
+        "author": "新能源分析师",
+        "publish_time": "2025-10-01 08:45:00",
+        "view_count": 11200,
+        "comment_count": 234,
+        "like_count": 567,
+        "tags": ["新能源汽车", "销量", "产业链", "业绩分化"],
+        "sentiment": "neutral",
+        "heat_score": 79.8,
+        "related_stocks": ["002594.SZ", "300750.SZ", "002460.SZ"]
+      },
+      {
+        "id": 5,
+        "title": "人工智能大模型商业化提速，相关概念股受追捧",
+        "content": "多家科技巨头发布AI大模型商业化进展，应用场景不断拓展。从文本生成到图像处理，从代码编写到数据分析，AI技术正在各行各业落地。相关概念股受到资金追捧，但估值已处于高位，需要警惕泡沫风险。",
+        "author": "AI投资专家",
+        "publish_time": "2025-10-01 07:30:00",
+        "view_count": 13450,
+        "comment_count": 298,
+        "like_count": 734,
+        "tags": ["人工智能", "大模型", "商业化", "概念股"],
+        "sentiment": "positive",
+        "heat_score": 91.5,
+        "related_stocks": ["000063.SZ", "002415.SZ", "300059.SZ"]
+      }
+    ],
+    "trending_stocks": [
+      {
+        "code": "000001.SZ",
+        "name": "平安银行",
+        "current_price": 12.45,
+        "change_percent": 3.2,
+        "volume": 125000000,
+        "market_cap": 241000000000,
+        "mention_count": 156,
+        "sentiment_score": 0.65,
+        "hot_rank": 1
+      },
+      {
+        "code": "300750.SZ",
+        "name": "宁德时代",
+        "current_price": 198.50,
+        "change_percent": -1.8,
+        "volume": 89000000,
+        "market_cap": 870000000000,
+        "mention_count": 134,
+        "sentiment_score": 0.42,
+        "hot_rank": 2
+      },
+      {
+        "code": "600519.SH",
+        "name": "贵州茅台",
+        "current_price": 1680.00,
+        "change_percent": 0.8,
+        "volume": 12000000,
+        "market_cap": 2100000000000,
+        "mention_count": 98,
+        "sentiment_score": 0.58,
+        "hot_rank": 3
+      },
+      {
+        "code": "000002.SZ",
+        "name": "万科A",
+        "current_price": 8.95,
+        "change_percent": 5.2,
+        "volume": 156000000,
+        "market_cap": 98000000000,
+        "mention_count": 87,
+        "sentiment_score": 0.71,
+        "hot_rank": 4
+      },
+      {
+        "code": "002594.SZ",
+        "name": "比亚迪",
+        "current_price": 245.80,
+        "change_percent": 2.1,
+        "volume": 67000000,
+        "market_cap": 715000000000,
+        "mention_count": 76,
+        "sentiment_score": 0.63,
+        "hot_rank": 5
+      }
+    ],
+    "market_sentiment": {
+      "overall_sentiment": "positive",
+      "sentiment_score": 0.62,
+      "positive_ratio": 0.68,
+      "negative_ratio": 0.18,
+      "neutral_ratio": 0.14,
+      "fear_greed_index": 72,
+      "confidence_level": "high"
+    },
+    "keyword_trends": [
+      {
+        "keyword": "降准",
+        "mention_count": 1250,
+        "trend": "up",
+        "change_percent": 45.2
+      },
+      {
+        "keyword": "AI大模型",
+        "mention_count": 980,
+        "trend": "up",
+        "change_percent": 32.1
+      },
+      {
+        "keyword": "新能源汽车",
+        "mention_count": 876,
+        "trend": "stable",
+        "change_percent": 5.8
+      },
+      {
+        "keyword": "房地产",
+        "mention_count": 654,
+        "trend": "up",
+        "change_percent": 28.9
+      },
+      {
+        "keyword": "外资流入",
+        "mention_count": 543,
+        "trend": "up",
+        "change_percent": 18.7
+      }
+    ]
+  }
+}

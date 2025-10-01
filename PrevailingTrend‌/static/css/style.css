@@ -1,0 +1,135 @@
+/* 全局样式 */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Microsoft YaHei", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+/* 布局样式 */
+.layout {
+    display: flex;
+    gap: 0;
+    padding: 16px;
+    min-height: 100vh;
+}
+
+.left {
+    min-width: 200px;
+    width: 280px;
+    max-width: 500px;
+    background: #fff;
+    border-radius: 12px 0 0 12px;
+    padding: 16px;
+    border: 3px solid #e74c3c;
+    border-right: none;
+    transition: width 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.resizer {
+    width: 6px;
+    background-color: #e74c3c;
+    cursor: ew-resize;
+    border-top: 3px solid #e74c3c;
+    border-bottom: 3px solid #e74c3c;
+    transition: background-color 0.2s;
+}
+
+.resizer:hover {
+    background-color: #c0392b;
+}
+
+.main {
+    flex: 1;
+    background: #fff;
+    border-radius: 0 12px 12px 0;
+    padding: 24px;
+    border: 3px solid #e74c3c;
+    border-left: none;
+    overflow: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 头部样式 */
+.header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 模块项样式 */
+.module-item {
+    display: block;
+    padding: 12px 16px;
+    margin: 8px 0;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #333;
+    background: #fff;
+}
+
+.module-item:hover {
+    background: #0d6efd;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+/* 徽章样式 */
+.enhanced-badge {
+    background: #ff6b6b;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 8px;
+    font-weight: 500;
+}
+
+.realtime-badge {
+    background: #28a745;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 8px;
+    font-weight: 500;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* 加载指示器 */
+.loading-indicator {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
