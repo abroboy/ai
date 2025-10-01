@@ -257,22 +257,35 @@ class AdminHandler(SimpleHTTPRequestHandler):
         return {"root": root, "items": tree}
 
 
-def run():
-    """启动服务器"""
+def main():
+    """主启动函数 - 统一的服务器启动入口"""
+    # 切换到根目录
     os.chdir(ROOT_DIR)
+    
+    # 创建HTTP服务器
     httpd = HTTPServer(("", PORT), AdminHandler)
+    
     print("========================================")
-    print("管理台服务器启动中...")
+    print("大势所趋风险框架管理台启动中...")
     print(f"端口: {PORT}")
     print("静态根目录:", ROOT_DIR)
-    print("页面:  http://localhost:%d/index.html" % PORT)
-    print("API:   /api/domestic-hotspot, /api/listed-companies, /api/db/query")
+    print("访问地址: http://localhost:%d/index.html" % PORT)
+    print("API接口: /api/domestic-hotspot, /api/domestic-hotspot/stats")
+    print("         /api/listed-companies, /api/db/query")
+    print("         /api/foreign-hotspot, /api/forum-hotspot")
+    print("         /api/global-capital-flow, /api/tencent-jian-index")
+    print("         /api/wind-industries")
     print("========================================")
+    print("按 Ctrl+C 停止服务器")
+    
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\n服务器已停止")
 
+def run():
+    """保持向后兼容的启动函数"""
+    main()
 
 if __name__ == "__main__":
-    run()
+    main()

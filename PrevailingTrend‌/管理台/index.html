@@ -8,9 +8,11 @@
   <!-- 针对IE的性能优化：内联关键CSS -->
   <style id="critical-css">
     body { font-family: "Microsoft YaHei", sans-serif; background: linear-gradient(135deg,#667eea,#764ba2); min-height: 100vh; margin: 0; padding: 0; }
-    .layout { display: flex; gap: 12px; padding: 16px; }
-    .left { width: 280px; background: #fff; border-radius: 12px; padding: 16px; border: 3px solid #e74c3c; }
-    .main { flex: 1; background: #fff; border-radius: 12px; padding: 24px; }
+    .layout { display: flex; gap: 0; padding: 16px; }
+    .left { min-width: 200px; width: 280px; max-width: 500px; background: #fff; border-radius: 12px 0 0 12px; padding: 16px; border: 3px solid #e74c3c; border-right: none; transition: width 0.2s; }
+    .resizer { width: 6px; background-color: #e74c3c; cursor: ew-resize; border-top: 3px solid #e74c3c; border-bottom: 3px solid #e74c3c; }
+    .resizer:hover { background-color: #c0392b; }
+    .main { flex: 1; background: #fff; border-radius: 0 12px 12px 0; padding: 24px; border: 3px solid #e74c3c; border-left: none; overflow: auto; }
     .header { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; border-radius: 12px; padding: 16px; text-align: center; font-weight: 700; margin-bottom: 16px; }
     .module-item { display:block; padding:8px 12px; margin:6px 0; border:1px solid #e5e5e5; border-radius:8px; cursor:pointer; }
     .module-item:hover { background:#0d6efd; color:#fff; }
@@ -48,7 +50,7 @@
 </head>
 <body>
   <div class="layout">
-    <div class="left">
+    <div class="left" id="sidebar">
       <div class="fw-bold mb-2">目录导航栏</div>
       <div class="small text-muted mb-2">第一层模块 - 基础数据采集</div>
       <div class="module-item" onclick="loadModule('国内热点数据')">国内热点数据 <span class="enhanced-badge">增强版</span> <span class="realtime-badge">实时</span></div>
@@ -79,6 +81,7 @@
       <div class="small text-muted mb-2 mt-3">第六层模块 - 预测分析</div>
       <div class="module-item" onclick="loadModule('曲线预测分析')">曲线预测分析 <span class="realtime-badge">实时</span></div>
     </div>
+    <div class="resizer" id="resizer"></div>
     <div class="main">
       <div class="header">大势所趋风险框架管理台</div>
       <div id="content" class="content-area">
@@ -202,6 +205,68 @@
     document.addEventListener('DOMContentLoaded',()=>{ 
       // 默认加载国内热点数据模块
       loadModule('国内热点数据'); 
+    });
+  </script>
+  <!-- 拖拽调整宽度功能 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const resizer = document.getElementById('resizer');
+      const layout = document.querySelector('.layout');
+      let isResizing = false;
+
+      // 开始拖拽
+      resizer.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        document.body.style.cursor = 'ew-resize';
+        document.body.style.userSelect = 'none';
+      });
+
+      // 结束拖拽
+      document.addEventListener('mouseup', function() {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+
+      // 拖拽过程
+      document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        
+        // 获取布局容器的位置
+        const layoutRect = layout.getBoundingClientRect();
+        // 计算新的侧边栏宽度
+        let newWidth = e.clientX - layoutRect.left - 16; // 减去padding
+        
+        // 限制最小和最大宽度
+        newWidth = Math.max(200, Math.min(500, newWidth));
+        
+        // 设置侧边栏宽度
+        sidebar.style.width = newWidth + 'px';
+      });
+
+      // 移动端触摸支持
+      resizer.addEventListener('touchstart', function(e) {
+        isResizing = true;
+        e.preventDefault(); // 防止滚动
+      }, { passive: false });
+
+      document.addEventListener('touchend', function() {
+        isResizing = false;
+      });
+
+      document.addEventListener('touchmove', function(e) {
+        if (!isResizing) return;
+        
+        const touch = e.touches[0];
+        const layoutRect = layout.getBoundingClientRect();
+        let newWidth = touch.clientX - layoutRect.left - 16;
+        
+        newWidth = Math.max(200, Math.min(500, newWidth));
+        sidebar.style.width = newWidth + 'px';
+        
+        e.preventDefault(); // 防止滚动
+      }, { passive: false });
     });
   </script>
   <!-- 核心模块优先加载 -->
