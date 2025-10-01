@@ -8,24 +8,20 @@ from http.server import SimpleHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
 # 数据库模块
-import database
-from database import init_db, get_stocks, get_industries, get_db_tables, execute_db_query
+try:
+    import database
+    from database import init_db, get_stocks, get_industries, get_db_tables, execute_db_query
+    DATABASE_AVAILABLE = True
+except ImportError:
+    DATABASE_AVAILABLE = False
+    print("警告: 数据库模块不可用")
 
-# 模块化API导入
+# CSV数据读取器
 from api.csv_data_reader import build_csv_based_response, build_industry_statistics_response
-from api.hotspots import generate_hotspots, calc_stats, generate_foreign_hotspots, generate_forum_hotspots, generate_global_capital_flow, generate_tencent_jian_index
-from api.wind import generate_wind_industries
-# 公司数据结构导入
-from api.company import StockCompany, create_company_from_akshare_data
 
 # 服务器配置
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PORT = int(os.environ.get("PORT", "8090"))
-
-# 受限目录映射
-SAFE_KEYS = {
-    "wind": os.path.abspath(os.path.join(ROOT_DIR, "..", "第一层模块", "上市公司或行业分类")),
-}
 
 class AdminHandler(SimpleHTTPRequestHandler):
     def send_head(self):
@@ -81,26 +77,6 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(f.read())
             return
         
-        # API路由 - 热点数据
-        if parsed.path in ["/api/domestic/hotspots", "/api/domestic-hotspot"]:
-            try:
-                data = generate_hotspots(ROOT_DIR)
-                if not data.get("data"):
-                    data["data"] = []
-                self._send_json(data)
-            except Exception as e:
-                self._send_json({
-                    "success": False,
-                    "message": f"获取热点数据失败: {str(e)}",
-                    "data": []
-                }, status=500)
-            return
-        
-        if parsed.path == "/api/domestic-hotspot/stats":
-            data = generate_hotspots(ROOT_DIR)
-            self._send_json(calc_stats(data.get("data", [])))
-            return
-        
         # API路由 - 上市公司数据（新的CSV数据源）
         if parsed.path == "/api/listed-companies":
             params = parse_qs(parsed.query or "")
@@ -131,8 +107,45 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 self._send_json({"success": False, "error": str(e)})
             return
         
-        # API路由 - 数据库查询
-        if parsed.path == "/api/db-query":
+        # API路由 - 股票数据（新增）
+        if parsed.path == "/api/stock-data":
+            params = parse_qs(parsed.query or "")
+            page = int((params.get("page") or ["0"])[0])
+            size = int((params.get("size") or ["50"])[0])
+            industry = (params.get("industry") or [None])[0]
+            try:
+                resp = build_csv_based_response(page, size, industry)
+                self._send_json(resp)
+            except Exception as e:
+                self._send_json({"success": False, "error": str(e)})
+            return
+        
+        # API路由 - 公司名称（新增）
+        if parsed.path == "/api/company-names":
+            try:
+                resp = build_csv_based_response(0, 10000)  # 获取所有公司名称
+                # 只返回代码和名称
+                if resp.get("success") and resp.get("data", {}).get("content"):
+                    companies = [{"code": item["code"], "name": item["name"]} 
+                               for item in resp["data"]["content"]]
+                    self._send_json({"success": True, "data": companies})
+                else:
+                    self._send_json({"success": False, "error": "无法获取公司名称"})
+            except Exception as e:
+                self._send_json({"success": False, "error": str(e)})
+            return
+        
+        # API路由 - 行业数据（新增）
+        if parsed.path == "/api/industry-data":
+            try:
+                resp = build_industry_statistics_response()
+                self._send_json(resp)
+            except Exception as e:
+                self._send_json({"success": False, "error": str(e)})
+            return
+        
+        # API路由 - 数据库查询（如果数据库可用）
+        if parsed.path == "/api/db-query" and DATABASE_AVAILABLE:
             params = parse_qs(parsed.query or "")
             query = (params.get("query") or [""])[0]
             if not query:
@@ -153,35 +166,12 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 })
             return
         
-        # API路由 - 基本功能路由
-        api_routes = {
-            "/api/foreign-hotspot": generate_foreign_hotspots,
-            "/api/forum-hotspot": generate_forum_hotspots,
-            "/api/global-capital-flow": generate_global_capital_flow,
-            "/api/tencent-jian-index": generate_tencent_jian_index,
-            "/api/wind-industries": generate_wind_industries,
-        }
-        
-        if parsed.path in api_routes:
-            try:
-                data = api_routes[parsed.path]()
-                if not data.get("data"):
-                    data["data"] = []
-                self._send_json(data)
-            except Exception as e:
-                self._send_json({
-                    "success": False,
-                    "message": f"获取数据失败: {str(e)}",
-                    "data": []
-                }, status=500)
-            return
-        
-        # API路由 - 数据库相关
-        if parsed.path == "/api/db/tables":
+        # API路由 - 数据库相关（如果数据库可用）
+        if parsed.path == "/api/db/tables" and DATABASE_AVAILABLE:
             self._send_json({"success": True, "data": get_db_tables()})
             return
         
-        if parsed.path == "/api/db/query":
+        if parsed.path == "/api/db/query" and DATABASE_AVAILABLE:
             params = parse_qs(parsed.query or "")
             query = (params.get("query") or [""])[0]
             if query:
@@ -191,13 +181,23 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 self._send_json({"success": False, "message": "查询语句不能为空"})
             return
         
-        # API路由 - 目录列表
-        if parsed.path == "/api/list-dir":
-            params = parse_qs(parsed.query or "")
-            key = (params.get("key") or [""])[0]
-            max_depth = int((params.get("depth") or ["2"])[0])
-            resp = self._list_dir_by_key(key, max_depth=max_depth)
-            self._send_json({"success": True, "data": resp})
+        # 占位API路由 - 返回示例数据
+        placeholder_routes = {
+            "/api/domestic/hotspots": {"data": [], "message": "热点数据模块未配置"},
+            "/api/domestic-hotspot": {"data": [], "message": "热点数据模块未配置"},
+            "/api/domestic-hotspot/stats": {"data": {}, "message": "统计模块未配置"},
+            "/api/foreign-hotspot": {"data": [], "message": "外资热点模块未配置"},
+            "/api/forum-hotspot": {"data": [], "message": "论坛热点模块未配置"},
+            "/api/global-capital-flow": {"data": [], "message": "全球资金流向模块未配置"},
+            "/api/tencent-jian-index": {"data": [], "message": "腾讯指数模块未配置"},
+            "/api/wind-industries": {"data": [], "message": "Wind行业数据模块未配置"},
+        }
+        
+        if parsed.path in placeholder_routes:
+            self._send_json({
+                "success": True,
+                **placeholder_routes[parsed.path]
+            })
             return
         
         # 默认静态文件处理
@@ -217,45 +217,6 @@ class AdminHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _list_dir_by_key(self, key: str, max_depth: int = 2):
-        """根据key列出目录结构"""
-        root = SAFE_KEYS.get(key)
-        if not root or not os.path.isdir(root):
-            return {"root": None, "items": []}
-        
-        def walk(d: str, depth: int):
-            node = {
-                "name": os.path.basename(d), 
-                "path": os.path.relpath(d, root), 
-                "type": "dir", 
-                "children": []
-            }
-            if depth >= max_depth:
-                return node
-            
-            try:
-                for name in sorted(os.listdir(d)):
-                    fp = os.path.join(d, name)
-                    if os.path.isdir(fp):
-                        node["children"].append(walk(fp, depth + 1))
-                    else:
-                        try:
-                            size = os.path.getsize(fp)
-                        except OSError:
-                            size = 0
-                        node["children"].append({
-                            "name": name,
-                            "path": os.path.relpath(fp, root).replace("\\", "/"),
-                            "type": "file",
-                            "size": size
-                        })
-            except OSError:
-                pass
-            return node
-        
-        tree = walk(root, 0)
-        return {"root": root, "items": tree}
-
 
 def run():
     """启动服务器"""
@@ -266,7 +227,9 @@ def run():
     print(f"端口: {PORT}")
     print("静态根目录:", ROOT_DIR)
     print("页面:  http://localhost:%d/index.html" % PORT)
-    print("API:   /api/domestic-hotspot, /api/listed-companies, /api/db/query")
+    print("API:   /api/listed-companies, /api/stock-data, /api/company-names, /api/industry-data")
+    if DATABASE_AVAILABLE:
+        print("数据库: /api/db/query")
     print("========================================")
     try:
         httpd.serve_forever()

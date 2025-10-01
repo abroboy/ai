@@ -23,26 +23,30 @@ function loadWindIndustryClassification() {
 
 // 渲染上市公司或行业分类模块内容
 function renderWindIndustryModule(container) {
-  // 直接从API获取上市公司数据，不入库
-  fetch('/api/listed-companies?dataSource=akshare&page=0&size=500')
+  // 从新的CSV数据API获取行业统计数据
+  fetch('/api/industry-statistics')
     .then(response => response.json())
     .then(data => {
-      if (data.success && data.data && data.data.content) {
-        const companiesData = data.data.content;
+      if (data.success && data.data) {
+        const industries = data.data.industries;
+        const companiesData = [];
         
-        // 对数据进行行业分类处理
-        const industryMap = groupCompaniesByIndustry(companiesData);
-        const industries = processIndustries(industryMap, companiesData);
+        // 提取所有公司数据
+        industries.forEach(industry => {
+          if (industry.companies) {
+            companiesData.push(...industry.companies);
+          }
+        });
         
         // 准备图表数据
-        const chartData = prepareChartData(industries);
+        const chartData = prepareChartDataFromCSV(industries);
         
         // 构建模块HTML
-        const moduleHTML = buildIndustryModuleHTML(industries, companiesData);
+        const moduleHTML = buildIndustryModuleHTMLFromCSV(industries, data.data);
         container.innerHTML = moduleHTML;
 
-        // 加载 AKShare 全量股票数据表格
-        loadAkshareStockData();
+        // 加载 CSV 股票数据表格
+        loadCSVStockData();
 
         // 初始化图表
         initIndustryChart(chartData);
@@ -118,6 +122,33 @@ function processIndustries(industryMap, companiesData) {
 
 // 准备图表数据
 function prepareChartData(industries) {
+  // 取前10个行业用于图表展示
+  const topIndustries = industries.slice(0, 10);
+  
+  const categories = topIndustries.map(item => item.industryName);
+  const marketCapData = topIndustries.map(item => item.totalMarketCap);
+  const companyCountData = topIndustries.map(item => item.companyCount);
+  
+  return {
+    categories: categories,
+    series: [
+      {
+        name: '总市值(亿元)',
+        type: 'bar',
+        data: marketCapData
+      },
+      {
+        name: '公司数量',
+        type: 'line',
+        yAxisIndex: 1,
+        data: companyCountData
+      }
+    ]
+  };
+}
+
+// 从CSV数据准备图表数据
+function prepareChartDataFromCSV(industries) {
   // 取前10个行业用于图表展示
   const topIndustries = industries.slice(0, 10);
   
@@ -570,6 +601,11 @@ function exportCompaniesData(industryName) {
 
 // 构建行业模块HTML
 function buildIndustryModuleHTML(industries, companiesData) {
+  return buildIndustryModuleHTMLFromCSV(industries, {totalCompanies: companiesData.length, totalMarketCap: industries.reduce((sum, item) => sum + parseFloat(item.totalMarketCap), 0)});
+}
+
+// 从CSV数据构建行业模块HTML
+function buildIndustryModuleHTMLFromCSV(industries, statsData) {
   return `
     <div class="mb-4">
       <h4 class="fw-bold text-primary mb-3">上市公司或行业分类 <span class="badge bg-danger">实时</span></h4>
@@ -614,8 +650,8 @@ function buildIndustryModuleHTML(industries, companiesData) {
                         <td>${item.parentIndustryCode ? industries.find(parent => parent.industryCode === item.parentIndustryCode)?.industryName || '-' : '-'}</td>
                         <td>${item.companyCount}</td>
                         <td>${item.totalMarketCap.toFixed(2)}</td>
-                        <td>${item.avgPeRatio.toFixed(2)}</td>
-                        <td>${item.avgPbRatio.toFixed(2)}</td>
+                        <td>${(item.avgMarketCap || 0).toFixed(2)}</td>
+                        <td>-</td>
                         <td>
                           <button class="btn btn-sm btn-outline-primary" onclick="viewCompanies('${item.industryCode}')">
                             <i class="bi bi-list-ul"></i> 查看公司
@@ -665,13 +701,13 @@ function buildIndustryModuleHTML(industries, companiesData) {
                 </div>
                 <div class="col-6">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-success mb-0">${companiesData.length}</h3>
+                    <h3 class="text-success mb-0">${statsData.totalCompanies || 0}</h3>
                     <small class="text-muted">上市公司</small>
                   </div>
                 </div>
                 <div class="col-12">
                   <div class="border rounded p-3 text-center">
-                    <h3 class="text-info mb-0">${industries.reduce((sum, item) => sum + parseFloat(item.totalMarketCap), 0).toFixed(2)}</h3>
+                    <h3 class="text-info mb-0">${(statsData.totalMarketCap || 0).toFixed(2)}</h3>
                     <small class="text-muted">总市值(亿元)</small>
                   </div>
                 </div>
@@ -723,85 +759,87 @@ function buildIndustryModuleHTML(industries, companiesData) {
 
 // 页面加载完成后初始化
 /**
- * 加载并渲染 AKShare 全量股票数据（来自 akshare_stock_structure.txt）
+ * 加载并渲染 CSV 股票数据（来自 CSV 文件）
  * 渲染位置：在 #content 顶部动态插入一个卡片区域
  */
-function loadAkshareStockData() {
+function loadCSVStockData() {
   const container = document.getElementById('content');
   if (!container) return;
 
   // 如果已存在，避免重复插入
-  if (!document.getElementById('akshare-stock-card')) {
+  if (!document.getElementById('csv-stock-card')) {
     const card = document.createElement('div');
-    card.id = 'akshare-stock-card';
+    card.id = 'csv-stock-card';
     card.className = 'card shadow-sm mb-4';
     card.innerHTML = `
       <div class="card-header bg-light d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">AKShare 全量股票数据</h5>
+        <h5 class="card-title mb-0">CSV 股票数据</h5>
         <div class="d-flex gap-2">
-          <input id="akshare-search" type="text" placeholder="搜索 代码/名称" class="form-control form-control-sm" style="width:220px;">
-          <button class="btn btn-sm btn-outline-primary" id="akshare-search-btn"><i class="bi bi-search"></i> 搜索</button>
-          <button class="btn btn-sm btn-outline-secondary" id="akshare-reset-btn"><i class="bi bi-x-circle"></i> 重置</button>
+          <input id="csv-search" type="text" placeholder="搜索 代码/名称" class="form-control form-control-sm" style="width:220px;">
+          <button class="btn btn-sm btn-outline-primary" id="csv-search-btn"><i class="bi bi-search"></i> 搜索</button>
+          <button class="btn btn-sm btn-outline-secondary" id="csv-reset-btn"><i class="bi bi-x-circle"></i> 重置</button>
         </div>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive" style="max-height: 480px; overflow: auto;">
           <table class="table table-hover table-striped mb-0">
-            <thead id="akshare-thead" class="table-light sticky-top"></thead>
-            <tbody id="akshare-tbody"></tbody>
+            <thead id="csv-thead" class="table-light sticky-top"></thead>
+            <tbody id="csv-tbody"></tbody>
           </table>
         </div>
       </div>
       <div class="card-footer bg-light d-flex justify-content-between">
-        <small class="text-muted">数据来源：AKShare | 文件：akshare_stock_structure.txt</small>
-        <div id="akshare-stats" class="text-muted"></div>
+        <small class="text-muted">数据来源：CSV文件 | 股票数据和公司名称</small>
+        <div id="csv-stats" class="text-muted"></div>
       </div>
     `;
     container.prepend(card);
   }
 
-  // 依次尝试多个资源路径
-  const candidates = [
-    'static/data/akshare_stock_structure.txt',
-    '../akshare_stock_structure.txt'
-  ];
+  // 从新的CSV API获取股票数据
+  fetch('/api/stock-data')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        renderCSVTable(data.data);
 
-  tryFetchTextSequentially(candidates)
-    .then((rawText) => {
-      const jsonText = extractJsonArrayFromText(rawText);
-      const sanitized = sanitizeAkshareJson(jsonText);
-      const rows = JSON.parse(sanitized);
-
-      renderAkshareTable(rows);
-
-      // 绑定检索
-      const searchInput = document.getElementById('akshare-search');
-      const searchBtn = document.getElementById('akshare-search-btn');
-      const resetBtn = document.getElementById('akshare-reset-btn');
-      if (searchBtn && resetBtn) {
-        searchBtn.onclick = () => {
-          const q = (searchInput?.value || '').trim().toLowerCase();
-          const allTr = document.querySelectorAll('#akshare-tbody tr');
-          allTr.forEach(tr => {
-            const code = (tr.getAttribute('data-code') || '').toLowerCase();
-            const name = (tr.getAttribute('data-name') || '').toLowerCase();
-            tr.style.display = (code.includes(q) || name.includes(q)) ? '' : 'none';
-          });
-        };
-        resetBtn.onclick = () => {
-          if (searchInput) searchInput.value = '';
-          const allTr = document.querySelectorAll('#akshare-tbody tr');
-          allTr.forEach(tr => tr.style.display = '');
-        };
+        // 绑定检索
+        const searchInput = document.getElementById('csv-search');
+        const searchBtn = document.getElementById('csv-search-btn');
+        const resetBtn = document.getElementById('csv-reset-btn');
+        if (searchBtn && resetBtn) {
+          searchBtn.onclick = () => {
+            const q = (searchInput?.value || '').trim().toLowerCase();
+            const allTr = document.querySelectorAll('#csv-tbody tr');
+            allTr.forEach(tr => {
+              const code = (tr.getAttribute('data-code') || '').toLowerCase();
+              const name = (tr.getAttribute('data-name') || '').toLowerCase();
+              tr.style.display = (code.includes(q) || name.includes(q)) ? '' : 'none';
+            });
+          };
+          resetBtn.onclick = () => {
+            if (searchInput) searchInput.value = '';
+            const allTr = document.querySelectorAll('#csv-tbody tr');
+            allTr.forEach(tr => tr.style.display = '');
+          };
+        }
+      } else {
+        console.error('获取CSV数据失败:', data.message);
+        const thead = document.getElementById('csv-thead');
+        const tbody = document.getElementById('csv-tbody');
+        if (thead && tbody) {
+          thead.innerHTML = '<tr><th>错误</th></tr>';
+          tbody.innerHTML = `<tr><td class="text-danger">无法加载CSV股票数据: ${data.message || '未知错误'}</td></tr>`;
+        }
       }
     })
     .catch((err) => {
-      console.error('加载 AKShare 数据失败:', err);
-      const thead = document.getElementById('akshare-thead');
-      const tbody = document.getElementById('akshare-tbody');
+      console.error('加载CSV数据失败:', err);
+      const thead = document.getElementById('csv-thead');
+      const tbody = document.getElementById('csv-tbody');
       if (thead && tbody) {
         thead.innerHTML = '<tr><th>错误</th></tr>';
-        tbody.innerHTML = `<tr><td class="text-danger">无法加载 akshare_stock_structure.txt，请将文件放到 static/data/ 目录或检查路径权限。</td></tr>`;
+        tbody.innerHTML = `<tr><td class="text-danger">无法加载CSV股票数据，请检查服务器连接。</td></tr>`;
       }
     });
 }
@@ -857,10 +895,10 @@ function sanitizeAkshareJson(jsonText) {
 }
 
 // 渲染表格（动态表头为所有键的并集）
-function renderAkshareTable(rows) {
-  const thead = document.getElementById('akshare-thead');
-  const tbody = document.getElementById('akshare-tbody');
-  const stats = document.getElementById('akshare-stats');
+function renderCSVTable(rows) {
+  const thead = document.getElementById('csv-thead');
+  const tbody = document.getElementById('csv-tbody');
+  const stats = document.getElementById('csv-stats');
   if (!thead || !tbody) return;
 
   // 计算列集合
