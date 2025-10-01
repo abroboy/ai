@@ -35,6 +35,7 @@ async function loadEnhancedDomesticHotspotData() {
         let statsData = {};
         
         if (response.ok) {
+            try {
                 const result = await response.json();
                 console.log("API返回数据:", result);
                 if (result.success && result.data) {
@@ -47,7 +48,24 @@ async function loadEnhancedDomesticHotspotData() {
                     }));
                     console.log("成功获取热点数据，数量:", hotspotData.length);
                 }
-            } else {
+            } catch (jsonError) {
+                // 处理JSON解析错误
+                console.error("获取统计数据时发生错误:", jsonError);
+                
+                // 尝试获取原始响应内容，查看是什么格式
+                try {
+                    const rawContent = await response.text();
+                    console.log("API返回非JSON内容格式:", rawContent.substring(0, 100) + (rawContent.length > 100 ? '...' : ''));
+                } catch (e) {
+                    console.error("无法获取原始响应内容:", e);
+                }
+                
+                // JSON解析失败，使用模拟数据
+                console.log("JSON解析失败，将使用模拟数据");
+                hotspotData = generateMockHotspotData();
+                statsData = generateMockStatsData();
+            }
+        } else {
             console.log("API响应错误:", response.status, response.statusText);
         }
         

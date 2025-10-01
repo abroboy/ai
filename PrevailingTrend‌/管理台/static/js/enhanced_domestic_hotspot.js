@@ -9,216 +9,162 @@ function loadEnhancedDomesticHotspotData() {
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">加载中...</span>
             </div>
-            <p class="mt-3">正在加载国内热点数据...</p>
+            <p class="mt-3">正在加载国内上市公司数据...</p>
         </div>
     `;
 
-    // 自包含数据生成 - 扩展到5000+条数据
-    function generateFullDataset() {
-        // 扩展行业和公司名称列表，使数据更加多样化
-        const industries = [
-            '科技', '金融', '医疗', '消费', '能源', '制造', '地产', '公用事业',
-            '农业', '教育', '交通', '物流', '传媒', '通信', '零售', '旅游',
-            '餐饮', '文化', '体育', '娱乐', '环保', '新能源', '互联网', '电子商务'
-        ];
-        
-        // 扩展公司名称列表
-        const companyPrefixes = ['中国', '国际', '环球', '东方', '西部', '南方', '北方', '华夏', '亚太', '欧美'];
-        const companySuffixes = ['科技', '集团', '控股', '股份', '信息', '网络', '电子', '数据', '软件', '硬件'];
-        const companyMiddles = ['通信', '电子', '医药', '金融', '能源', '食品', '建筑', '汽车', '服装', '教育'];
-        
-        // 生成5000+条数据
-        const totalCompanies = 5200;
-        const result = [];
-        
-        for (let i = 0; i < totalCompanies; i++) {
-            // 生成更多样化的公司名称
-            let companyName;
-            if (i < 100) {
-                // 前100家使用知名公司名称
-                const famousCompanies = [
-                    '阿里巴巴', '腾讯', '美团', '京东', '拼多多', '百度', '网易', '小米', 
-                    '中国平安', '招商银行', '中信证券', '贵州茅台', '五粮液', '格力电器', 
-                    '海尔智家', '比亚迪', '宁德时代', '中国石油', '中国石化', '中国移动'
-                ];
-                companyName = famousCompanies[i % famousCompanies.length];
-            } else {
-                // 其余公司使用组合名称
-                const prefix = companyPrefixes[Math.floor(Math.random() * companyPrefixes.length)];
-                const middle = companyMiddles[Math.floor(Math.random() * companyMiddles.length)];
-                const suffix = companySuffixes[Math.floor(Math.random() * companySuffixes.length)];
-                companyName = `${prefix}${middle}${suffix}`;
-            }
-            
-            // 生成股票代码 (沪市600/601/603/605，深市000/001/002/003，创业板300/301，科创板688)
-            let stockCode;
-            const codeType = Math.floor(Math.random() * 10);
-            if (codeType < 4) {
-                // 沪市A股
-                const prefix = ['600', '601', '603', '605'][Math.floor(Math.random() * 4)];
-                stockCode = prefix + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-            } else if (codeType < 7) {
-                // 深市A股
-                const prefix = ['000', '001', '002', '003'][Math.floor(Math.random() * 4)];
-                stockCode = prefix + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-            } else if (codeType < 9) {
-                // 创业板
-                const prefix = ['300', '301'][Math.floor(Math.random() * 2)];
-                stockCode = prefix + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-            } else {
-                // 科创板
-                stockCode = '688' + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-            }
-            
-            // 生成价格和涨跌幅
-            // 根据不同板块设置不同价格范围
-            let basePrice;
-            if (stockCode.startsWith('688')) {
-                // 科创板股票价格普遍较高
-                basePrice = Math.random() * 150 + 50;
-            } else if (stockCode.startsWith('300') || stockCode.startsWith('301')) {
-                // 创业板价格中等
-                basePrice = Math.random() * 100 + 30;
-            } else {
-                // 主板价格范围更广
-                basePrice = Math.random() * 80 + 5;
-            }
-            
-            const price = basePrice.toFixed(2);
-            
-            // 涨跌幅 (-10% ~ +10%)，贴近涨跌停板
-            let change;
-            const limitProb = Math.random();
-            if (limitProb < 0.05) {
-                // 5%概率涨停
-                change = '10.00';
-            } else if (limitProb < 0.1) {
-                // 5%概率跌停
-                change = '-10.00';
-            } else if (limitProb < 0.3) {
-                // 20%概率大幅波动
-                change = (Math.random() * 8 - 4).toFixed(2);
-            } else {
-                // 70%概率小幅波动
-                change = (Math.random() * 4 - 2).toFixed(2);
-            }
-            
-            // 数据来源更加多样化
-            const sources = ['东方财富', '同花顺', '雪球', '新浪财经', '腾讯财经', '证券时报', '中国证券报', '上证报'];
-            const source = sources[Math.floor(Math.random() * sources.length)];
-            
-            // 热度分数 - 与涨跌幅、成交量相关
-            const absChange = Math.abs(parseFloat(change));
-            const volumeFactor = Math.random() * 30; // 模拟成交量因素
-            const heatScore = Math.min(100, absChange * 5 + volumeFactor + Math.random() * 20);
-            
-            // 发布时间 - 过去24小时内随机时间
-            const publishTime = new Date(Date.now() - Math.random() * 86400000).toISOString();
-            
-            // 行业分类 - 根据股票代码范围进行一些关联
-            let category;
-            if (i < 100) {
-                // 前100家公司使用固定行业
-                category = industries[i % industries.length];
-            } else {
-                // 根据股票代码首位数字关联一些行业
-                const firstDigit = parseInt(stockCode[3]);
-                const industryIndex = (firstDigit + i) % industries.length;
-                category = industries[industryIndex];
-            }
-            
-            result.push({
-                id: stockCode,
-                name: companyName,
-                category: category,
-                price: price,
-                change: change,
-                source: source,
-                heatScore: heatScore.toFixed(1),
-                publishTime: publishTime
+    // 从后端API获取真实数据
+    function fetchRealData() {
+        return fetch('/api/listed-companies?page=0&size=10000&sortBy=stockCode&sortDir=asc')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    return data.data.content;
+                } else {
+                    console.error('获取数据失败:', data.error);
+                    // 如果API调用失败，返回空数组
+                    return [];
+                }
+            })
+            .catch(error => {
+                console.error('获取数据时发生错误:', error);
+                // 网络错误时，返回空数组
+                return [];
             });
-        }
-        
-        return result;
+    }
+    
+    // 加载统计数据
+    function fetchStatistics() {
+        return fetch('/api/listed-companies/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    return data.data;
+                } else {
+                    console.error('获取统计数据失败:', data.error);
+                    return null;
+                }
+            })
+            .catch(error => {
+                console.error('获取统计数据时发生错误:', error);
+                return null;
+            });
     }
 
-    // 模拟异步加载 - 使用Web Worker处理大量数据
-    if (window.Worker) {
-        // 创建内联Worker
-        const workerBlob = new Blob([`
-            self.onmessage = function(e) {
-                if (e.data === 'generate') {
-                    // 复制数据生成函数到Worker中
-                    ${generateFullDataset.toString()}
-                    
-                    // 生成数据
-                    const data = generateFullDataset();
-                    
-                    // 返回生成的数据
-                    self.postMessage(data);
-                }
-            };
-        `], { type: 'application/javascript' });
-        
-        const workerUrl = URL.createObjectURL(workerBlob);
-        const worker = new Worker(workerUrl);
-        
-        worker.onmessage = function(e) {
+    // 同时获取数据和统计信息
+    Promise.all([fetchRealData(), fetchStatistics()])
+        .then(([companiesData, statisticsData]) => {
             // 存储数据到全局变量，便于分页操作
-            window.marketData = e.data;
-            renderData(e.data, 1); // 默认显示第1页
+            window.marketData = companiesData;
+            window.statisticsData = statisticsData;
             
-            // 清理Worker
-            worker.terminate();
-            URL.revokeObjectURL(workerUrl);
-        };
-        
-        worker.onerror = function(error) {
+            // 使用Web Worker处理大量数据
+            if (window.Worker) {
+                // 创建内联Worker用于数据处理
+                const workerBlob = new Blob([`
+                    self.onmessage = function(e) {
+                        const { companies, statistics } = e.data;
+                        
+                        // 处理数据（转换数值类型）
+                        const processedCompanies = companies.map(company => {
+                            // 确保所有数字字段转换为适当的类型
+                            return {
+                                ...company,
+                                latestPrice: company.latestPrice ? (typeof company.latestPrice === 'string' ? company.latestPrice : company.latestPrice.toString()) : '0.00',
+                                priceChangeRate: company.priceChangeRate ? (typeof company.priceChangeRate === 'string' ? company.priceChangeRate : company.priceChangeRate.toString()) : '0.00',
+                                totalMarketValue: company.totalMarketValue ? (typeof company.totalMarketValue === 'string' ? company.totalMarketValue : company.totalMarketValue.toString()) : '0.00',
+                                peRatio: company.peRatio ? (typeof company.peRatio === 'string' ? company.peRatio : company.peRatio.toString()) : '0.00',
+                                pbRatio: company.pbRatio ? (typeof company.pbRatio === 'string' ? company.pbRatio : company.pbRatio.toString()) : '0.00'
+                            };
+                        });
+                        
+                        // 返回处理后的数据
+                        self.postMessage({ companies: processedCompanies, statistics });
+                    };
+                `], { type: 'application/javascript' });
+                
+                const workerUrl = URL.createObjectURL(workerBlob);
+                const worker = new Worker(workerUrl);
+                
+                worker.onmessage = function(e) {
+                    const { companies, statistics } = e.data;
+                    // 使用处理后的数据渲染页面
+                    renderData(companies, statistics, 1); // 默认显示第1页
+                    
+                    // 清理Worker
+                    worker.terminate();
+                    URL.revokeObjectURL(workerUrl);
+                };
+                
+                worker.onerror = function(error) {
+                    console.error('Web Worker 处理错误:', error);
+                    // 降级处理：直接使用原始数据
+                    renderData(companiesData, statisticsData, 1);
+                    worker.terminate();
+                    URL.revokeObjectURL(workerUrl);
+                };
+                
+                // 发送数据给Worker处理
+                worker.postMessage({ companies: companiesData, statistics: statisticsData });
+            } else {
+                // 浏览器不支持Worker，直接使用原始数据
+                renderData(companiesData, statisticsData, 1);
+            }
+        })
+        .catch(error => {
+            console.error('数据加载失败:', error);
             contentArea.innerHTML = `
-                <div class="alert alert-danger">
-                    <h4>数据加载失败</h4>
-                    <p>Worker错误: ${error.message}</p>
-                    <button class="btn btn-primary mt-2" onclick="loadEnhancedDomesticHotspotData()">
-                        重试加载
+                <div class="text-center py-5">
+                    <div class="alert alert-danger" role="alert">
+                        数据加载失败，请稍后重试
+                    </div>
+                    <button class="btn btn-primary mt-3" onclick="loadEnhancedDomesticHotspotData()">
+                        重新加载
                     </button>
                 </div>
             `;
-            
-            // 清理Worker
-            worker.terminate();
-            URL.revokeObjectURL(workerUrl);
-        };
-        
-        // 启动数据生成
-        worker.postMessage('generate');
-    } else {
-        // 浏览器不支持Worker，回退到主线程处理
-        setTimeout(() => {
-            try {
-                const fullData = generateFullDataset();
-                // 存储数据到全局变量，便于分页操作
-                window.marketData = fullData;
-                renderData(fullData, 1); // 默认显示第1页
-            } catch (e) {
-                contentArea.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h4>数据加载失败</h4>
-                        <p>${e.message}</p>
-                        <button class="btn btn-primary mt-2" onclick="loadEnhancedDomesticHotspotData()">
-                            重试加载
-                        </button>
-                    </div>
-                `;
+        });
+}
+
+// 刷新上市公司数据
+function refreshListedCompanyData() {
+    const contentArea = document.querySelector(".content-area");
+    if (!contentArea) return;
+    
+    // 显示加载状态
+    contentArea.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">刷新中...</span>
+            </div>
+            <p class="mt-3">正在刷新国内上市公司数据...</p>
+        </div>
+    `;
+    
+    // 调用后端刷新数据接口
+    fetch('/api/listed-companies/refresh')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 刷新成功后重新加载数据
+                loadEnhancedDomesticHotspotData();
+            } else {
+                alert('数据刷新失败: ' + (data.error || '未知错误'));
+                loadEnhancedDomesticHotspotData();
             }
-        }, 800);
-    }
+        })
+        .catch(error => {
+            console.error('刷新数据时发生错误:', error);
+            alert('数据刷新失败，请稍后重试');
+            loadEnhancedDomesticHotspotData();
+        });
 }
 
 // 分页配置
 const PAGE_SIZE = 50; // 每页显示的公司数量，增加到50条以显示更多数据
 
 // 当前排序状态
-let currentSortField = 'heatScore'; // 默认按热度排序
+let currentSortField = 'totalMarketValue'; // 默认按市值排序
 let currentSortDirection = 'desc'; // 默认降序
 
 // 排序函数 - 优化以处理大量数据
@@ -232,28 +178,14 @@ function sortData(data, field, direction) {
         let valueB = data[b][field];
         
         // 数值型字段特殊处理
-        if (field === 'price' || field === 'heatScore') {
-            valueA = parseFloat(valueA);
-            valueB = parseFloat(valueB);
-        } else if (field === 'change') {
-            // 特殊处理涨跌幅，确保正确排序（去除%和正负号）
-            valueA = parseFloat(valueA);
-            valueB = parseFloat(valueB);
-        } else if (field === 'publishTime') {
-            // 日期时间排序
-            valueA = new Date(valueA).getTime();
-            valueB = new Date(valueB).getTime();
-        } else if (field === 'id') {
+        if (field === 'latestPrice' || field === 'totalMarketValue' || field === 'priceChangeRate' || 
+            field === 'peRatio' || field === 'pbRatio') {
+            valueA = parseFloat(valueA) || 0;
+            valueB = parseFloat(valueB) || 0;
+        } else if (field === 'stockCode') {
             // 股票代码排序 - 确保按数字大小排序而不是字符串
             valueA = valueA.toString();
             valueB = valueB.toString();
-        }
-        
-        // 处理相等的情况，使用热度作为次要排序条件
-        if (valueA === valueB && field !== 'heatScore') {
-            const heatA = parseFloat(data[a]['heatScore']);
-            const heatB = parseFloat(data[b]['heatScore']);
-            return direction === 'asc' ? heatA - heatB : heatB - heatA;
         }
         
         if (direction === 'asc') {
@@ -281,12 +213,12 @@ function toggleSort(field) {
     // 重新渲染数据 - 尝试保持在当前页
     if (window.marketData) {
         const currentPageToKeep = window.currentPage || 1;
-        renderData(window.marketData, currentPageToKeep);
+        renderData(window.marketData, window.statisticsData, currentPageToKeep);
     }
 }
 
 // 渲染逻辑（表格式，带分页和排序）- 优化以处理大量数据
-function renderData(data, currentPage = 1) {
+function renderData(data, statisticsData, currentPage = 1) {
     const contentArea = document.querySelector(".content-area");
     if (!contentArea) return;
     
@@ -304,39 +236,120 @@ function renderData(data, currentPage = 1) {
     
     // 使用setTimeout让浏览器有机会渲染加载指示器
     setTimeout(() => {
+        if (!data || data.length === 0) {
+            contentArea.innerHTML = `
+                <div class="text-center py-10">
+                    <p class="text-muted">暂无数据</p>
+                    <button class="btn btn-primary mt-3" onclick="refreshListedCompanyData()">
+                        刷新数据
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
         // 按当前排序条件排序
         const sortedData = sortData(data, currentSortField, currentSortDirection);
         
         // 计算分页
         const totalPages = Math.ceil(sortedData.length / PAGE_SIZE);
         currentPage = Math.max(1, Math.min(currentPage, totalPages)); // 确保页码在有效范围内
+        window.currentPage = currentPage;
         
         // 获取当前页的数据
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         const endIndex = Math.min(startIndex + PAGE_SIZE, sortedData.length);
         const currentPageData = sortedData.slice(startIndex, endIndex);
         
+        // 格式化数字显示
+        const formatNumber = (num, decimals = 2) => {
+            if (!num) return '-';
+            return parseFloat(num).toFixed(decimals);
+        };
+        
+        // 根据股票代码获取市场名称
+        const getMarketName = (stockCode) => {
+            if (!stockCode) return '-';
+            
+            if (stockCode.startsWith('6')) {
+                return '沪市';
+            } else if (stockCode.startsWith('0')) {
+                return '深市';
+            } else if (stockCode.startsWith('3')) {
+                return '创业板';
+            } else if (stockCode.startsWith('688')) {
+                return '科创板';
+            }
+            return '其他';
+        };
+        
+        // 构建统计信息卡片
+        let statsHtml = '';
+        if (statisticsData) {
+            statsHtml = `
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card bg-light border-primary">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">上市公司总数</h5>
+                            <p class="card-text display-4">${statisticsData.totalCount || 0}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card bg-light border-success">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">活跃公司</h5>
+                            <p class="card-text display-4">${statisticsData.activeCount || 0}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card bg-light border-warning">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">停牌公司</h5>
+                            <p class="card-text display-4">${statisticsData.suspendedCount || 0}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card bg-light border-info">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">行业数量</h5>
+                            <p class="card-text display-4">${statisticsData.industryCount || 0}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        
         // 构建HTML
         let html = `
             <div class="market-header">
                 <h2><i class="bi bi-graph-up"></i> 国内上市公司全景</h2>
                 <p class="text-muted">共 ${data.length} 家公司 • 最后更新: ${new Date().toLocaleString()}</p>
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="form-inline">
-                        <label for="pageSizeSelect" class="me-2">每页显示:</label>
-                        <select id="pageSizeSelect" class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
-                            <option value="20" ${PAGE_SIZE === 20 ? 'selected' : ''}>20条</option>
-                            <option value="50" ${PAGE_SIZE === 50 ? 'selected' : ''}>50条</option>
-                            <option value="100" ${PAGE_SIZE === 100 ? 'selected' : ''}>100条</option>
-                            <option value="200" ${PAGE_SIZE === 200 ? 'selected' : ''}>200条</option>
-                        </select>
-                    </div>
-                    <div class="input-group" style="max-width: 300px;">
-                        <input type="text" id="searchInput" class="form-control" placeholder="搜索公司名称或代码..." 
-                               onkeyup="if(event.key === 'Enter') searchCompanies()">
-                        <button class="btn btn-outline-secondary" type="button" onclick="searchCompanies()">
-                            <i class="bi bi-search"></i>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                    ${statsHtml}
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="form-inline">
+                            <label for="pageSizeSelect" class="me-2">每页显示:</label>
+                            <select id="pageSizeSelect" class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                                <option value="20" ${PAGE_SIZE === 20 ? 'selected' : ''}>20条</option>
+                                <option value="50" ${PAGE_SIZE === 50 ? 'selected' : ''}>50条</option>
+                                <option value="100" ${PAGE_SIZE === 100 ? 'selected' : ''}>100条</option>
+                                <option value="200" ${PAGE_SIZE === 200 ? 'selected' : ''}>200条</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="refreshListedCompanyData()">
+                            <i class="bi bi-arrow-repeat"></i> 刷新数据
                         </button>
+                        <div class="input-group" style="max-width: 300px;">
+                            <input type="text" id="searchInput" class="form-control" placeholder="搜索公司名称或代码..." 
+                                   onkeyup="if(event.key === 'Enter') searchCompanies()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="searchCompanies()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -344,29 +357,30 @@ function renderData(data, currentPage = 1) {
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
                         <tr>
-                            <th scope="col" class="sortable" onclick="toggleSort('id')">
-                                代码 ${getSortIcon('id')}
+                            <th scope="col" class="sortable" onclick="toggleSort('stockCode')">
+                                股票代码 ${getSortIcon('stockCode')}
                             </th>
-                            <th scope="col" class="sortable" onclick="toggleSort('name')">
-                                公司名称 ${getSortIcon('name')}
+                            <th scope="col" class="sortable" onclick="toggleSort('companyName')">
+                                公司名称 ${getSortIcon('companyName')}
                             </th>
-                            <th scope="col" class="sortable" onclick="toggleSort('category')">
-                                行业 ${getSortIcon('category')}
+                            <th scope="col">市场</th>
+                            <th scope="col" class="sortable" onclick="toggleSort('industry')">
+                                行业 ${getSortIcon('industry')}
                             </th>
-                            <th scope="col" class="sortable" onclick="toggleSort('price')">
-                                当前价格 ${getSortIcon('price')}
+                            <th scope="col" class="sortable" onclick="toggleSort('latestPrice')">
+                                最新价(元) ${getSortIcon('latestPrice')}
                             </th>
-                            <th scope="col" class="sortable" onclick="toggleSort('change')">
-                                涨跌幅 ${getSortIcon('change')}
+                            <th scope="col" class="sortable" onclick="toggleSort('priceChangeRate')">
+                                涨跌幅(%) ${getSortIcon('priceChangeRate')}
                             </th>
-                            <th scope="col" class="sortable" onclick="toggleSort('heatScore')">
-                                热度 ${getSortIcon('heatScore')}
+                            <th scope="col" class="sortable" onclick="toggleSort('totalMarketValue')">
+                                市值(亿元) ${getSortIcon('totalMarketValue')}
                             </th>
-                            <th scope="col" class="sortable" onclick="toggleSort('source')">
-                                数据来源 ${getSortIcon('source')}
+                            <th scope="col" class="sortable" onclick="toggleSort('peRatio')">
+                                PE ${getSortIcon('peRatio')}
                             </th>
-                            <th scope="col" class="sortable" onclick="toggleSort('publishTime')">
-                                更新时间 ${getSortIcon('publishTime')}
+                            <th scope="col" class="sortable" onclick="toggleSort('pbRatio')">
+                                PB ${getSortIcon('pbRatio')}
                             </th>
                         </tr>
                     </thead>
@@ -375,31 +389,23 @@ function renderData(data, currentPage = 1) {
 
         // 构建表格行HTML
         currentPageData.forEach(item => {
-            const changeValue = parseFloat(item.change);
-            const changeClass = changeValue > 0 ? 'text-success' : (changeValue < 0 ? 'text-danger' : 'text-muted');
-            const changeIcon = changeValue > 0 ? '↑' : (changeValue < 0 ? '↓' : '-');
+            // 涨跌样式
+            const priceChangeClass = parseFloat(item.priceChangeRate) >= 0 ? 'text-danger' : 'text-success';
+            const priceChangeIcon = parseFloat(item.priceChangeRate) >= 0 ? '↑' : '↓';
             
             html += `
                 <tr>
-                    <td title="${item.id}">${item.id}</td>
-                    <td title="${item.name}"><strong>${item.name}</strong></td>
-                    <td title="${item.category}">${item.category}</td>
-                    <td title="¥${item.price}">¥${item.price}</td>
-                    <td class="${changeClass}" title="${changeIcon} ${Math.abs(changeValue)}%"><strong>${changeIcon} ${Math.abs(changeValue)}%</strong></td>
-                    <td>
-                        <div class="progress" style="height: 20px;" title="热度: ${item.heatScore}">
-                            <div class="progress-bar bg-${parseFloat(item.heatScore) > 70 ? 'danger' : parseFloat(item.heatScore) > 50 ? 'warning' : 'success'}" 
-                                 role="progressbar" 
-                                 style="width: ${Math.min(100, item.heatScore)}%" 
-                                 aria-valuenow="${item.heatScore}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                ${Math.round(parseFloat(item.heatScore))}
-                            </div>
-                        </div>
+                    <td title="${item.stockCode || '-'}">${item.stockCode || '-'}</td>
+                    <td title="${item.companyName || '-'}"><strong>${item.companyName || '-'}</strong></td>
+                    <td>${getMarketName(item.stockCode)}</td>
+                    <td title="${item.industry || '-'}">${item.industry || '-'}</td>
+                    <td title="${formatNumber(item.latestPrice)}">${formatNumber(item.latestPrice)}</td>
+                    <td class="${priceChangeClass}" title="${formatNumber(item.priceChangeRate)}%">
+                        <strong>${priceChangeIcon} ${formatNumber(item.priceChangeRate)}</strong>
                     </td>
-                    <td title="${item.source}">${item.source}</td>
-                    <td title="${new Date(item.publishTime).toLocaleString()}">${new Date(item.publishTime).toLocaleTimeString()}</td>
+                    <td title="${formatNumber(item.totalMarketValue, 2)}">${formatNumber(item.totalMarketValue, 2)}</td>
+                    <td title="${formatNumber(item.peRatio, 2)}">${formatNumber(item.peRatio, 2)}</td>
+                    <td title="${formatNumber(item.pbRatio, 2)}">${formatNumber(item.pbRatio, 2)}</td>
                 </tr>
             `;
         });
@@ -492,7 +498,7 @@ function getSortIcon(field) {
 // 切换页面函数
 function changePage(pageNumber) {
     if (!window.marketData) return;
-    renderData(window.marketData, pageNumber);
+    renderData(window.marketData, window.statisticsData, pageNumber);
     // 滚动到页面顶部
     window.scrollTo({top: 0, behavior: 'smooth'});
 }
@@ -501,7 +507,7 @@ function changePage(pageNumber) {
 function changePageSize(size) {
     window.PAGE_SIZE = parseInt(size);
     if (window.marketData) {
-        renderData(window.marketData, 1);
+        renderData(window.marketData, window.statisticsData, 1);
     }
 }
 
@@ -514,20 +520,38 @@ function searchCompanies() {
     
     if (searchTerm === '') {
         // 如果搜索框为空，显示所有数据
-        renderData(window.marketData, 1);
+        renderData(window.marketData, window.statisticsData, 1);
         return;
     }
     
     // 过滤数据 - 增强搜索功能，同时搜索公司名称、代码和行业
     const filteredData = window.marketData.filter(item => 
-        item.name.toLowerCase().includes(searchTerm) || 
-        item.id.toLowerCase().includes(searchTerm) ||
-        item.category.toLowerCase().includes(searchTerm)
+        (item.companyName && item.companyName.toLowerCase().includes(searchTerm)) || 
+        (item.stockCode && item.stockCode.toLowerCase().includes(searchTerm)) ||
+        (item.industry && item.industry.toLowerCase().includes(searchTerm))
     );
     
     // 显示过滤后的数据
     if (filteredData.length > 0) {
-        renderData(filteredData, 1);
+        renderData(filteredData, window.statisticsData, 1);
+        
+        // 添加搜索结果提示
+        const resultInfo = document.createElement('div');
+        resultInfo.className = 'alert alert-info mt-3 text-center';
+        resultInfo.innerHTML = `找到 ${filteredData.length} 条符合条件的记录`;
+        resultInfo.setAttribute('id', 'searchResultAlert');
+        
+        const contentArea = document.querySelector('.content-area');
+        if (contentArea) {
+            // 移除之前的提示
+            const oldAlert = contentArea.querySelector('#searchResultAlert');
+            if (oldAlert) oldAlert.remove();
+            
+            const marketHeader = contentArea.querySelector('.market-header');
+            if (marketHeader) {
+                marketHeader.appendChild(resultInfo);
+            }
+        }
     } else {
         const contentArea = document.querySelector(".content-area");
         if (contentArea) {
@@ -535,28 +559,33 @@ function searchCompanies() {
                 <div class="market-header">
                     <h2><i class="bi bi-graph-up"></i> 国内上市公司全景</h2>
                     <p class="text-muted">共 ${window.marketData.length} 家公司 • 最后更新: ${new Date().toLocaleString()}</p>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="form-inline">
-                            <label for="pageSizeSelect" class="me-2">每页显示:</label>
-                            <select id="pageSizeSelect" class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
-                                <option value="20" ${PAGE_SIZE === 20 ? 'selected' : ''}>20条</option>
-                                <option value="50" ${PAGE_SIZE === 50 ? 'selected' : ''}>50条</option>
-                                <option value="100" ${PAGE_SIZE === 100 ? 'selected' : ''}>100条</option>
-                                <option value="200" ${PAGE_SIZE === 200 ? 'selected' : ''}>200条</option>
-                            </select>
-                        </div>
-                        <div class="input-group" style="max-width: 300px;">
-                            <input type="text" id="searchInput" class="form-control" placeholder="搜索公司名称或代码..." 
-                                   value="${searchTerm}" onkeyup="if(event.key === 'Enter') searchCompanies()">
-                            <button class="btn btn-outline-secondary" type="button" onclick="searchCompanies()">
-                                <i class="bi bi-search"></i>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="form-inline">
+                                <label for="pageSizeSelect" class="me-2">每页显示:</label>
+                                <select id="pageSizeSelect" class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                                    <option value="20" ${PAGE_SIZE === 20 ? 'selected' : ''}>20条</option>
+                                    <option value="50" ${PAGE_SIZE === 50 ? 'selected' : ''}>50条</option>
+                                    <option value="100" ${PAGE_SIZE === 100 ? 'selected' : ''}>100条</option>
+                                    <option value="200" ${PAGE_SIZE === 200 ? 'selected' : ''}>200条</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="refreshListedCompanyData()">
+                                <i class="bi bi-arrow-repeat"></i> 刷新数据
                             </button>
+                            <div class="input-group" style="max-width: 300px;">
+                                <input type="text" id="searchInput" class="form-control" placeholder="搜索公司名称、代码或行业..." 
+                                       value="${searchTerm}" onkeyup="if(event.key === 'Enter') searchCompanies()">
+                                <button class="btn btn-outline-secondary" type="button" onclick="searchCompanies()">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="alert alert-info">
                     <h4>未找到匹配结果</h4>
-                    <p>没有找到与 "${searchTerm}" 匹配的公司名称或代码。</p>
+                    <p>没有找到与 "${searchTerm}" 匹配的公司名称、代码或行业。</p>
                     <button class="btn btn-primary mt-2" onclick="document.getElementById('searchInput').value = ''; searchCompanies();">
                         显示所有公司
                     </button>

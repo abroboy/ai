@@ -453,7 +453,7 @@ class MarketDatabase:
         except Exception as e:
             logging.error(f"获取股票数据失败: {str(e)}")
             return None
-    
+
     def get_stocks(self, limit=None, offset=None, order_by=None, order_dir='DESC'):
         """
         获取股票列表
@@ -1007,3 +1007,38 @@ class MarketDatabase:
         except Exception as e:
             logging.error(f"执行查询失败: {str(e)}")
             return None
+
+# 兼容旧的函数名
+def execute_db_query(query, params=None):
+    """
+    执行数据库查询并返回格式化的响应
+    
+    Args:
+        query (str): SQL查询语句
+        params (tuple, optional): 查询参数
+    
+    Returns:
+        dict: 查询结果，包含success、message和data字段
+    """
+    try:
+        db = MarketDatabase()
+        results = db.execute_query(query, params)
+        if results is not None:
+            return {
+                "success": True,
+                "message": "查询成功",
+                "data": results
+            }
+        else:
+            return {
+                "success": False,
+                "message": "查询执行失败",
+                "data": None
+            }
+    except Exception as e:
+        logging.error(f"数据库查询错误: {str(e)}")
+        return {
+            "success": False,
+            "message": f"查询执行失败: {str(e)}",
+            "data": None
+        }

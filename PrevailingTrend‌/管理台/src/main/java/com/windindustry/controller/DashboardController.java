@@ -5,6 +5,7 @@ import com.windindustry.service.DataCollectionService;
 import com.windindustry.service.WindIndustryService;
 import com.windindustry.service.WindStockMappingService;
 import com.windindustry.service.ListedCompanyInfoService;
+import com.windindustry.service.AkShareDataService;
 import com.windindustry.service.HkConnectStockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +37,9 @@ public class DashboardController {
     
     @Autowired
     private HkConnectStockService hkConnectStockService;
+    
+    @Autowired
+    private AkShareDataService akShareDataService;
     
     @GetMapping("/")
     public String dashboard(Model model) {
@@ -202,6 +206,26 @@ public class DashboardController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", stats);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.ok(response);
+        }
+    }
+    
+    @GetMapping("/api/akshare/stock-spot")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getAkshareStockSpot() {
+        try {
+            List<Map<String, Object>> rows = akShareDataService.getAllListedCompaniesRaw();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            Map<String, Object> data = new HashMap<>();
+            data.put("content", rows);
+            data.put("total", rows.size());
+            response.put("data", data);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();

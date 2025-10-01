@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Map;
 
 /**
  * 上市公司信息服务层
@@ -23,6 +25,9 @@ public class ListedCompanyInfoService {
     
     @Autowired
     private ListedCompanyInfoRepository listedCompanyRepository;
+    
+    @Autowired
+    private AkShareDataService akShareDataService;
     
     /**
      * 获取上市公司信息统计数据
@@ -134,26 +139,128 @@ public class ListedCompanyInfoService {
     
     /**
      * 刷新上市公司数据
+     * 优先从AKShare获取真实数据，若不可用则使用模拟数据
      */
     public void refreshCompanyData() {
         System.out.println("开始刷新上市公司数据...");
         
         try {
-            // 获取所有活跃公司
-            List<ListedCompanyInfo> companies = listedCompanyRepository.findByIsActiveTrue();
-            
-            // 更新数据
-            for (ListedCompanyInfo company : companies) {
-                updateCompanyData(company);
+            // 检查AKShare服务是否可用
+            if (akShareDataService.isAkShareAvailable()) {
+                // 使用AKShare获取真实数据
+                refreshFromAkShare();
+            } else {
+                System.out.println("AKShare服务不可用，使用模拟数据进行更新");
+                // 获取所有活跃公司
+                List<ListedCompanyInfo> companies = listedCompanyRepository.findByIsActiveTrue();
+                
+                // 更新数据
+                for (ListedCompanyInfo company : companies) {
+                    updateCompanyData(company);
+                }
+                
+                // 批量保存
+                listedCompanyRepository.saveAll(companies);
+                
+                System.out.println("上市公司数据刷新完成，共更新 " + companies.size() + " 家公司");
             }
-            
-            // 批量保存
-            listedCompanyRepository.saveAll(companies);
-            
-            System.out.println("上市公司数据刷新完成，共更新 " + companies.size() + " 家公司");
             
         } catch (Exception e) {
             System.err.println("刷新上市公司数据失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * 从AKShare获取真实数据并更新数据库
+     */
+    private void refreshFromAkShare() {
+        System.out.println("开始从AKShare获取真实数据...");
+        
+        try {
+            // 获取所有上市公司数据
+            List<Map<String, Object>> akCompanies = akShareDataService.getAllListedCompanies();
+            List<ListedCompanyInfo> companiesToSave = new ArrayList<>();
+            
+            for (Map<String, Object> akCompany : akCompanies) {
+                String stockCode = (String) akCompany.get("stockCode");
+                
+                // 查找现有公司或创建新公司
+                Optional<ListedCompanyInfo> existingCompanyOpt = listedCompanyRepository.findByStockCode(stockCode);
+                ListedCompanyInfo company;
+                
+                if (existingCompanyOpt.isPresent()) {
+                    company = existingCompanyOpt.get();
+                } else {
+                    company = new ListedCompanyInfo();
+                    company.setStockCode(stockCode);
+                    company.setStockName((String) akCompany.get("stockName"));
+                    company.setIsActive(true);
+                    company.setIsSt(false);
+                    company.setIsSuspended(false);
+                    
+                    // 设置默认值
+                    company.setCompanyName((String) akCompany.get("stockName"));
+                    
+                    // 根据股票代码判断市场类型
+                    if (stockCode.startsWith("00") || stockCode.startsWith("30")) {
+                        company.setMarketType("深交所");
+                    } else if (stockCode.startsWith("60")) {
+                        company.setMarketType("上交所");
+                    } else if (stockCode.startsWith("8")) {
+                        company.setMarketType("北交所");
+                    } else {
+                        company.setMarketType("未知");
+                    }
+                }
+                
+                // 更新基本数据
+                if (akCompany.containsKey("latestPrice")) {
+                    company.setLatestPrice((BigDecimal) akCompany.get("latestPrice"));
+                }
+                if (akCompany.containsKey("peRatio")) {
+                    company.setPeRatio((BigDecimal) akCompany.get("peRatio"));
+                }
+                if (akCompany.containsKey("priceChangeRate")) {
+                    company.setPriceChangeRate((BigDecimal) akCompany.get("priceChangeRate"));
+                }
+                
+                // 模拟计算市值和其他财务数据
+                if (company.getLatestPrice() != null && company.getTotalShareCapital() == null) {
+                    // 如果没有股本数据，使用模拟数据
+                    Random random = ThreadLocalRandom.current();
+                    BigDecimal totalShares = BigDecimal.valueOf(100000000 + random.nextDouble() * 9000000000L);
+                    company.setTotalShareCapital(totalShares);
+                    
+                    // 流通股本(总股本的60-100%)
+                    BigDecimal circulatingShares = totalShares.multiply(
+                            BigDecimal.valueOf(0.6 + random.nextDouble() * 0.4));
+                    company.setCirculatingShareCapital(circulatingShares);
+                    
+                    // 市值
+                    company.setTotalMarketValue(totalShares.multiply(company.getLatestPrice()));
+                    company.setCirculatingMarketValue(circulatingShares.multiply(company.getLatestPrice()));
+                } else if (company.getLatestPrice() != null) {
+                    // 如果有股本数据，计算真实市值
+                    company.setTotalMarketValue(company.getTotalShareCapital().multiply(company.getLatestPrice()));
+                    if (company.getCirculatingShareCapital() != null) {
+                        company.setCirculatingMarketValue(company.getCirculatingShareCapital().multiply(company.getLatestPrice()));
+                    }
+                }
+                
+                // 设置更新时间
+                company.setLastUpdated(LocalDateTime.now());
+                
+                companiesToSave.add(company);
+            }
+            
+            // 批量保存
+            listedCompanyRepository.saveAll(companiesToSave);
+            
+            System.out.println("从AKShare获取数据完成，共更新 " + companiesToSave.size() + " 家公司");
+            
+        } catch (Exception e) {
+            System.err.println("从AKShare获取数据失败: " + e.getMessage());
             e.printStackTrace();
         }
     }

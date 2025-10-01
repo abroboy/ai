@@ -1,0 +1,42 @@
+2025-09-30 22:07:10,340 - market_database - INFO - 更新股票数据成功，共2条记录
+2025-09-30 22:07:13,954 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 4232 and this is thread id 21192.
+2025-09-30 22:07:13,954 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 4232 and this is thread id 21192.
+2025-09-30 22:17:57,379 - market_database - INFO - 更新股票数据成功，共1条记录
+2025-09-30 22:18:02,453 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 18404 and this is thread id 1664.
+2025-09-30 22:18:02,454 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 18404 and this is thread id 1664.
+2025-09-30 22:43:59,674 - market_database - INFO - 更新股票数据成功，共1条记录
+2025-09-30 22:44:03,190 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 15316 and this is thread id 20952.
+2025-09-30 22:44:03,190 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 15316 and this is thread id 20952.
+2025-09-30 22:48:39,598 - market_database - INFO - 更新股票数据成功，共2条记录
+2025-09-30 22:48:43,172 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 14216 and this is thread id 19844.
+2025-09-30 22:48:43,172 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 14216 and this is thread id 19844.
+2025-09-30 22:58:37,892 - market_database - INFO - 更新股票数据成功，共58条记录
+2025-09-30 22:58:38,066 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 6556 and this is thread id 19512.
+2025-09-30 22:58:38,083 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 6556 and this is thread id 19512.
+2025-09-30 23:00:17,334 - market_database - INFO - 更新股票数据成功，共58条记录
+2025-09-30 23:00:17,445 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 21176 and this is thread id 14060.
+2025-09-30 23:00:17,445 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 21176 and this is thread id 14060.
+2025-09-30 23:03:10,513 - market_database - INFO - 更新股票数据成功，共58条记录
+2025-09-30 23:03:10,641 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 20756 and this is thread id 12096.
+2025-09-30 23:03:10,645 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 20756 and this is thread id 12096.
+2025-09-30 23:15:48,146 - market_database - INFO - 更新股票数据成功，共2条记录
+2025-09-30 23:15:51,369 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 14228 and this is thread id 11244.
+2025-09-30 23:15:51,369 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 14228 and this is thread id 11244.
+2025-09-30 23:19:43,758 - market_database - INFO - 更新股票数据成功，共58条记录
+2025-09-30 23:19:47,056 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 5948 and this is thread id 19800.
+2025-09-30 23:19:47,056 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 5948 and this is thread id 19800.
+2025-09-30 23:52:13,906 - market_database - INFO - 更新股票数据成功，共2条记录
+2025-09-30 23:52:17,133 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 13944 and this is thread id 10528.
+2025-09-30 23:52:17,133 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 13944 and this is thread id 10528.
+2025-09-30 23:52:36,950 - market_database - INFO - 更新股票数据成功，共2条记录
+2025-09-30 23:52:36,990 - store_akshare_data - INFO - ====================================
+2025-09-30 23:52:36,993 - store_akshare_data - INFO - AKShare数据存储脚本启动 - 2025-09-30 23:52:36
+2025-09-30 23:52:36,998 - store_akshare_data - INFO - ====================================
+2025-09-30 23:52:36,999 - store_akshare_data - INFO - 开始从AKShare获取数据...
+2025-09-30 23:52:36,999 - market_database - INFO - 数据库初始化成功
+2025-09-30 23:52:40,908 - root - ERROR - 批量插入股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 19880 and this is thread id 1708.
+2025-09-30 23:52:40,992 - market_database - ERROR - 更新股票数据失败: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 19880 and this is thread id 1708.
+2025-09-30 23:53:24,995 - store_akshare_data - INFO - 成功获取AKShare数据，共5435条记录，耗时48.00秒
+2025-09-30 23:53:25,072 - market_database - INFO - 更新股票数据成功，共5435条记录
+2025-09-30 23:53:25,073 - store_akshare_data - INFO - 数据库更新成功，耗时0.08秒
+2025-09-30 23:53:25,076 - store_akshare_data - INFO - 数据存储任务已成功完成

@@ -9,29 +9,31 @@ function loadCompanyAttributes() {
   
   // 显示加载中状态
   contentArea.innerHTML = `
-    <div class="text-center py-3">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">加载中...</span>
-      </div>
-      <p class="mt-2">正在加载公司属性表数据...</p>
+    <div class="text-center py-5">
+      <div class="loading-indicator"></div>
+      <p class="mt-3">正在加载公司属性表数据...</p>
     </div>
   `;
   
-  // 模拟API请求延迟
-  setTimeout(() => {
-    // 加载模块内容
-    renderCompanyAttributesModule(contentArea);
-  }, 800);
+  // 直接加载模块内容，使用AKShare数据源
+  renderCompanyAttributesModule(contentArea);
 }
 
 // 渲染公司属性表模块内容
 function renderCompanyAttributesModule(container) {
-  // 从API获取公司属性数据
-  fetch('/api/company-attributes')
-    .then(response => response.json())
+  // 使用AKShare数据源获取公司数据
+  fetch('/api/listed-companies?dataSource=akshare&page=0&size=500')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP错误! 状态码: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
-      if (data.success && data.data) {
-        const companies = data.data;
+      if (data.success && data.data && data.data.content) {
+        const companiesData = data.data.content;
+        // 处理公司数据，转换为公司属性表所需格式
+        const companies = processCompanyData(companiesData);
         renderCompanyAttributesContent(container, companies);
       } else {
         container.innerHTML = `
@@ -48,6 +50,38 @@ function renderCompanyAttributesModule(container) {
         </div>
       `;
     });
+}
+
+// 处理公司数据，转换为属性表所需格式
+function processCompanyData(companiesData) {
+  // 从AKShare数据中提取所需字段
+  return companiesData.map((company, index) => ({
+    id: index + 1,
+    name: company.stockName,
+    industry: company.industryName || '未知行业',
+    region: getRegionFromCode(company.stockCode),
+    marketCap: parseFloat(company.totalMarketValue || 0).toFixed(2),
+    employees: Math.floor(Math.random() * 50000) + 1000, // 模拟员工数
+    riskLevel: calculateRiskLevel(company.peRatio, company.pbRatio)
+  }));
+}
+
+// 根据股票代码获取地区信息
+function getRegionFromCode(stockCode) {
+  if (stockCode.startsWith('6')) return '上海';
+  if (stockCode.startsWith('0') || stockCode.startsWith('3')) return '深圳';
+  return '未知地区';
+}
+
+// 计算风险等级
+function calculateRiskLevel(peRatio, pbRatio) {
+  const pe = parseFloat(peRatio || 0);
+  const pb = parseFloat(pbRatio || 0);
+  
+  if (pe > 50 || pb > 5) return '高';
+  if (pe > 30 || pb > 3) return '中';
+  if (pe > 15 || pb > 1.5) return '中低';
+  return '低';
 }
 
 // 渲染公司属性内容
@@ -116,6 +150,92 @@ function renderCompanyAttributesContent(container, companies) {
           </div>
         </div>
       </div>
+    `;
+    
+    modalContent.innerHTML = detailContent;
+  } else {
+    modalTitle.textContent = '公司不存在';
+    modalContent.innerHTML = `
+      <div class="alert alert-danger text-center py-4">
+        <i class="bi bi-exclamation-circle-fill me-2"></i>
+        未找到ID为 ${companyId} 的公司信息
+      </div>
+    `;
+  }
+} catch (error) {
+  modalTitle.textContent = '加载失败';
+  modalContent.innerHTML = `
+    <div class="alert alert-danger text-center py-4">
+      <i class="bi bi-exclamation-circle-fill me-2"></i>
+      获取公司详情失败: ${error.message}
+    </div>
+  `;
+}
+});
+}
+
+// 处理公司详情数据
+function processCompanyDetail(companyItem, companyId) {
+  const pe = parseFloat(companyItem.peRatio || 0);
+  const pb = parseFloat(companyItem.pbRatio || 0);
+  const riskLevel = calculateRiskLevel(pe, pb);
+  
+  // 生成模拟的财务数据和风险因素
+  return {
+    id: companyId,
+    name: companyItem.stockName,
+    industry: companyItem.industryName || '未知行业',
+    region: getRegionFromCode(companyItem.stockCode),
+    marketCap: parseFloat(companyItem.totalMarketValue || 0).toFixed(2),
+    employees: Math.floor(Math.random() * 50000) + 1000,
+    riskLevel: riskLevel,
+    financials: {
+      revenue: (Math.random() * 1000 + 100).toFixed(1),
+      profit: (Math.random() * 200 + 50).toFixed(1),
+      assets: (Math.random() * 2000 + 200).toFixed(1),
+      liabilities: (Math.random() * 1000 + 100).toFixed(1)
+    },
+    riskFactors: [
+      { name: "政策风险", level: getRandomRiskLevel(), impact: (Math.random() * 2 + 2).toFixed(1) },
+      { name: "市场风险", level: getRandomRiskLevel(), impact: (Math.random() * 2 + 2).toFixed(1) },
+      { name: "技术风险", level: getRandomRiskLevel(), impact: (Math.random() * 2 + 2).toFixed(1) },
+      { name: "管理风险", level: getRandomRiskLevel(), impact: (Math.random() * 2 + 2).toFixed(1) }
+    ],
+    recentEvents: generateRecentEvents()
+  };
+}
+
+// 生成随机风险等级
+function getRandomRiskLevel() {
+  const levels = ['低', '中低', '中', '高'];
+  return levels[Math.floor(Math.random() * levels.length)];
+}
+
+// 生成最近事件
+function generateRecentEvents() {
+  const eventTypes = [
+    '发布新产品', '高管变动', '季度财报发布', '战略合作', 
+    '融资活动', '并购重组', '股权激励', '产品更新'
+  ];
+  const impacts = ['正面', '负面', '中性'];
+  const events = [];
+  
+  for (let i = 0; i < 3; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * 90));
+    const formattedDate = date.toISOString().split('T')[0];
+    
+    events.push({
+      date: formattedDate,
+      event: eventTypes[Math.floor(Math.random() * eventTypes.length)],
+      impact: impacts[Math.floor(Math.random() * impacts.length)]
+    });
+  }
+  
+  // 按日期排序（最新的在前）
+  events.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return events;
+}
       
       <div class="row">
         <div class="col-md-6">
@@ -337,15 +457,13 @@ function refreshCompanyData() {
   
   // 显示加载中状态
   contentArea.innerHTML = `
-    <div class="text-center py-3">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">加载中...</span>
-      </div>
-      <p class="mt-2">正在刷新公司属性数据...</p>
+    <div class="text-center py-5">
+      <div class="loading-indicator"></div>
+      <p class="mt-3">正在刷新公司属性数据...</p>
     </div>
   `;
   
-  // 重新渲染模块
+  // 重新渲染模块，使用AKShare数据源
   renderCompanyAttributesModule(contentArea);
 }
 
@@ -358,46 +476,52 @@ function exportCompanyData() {
 
 // 显示公司详情
 function showCompanyDetail(companyId) {
-  // 模拟获取公司详情数据
-  const companyDetail = {
-    id: companyId,
-    name: "示例公司",
-    industry: "互联网",
-    region: "深圳",
-    marketCap: 3500,
-    employees: 108000,
-    riskLevel: "中低",
-    financials: {
-      revenue: 560.2,
-      profit: 120.5,
-      assets: 890.7,
-      liabilities: 450.3
-    },
-    riskFactors: [
-      { name: "政策风险", level: "中", impact: 3.2 },
-      { name: "市场风险", level: "中", impact: 3.5 },
-      { name: "技术风险", level: "低", impact: 2.1 },
-      { name: "管理风险", level: "中低", impact: 2.8 }
-    ],
-    recentEvents: [
-      { date: "2025-09-15", event: "发布新产品", impact: "正面" },
-      { date: "2025-08-28", event: "高管变动", impact: "中性" },
-      { date: "2025-07-10", event: "季度财报发布", impact: "正面" }
-    ]
-  };
+  const modalTitle = document.getElementById('companyDetailTitle');
+  const modalContent = document.getElementById('companyDetailContent');
   
-  // 更新模态框标题
-  document.getElementById('companyDetailTitle').textContent = `${companyDetail.name} 详情`;
+  // 显示加载状态
+  modalTitle.textContent = '正在加载公司详情...';
+  modalContent.innerHTML = `
+    <div class="text-center py-4">
+      <div class="loading-indicator"></div>
+      <p class="mt-2">正在获取公司详细信息...</p>
+    </div>
+  `;
   
-  // 构建详情内容
-  const detailContent = `
-    <div class="mb-4">
-      <div class="d-flex justify-content-between mb-3">
-        <div>
-          <span class="badge bg-${companyDetail.riskLevel === '低' ? 'success' : companyDetail.riskLevel === '中' ? 'warning' : companyDetail.riskLevel === '中低' ? 'info' : 'danger'} me-2">
-            ${companyDetail.riskLevel}风险
+  // 显示模态框
+  const modal = new bootstrap.Modal(document.getElementById('companyDetailModal'));
+  modal.show();
+  
+  // 从API获取公司详情数据
+  fetch('/api/listed-companies?dataSource=akshare&page=0&size=500')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP错误! 状态码: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success && data.data && data.data.content) {
+        // 找到对应ID的公司
+        const companiesData = data.data.content;
+        const companyItem = companiesData[companyId - 1]; // 假设ID从1开始
+        
+        if (companyItem) {
+          // 处理公司详情数据
+          const companyDetail = processCompanyDetail(companyItem, companyId);
+          
+          // 更新模态框标题
+          modalTitle.textContent = `${companyDetail.name} 详情`;
+          
+          // 构建详情内容
+          const detailContent = `
+            <div class="mb-4">
+              <div class="d-flex justify-content-between mb-3">
+                <div>
+                  <span class="badge bg-${companyDetail.riskLevel === '低' ? 'success' : companyDetail.riskLevel === '中' ? 'warning' : companyDetail.riskLevel === '中低' ? 'info' : 'danger'} me-2">
+                    ${companyDetail.riskLevel}风险`}]}}}
           </span>
-          <span class="badge bg-secondary">ID: ${companyDetail.id}</span>
+            <span class="badge bg-secondary">ID: ${companyDetail.id}</span>
         </div>
         <div class="text-muted small">
           行业: ${companyDetail.industry} | 地区: ${companyDetail.region}
