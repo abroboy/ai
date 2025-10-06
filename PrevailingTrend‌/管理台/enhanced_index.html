@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球资金流向监控系统 - 增强版</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    
+    <!-- 自定义样式 -->
+    <link href="static/css/style.css" rel="stylesheet">
+    <link href="static/css/global_capital_flow.css" rel="stylesheet">
+    <link href="static/css/global_capital_flow_enhanced.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-globe2"></i>
+                全球资金流向监控系统
+                <span class="badge bg-success ms-2">增强版</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="loadGlobalCapitalFlowEnhanced()">
+                            <i class="bi bi-map"></i> 全球资金流向
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showAnalysisReportModal()">
+                            <i class="bi bi-graph-up"></i> 数据分析
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showComparisonTools()">
+                            <i class="bi bi-bar-chart"></i> 对比分析
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm" onclick="ThemeManager.toggleTheme()">
+                            <i class="bi bi-moon"></i> 切换主题
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <div class="container-fluid mt-4">
+        <!-- 工具栏 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-tools me-2"></i>控制面板
+                                </h5>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="btn btn-primary btn-sm me-2 btn-loading" onclick="refreshGlobalData()">
+                                    <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                                </button>
+                                <button class="btn btn-success btn-sm me-2" onclick="showAnalysisReportModal()">
+                                    <i class="bi bi-file-earmark-text"></i> 生成报告
+                                </button>
+                                <button class="btn btn-info btn-sm" onclick="exportToCSV(currentGlobalData?.data)">
+                                    <i class="bi bi-download"></i> 导出数据
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 全球资金流向模块 -->
+        <div id="global-capital-flow-enhanced" class="module-container">
+            <!-- 这里将动态加载全球资金流向增强版内容 -->
+        </div>
+    </div>
+
+    <!-- 全局加载指示器 -->
+    <div id="global-loading" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <div class="mt-2">正在加载数据...</div>
+        </div>
+    </div>
+
+    <!-- 通知容器 -->
+    <div id="notification-container" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <!-- 通知将动态添加到这里 -->
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 核心模块 -->
+    <script src="static/js/global_capital_flow_utils.js"></script>
+    <script src="static/js/global_capital_flow_utils_enhanced.js"></script>
+    <script src="static/js/global_capital_flow_map.js"></script>
+    <script src="static/js/global_capital_flow_map_enhanced.js"></script>
+    <script src="static/js/global_capital_flow_chart.js"></script>
+    <script src="static/js/global_capital_flow_chart_enhanced.js"></script>
+    <script src="static/js/global_capital_flow_analysis.js"></script>
+    <script src="static/js/global_capital_flow_comparison.js"></script>
+    <script src="static/js/global_capital_flow_enhanced.js"></script>
+
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('全球资金流向监控系统 - 增强版已加载');
+            
+            // 自动加载全球资金流向模块
+            loadGlobalCapitalFlowEnhanced();
+        });
+
+        // 刷新全球数据
+        function refreshGlobalData() {
+            LoadingManager.show('refresh');
+            
+            // 清除缓存
+            DataCache.clear();
+            
+            // 重新加载数据
+            fetchGlobalCapitalFlowData()
+                .then(data => {
+                    if (data && data.success) {
+                        updateGlobalCapitalFlowDisplay(data);
+                        showNotification('数据刷新成功', 'success');
+                    } else {
+                        throw new Error('数据刷新失败');
+                    }
+                })
+                .catch(error => {
+                    handleError(error, '数据刷新');
+                })
+                .finally(() => {
+                    LoadingManager.hide('refresh');
+                });
+        }
+
+        // 显示对比工具
+        function showComparisonTools() {
+            if (!currentGlobalData || !currentGlobalData.data) {
+                showNotification('请先加载数据', 'warning');
+                return;
+            }
+
+            const regions = currentGlobalData.data.map(item => item.region);
+            
+            const modal = `
+                <div class="modal fade" id="comparisonToolsModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-bar-chart me-2"></i>对比分析工具
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">选择第一个地区:</label>
+                                    <select class="form-select" id="region1Select">
+                                        <option value="">请选择...</option>
+                                        ${regions.map(region => `<option value="${region}">${region}</option>`).join('')}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">选择第二个地区:</label>
+                                    <select class="form-select" id="region2Select">
+                                        <option value="">请选择...</option>
+                                        ${regions.map(region => `<option value="${region}">${region}</option>`).join('')}
+                                    </select>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary" onclick="startComparison()">
+                                        <i class="bi bi-graph-up"></i> 开始对比
+                                    </button>
+                                    <button class="btn btn-info" onclick="showBatchComparisonOptions()">
+                                        <i class="bi bi-list-check"></i> 批量对比
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除现有模态框
+            const existingModal = document.getElementById('comparisonToolsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', modal);
+            
+            // 显示模态框
+            const modalInstance = new bootstrap.Modal(document.getElementById('comparisonToolsModal'));
+            modalInstance.show();
+        }
+
+        // 开始对比
+        function startComparison() {
+            const region1 = document.getElementById('region1Select').value;
+            const region2 = document.getElementById('region2Select').value;
+            
+            if (!region1 || !region2) {
+                showNotification('请选择两个地区进行对比', 'warning');
+                return;
+            }
+            
+            if (region1 === region2) {
+                showNotification('请选择不同的地区进行对比', 'warning');
+                return;
+            }
+            
+            // 关闭工具模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('comparisonToolsModal'));
+            modal.hide();
+            
+            // 开始对比
+            compareRegions(region1, region2);
+        }
+    </script>
+</body>
+</html>

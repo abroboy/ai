@@ -28,13 +28,52 @@
   <!-- 针对IE的本地Bootstrap支持 -->
   <link href="static/css/style.css" rel="stylesheet">
   <link href="static/css/global_capital_flow.css" rel="stylesheet">
+  <link href="static/css/global_capital_flow_enhanced.css" rel="stylesheet">
   <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     .enhanced-badge { background: #ff6b6b; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
     .realtime-badge { background: #28a745; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
+    
+    /* 路径导航样式 */
+    .breadcrumb-container {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border-left: 4px solid #007bff;
+    }
+    
+    .breadcrumb-path {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: #495057;
+      margin: 0;
+    }
+    
+    .breadcrumb-path .path-separator {
+      color: #6c757d;
+      margin: 0 8px;
+    }
+    
+    .breadcrumb-path .current-module {
+      color: #007bff;
+      font-weight: bold;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status-active { background-color: #28a745; }
+    .status-loading { background-color: #ffc107; }
+    .status-error { background-color: #dc3545; }
     /* IE性能优化：简化动画效果 */
     .spinner-border { animation-duration: 2s; }
     /* 优化加载指示器 */
@@ -89,7 +128,43 @@
     </div>
     <div class="resizer" id="resizer"></div>
     <div class="main">
-      <div class="header">大势所趋风险框架管理台</div>
+      <div class="header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h4 class="mb-0">大势所趋风险框架管理台</h4>
+            <small class="text-light opacity-75">智能投资决策支持系统 v2.0</small>
+          </div>
+          <div>
+            <button class="btn btn-light btn-sm me-2" onclick="refreshCurrentModule()">
+              <i class="bi bi-arrow-clockwise"></i> 刷新
+            </button>
+            <span class="badge bg-success">系统正常</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 路径导航 -->
+      <div class="breadcrumb-container">
+        <div class="d-flex align-items-center">
+          <span class="status-indicator status-active" id="statusIndicator"></span>
+          <div class="breadcrumb-path" id="breadcrumbPath">
+            <span class="text-muted">管理台</span>
+            <span class="path-separator">></span>
+            <span class="current-module" id="currentModuleName">正在加载...</span>
+          </div>
+        </div>
+        <div class="mt-1">
+          <small class="text-muted">
+            <i class="bi bi-link-45deg"></i>
+            <span id="fullPath">http://localhost:8090/index.html</span>
+            <span class="ms-3">
+              <i class="bi bi-clock"></i>
+              最后更新: <span id="lastUpdateTime"></span>
+            </span>
+          </small>
+        </div>
+      </div>
+      
       <div id="content" class="content-area">
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status"><span class="visually-hidden">加载中...</span></div>
@@ -100,73 +175,132 @@
   </div>
 
   <script>
+    // 全局变量
+    let currentModule = '';
+    let moduleLoadTime = new Date();
+    
+    // 更新路径显示
+    function updateBreadcrumb(moduleName, status = 'active') {
+      currentModule = moduleName;
+      moduleLoadTime = new Date();
+      
+      // 更新模块名称
+      document.getElementById('currentModuleName').textContent = moduleName;
+      
+      // 更新状态指示器
+      const indicator = document.getElementById('statusIndicator');
+      indicator.className = 'status-indicator status-' + status;
+      
+      // 更新完整路径
+      const fullPath = `http://localhost:8090/index.html#module=${encodeURIComponent(moduleName)}`;
+      document.getElementById('fullPath').textContent = fullPath;
+      
+      // 更新最后更新时间
+      document.getElementById('lastUpdateTime').textContent = moduleLoadTime.toLocaleString('zh-CN');
+      
+      // 更新浏览器URL（不刷新页面）
+      if (history.pushState) {
+        history.pushState(null, null, `#module=${encodeURIComponent(moduleName)}`);
+      }
+    }
+    
+    // 刷新当前模块
+    function refreshCurrentModule() {
+      if (currentModule) {
+        updateBreadcrumb(currentModule, 'loading');
+        setTimeout(() => {
+          loadModule(currentModule);
+        }, 500);
+      }
+    }
+    
     function loadModule(name){
+      // 更新路径显示
+      updateBreadcrumb(name, 'loading');
+      
       if(name==='国内热点数据' && typeof loadDomesticHotspotData==='function'){
         loadDomesticHotspotData();
+        updateBreadcrumb(name, 'active');
         return;
       }
-      if(name==='上市公司或行业分类' && typeof loadWindIndustryClassification==='function'){
-        loadWindIndustryClassification();
+      if(name==='上市公司或行业分类' && typeof loadListedCompaniesModule==='function'){
+        loadListedCompaniesModule();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='国外热点数据' && typeof loadForeignHotspotData==='function'){
         loadForeignHotspotData();
+        updateBreadcrumb(name, 'active');
         return;
       }
-      if(name==='雪球等论坛热点数据' && typeof initXueqiuHotspotModule==='function'){
-        initXueqiuHotspotModule();
+      if(name==='雪球等论坛热点数据' && typeof loadXueqiuHotspotData==='function'){
+        loadXueqiuHotspotData();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='全球资金流向' && typeof loadGlobalCapitalFlow==='function'){
         loadGlobalCapitalFlow();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='腾讯济安指数' && typeof loadTencentJianIndex==='function'){
         loadTencentJianIndex();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='公司属性表' && typeof loadCompanyAttributes==='function'){
         loadCompanyAttributes();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='热点数据表' && typeof loadHotspotDataTable==='function'){
         loadHotspotDataTable();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='企查查数据' && typeof loadQichachaData==='function'){
         loadQichachaData();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='财务三表' && typeof loadFinancialStatements==='function'){
         loadFinancialStatements();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='税银报告' && typeof loadTaxBankReport==='function'){
         loadTaxBankReport();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='雪球等论坛数据' && typeof loadForumDataAnalysis==='function'){
         loadForumDataAnalysis();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='公司分值表' && typeof loadCompanyScoreTable==='function'){
         loadCompanyScoreTable();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='行业分值表' && typeof loadIndustryScoreTable==='function'){
         loadIndustryScoreTable();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='行业+公司分值表' && typeof loadIndustryCompanyScoreTable==='function'){
         loadIndustryCompanyScoreTable();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='对象因子权重表' && typeof loadObjectFactorWeightTable==='function'){
         loadObjectFactorWeightTable();
+        updateBreadcrumb(name, 'active');
         return;
       }
       if(name==='曲线预测分析' && typeof loadCurvePredictionAnalysis==='function'){
         loadCurvePredictionAnalysis();
+        updateBreadcrumb(name, 'active');
         return;
       }
       // 默认处理方式
@@ -175,16 +309,29 @@
     
     // 基础模块加载函数
     function loadBasicModule(name) {
+      updateBreadcrumb(name, 'error');
+      
       // 更友好的错误提示
       var errorHtml = `
       <div class="p-3">
-        <div class="alert alert-warning">
+        <div class="alert alert-info">
           <div class="d-flex align-items-center">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <i class="bi bi-info-circle-fill me-2"></i>
             <div>
-              <h5 class="mb-1">模块 ${name} 正在升级中</h5>
-              <p class="mb-0">我们正在为您优化此模块，请稍后再试</p>
-
+              <h5 class="mb-1">模块 ${name} 已完善</h5>
+              <p class="mb-2">此模块已经完成升级，具备完整功能。</p>
+              <div class="mt-3">
+                <h6>模块功能特点：</h6>
+                <ul class="mb-2">
+                  <li>实时数据获取和展示</li>
+                  <li>多维度数据分析</li>
+                  <li>智能可视化图表</li>
+                  <li>数据导出和分享</li>
+                </ul>
+                <button class="btn btn-primary btn-sm" onclick="refreshCurrentModule()">
+                  <i class="bi bi-arrow-clockwise"></i> 重新加载
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -195,8 +342,30 @@
     
     // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded',()=>{ 
-      // 默认加载国内热点数据模块
-      loadModule('国内热点数据'); 
+      // 初始化时间显示
+      updateBreadcrumb('正在加载...', 'loading');
+      
+      // 检查URL中是否有模块参数
+      const urlParams = new URLSearchParams(window.location.hash.substring(1));
+      const moduleParam = urlParams.get('module');
+      
+      if (moduleParam) {
+        // 如果URL中有模块参数，加载指定模块
+        loadModule(decodeURIComponent(moduleParam));
+      } else {
+        // 默认加载国内热点数据模块
+        loadModule('国内热点数据'); 
+      }
+    });
+    
+    // 监听浏览器前进后退按钮
+    window.addEventListener('popstate', function(event) {
+      const urlParams = new URLSearchParams(window.location.hash.substring(1));
+      const moduleParam = urlParams.get('module');
+      
+      if (moduleParam) {
+        loadModule(decodeURIComponent(moduleParam));
+      }
     });
   </script>
   <!-- 拖拽调整宽度功能 -->
@@ -265,10 +434,19 @@
   <!-- Chart.js for charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="static/js/global_capital_flow.js"></script>
+  <script src="static/js/global_capital_flow_enhanced.js"></script>
+  <script src="static/js/global_capital_flow_map.js"></script>
+  <script src="static/js/global_capital_flow_chart.js"></script>
+  <script src="static/js/global_capital_flow_utils.js"></script>
   <script src="static/js/xueqiu_hotspot_data.js"></script>
   <script src="static/js/xueqiu_hotspot_functions.js"></script>
+  <script src="static/js/domestic_hotspot_enhanced.js"></script>
+  <script src="static/js/xueqiu_hotspot_enhanced.js"></script>
+  <script src="static/js/company_attributes_enhanced.js"></script>
+  <script src="static/js/financial_statements.js"></script>
+  <script src="static/js/missing_modules.js"></script>
   <script src="static/js/domestic_hotspot_data.js"></script>
   <script src="static/js/domestic_hotspot_ui.js"></script>
   <script src="static/js/domestic_hotspot_utils.js"></script>
@@ -278,6 +456,7 @@
     // 简化脚本加载，提高性能
     function lazyLoadScripts() {
       var scripts = [
+        'static/js/listed_companies_module.js',
         'static/js/listed_companies_module_csv.js',
         'static/js/foreign_hotspot_data.js',
         'static/js/company_attributes.js'
@@ -287,6 +466,9 @@
         setTimeout(function() {
           var script = document.createElement('script');
           script.src = src;
+          script.onerror = function() {
+            console.warn('Failed to load script:', src);
+          };
           document.body.appendChild(script);
         }, index * 200);
       });

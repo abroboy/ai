@@ -5,6 +5,12 @@
 
 // 加载全球资金流向模块
 function loadGlobalCapitalFlow() {
+  // 检查是否有增强版功能
+  if (typeof loadGlobalCapitalFlowEnhanced === 'function') {
+    loadGlobalCapitalFlowEnhanced();
+    return;
+  }
+  
   const contentArea = document.getElementById('content');
   
   // 显示加载中状态
