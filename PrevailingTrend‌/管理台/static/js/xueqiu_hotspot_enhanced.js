@@ -221,7 +221,18 @@ function renderXueqiuHotspotModule(container, responseData) {
     renderSentimentChart(data.market_sentiment);
 }
 
+// 定义模块初始化函数
+function initXueqiuHotspotModule() {
+    loadXueqiuHotspotData();
+}
+
+// 刷新数据函数
+function refreshXueqiuHotspotData() {
+    loadXueqiuHotspotData();
+}
+
 // 导出模块函数
 if (typeof window !== 'undefined') {
     window.initXueqiuHotspotModule = initXueqiuHotspotModule;
+    window.refreshXueqiuHotspotData = refreshXueqiuHotspotData;
 }

@@ -524,8 +524,23 @@ function initializeEnhancedFeatures() {
 
 // 添加搜索框
 function addSearchBox() {
-  const cardHeader = document.querySelector('#realtime-data-table').closest('.card').querySelector('.card-header');
-  if (!cardHeader) return;
+  const tableElement = document.querySelector('#realtime-data-table');
+  if (!tableElement) {
+    console.warn('未找到realtime-data-table元素，跳过搜索框添加');
+    return;
+  }
+  
+  const cardElement = tableElement.closest('.card');
+  if (!cardElement) {
+    console.warn('未找到表格所在的card元素，跳过搜索框添加');
+    return;
+  }
+  
+  const cardHeader = cardElement.querySelector('.card-header');
+  if (!cardHeader) {
+    console.warn('未找到card-header元素，跳过搜索框添加');
+    return;
+  }
   
   const searchHTML = `
     <div class="input-group input-group-sm" style="width: 200px;">

@@ -58,26 +58,56 @@ function createWorldMap(data) {
   enhancedMapInstance = mapInstance;
   
   // 添加多个地图图层选项
+  // OSM主图层
   const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
-    maxZoom: 18
+    maxZoom: 18,
+    errorTileUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="256" height="256"%3E%3Crect width="256" height="256" fill="%23f0f0f0"/%3E%3Ctext x="128" y="128" font-family="Arial" font-size="12" fill="%23999" text-anchor="middle" alignment-baseline="middle"%3ETile not available%3C/text%3E%3C/svg%3E',
+    maxNativeZoom: 19
   });
   
+  //备用OSM图层
+  const osmLayer2 = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18,
+    errorTileUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="256" height="256"%3E%3Crect width="256" height="256" fill="%23f0f0f0"/%3E%3Ctext x="128" y="128" font-family="Arial" font-size="12" fill="%23999" text-anchor="middle" alignment-baseline="middle"%3ETile not available%3C/text%3E%3C/svg%3E',
+    maxNativeZoom: 19
+  });
+  
+  // ArcGIS卫星地图图层
   const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution: '© Esri',
-    maxZoom: 18
+    maxZoom: 18,
+    errorTileUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="256" height="256"%3E%3Crect width="256" height="256" fill="%23f0f0f0"/%3E%3Ctext x="128" y="128" font-family="Arial" font-size="12" fill="%23999" text-anchor="middle" alignment-baseline="middle"%3ETile not available%3C/text%3E%3C/svg%3E',
+    maxNativeZoom: 19
   });
-  
-  // 默认使用OSM图层
-  osmLayer.addTo(mapInstance);
   
   // 添加图层控制
   const baseLayers = {
-    "标准地图": osmLayer,
-    "卫星地图": satelliteLayer
+    "标准地图 (OSM)": osmLayer,
+    "备用地图 (OSM France)": osmLayer2,
+    "卫星地图 (ArcGIS)": satelliteLayer
   };
   
   L.control.layers(baseLayers).addTo(mapInstance);
+  
+  // 尝试默认加载图层，如果失败则自动切换
+  let currentLayer = osmLayer;
+  currentLayer.addTo(mapInstance);
+  
+  // 添加错误处理，当图层加载失败时自动切换
+  currentLayer.on('tileerror', function(err) {
+    console.warn('地图瓦片加载失败，尝试切换到备用图层:', err);
+    mapInstance.removeLayer(currentLayer);
+    if (currentLayer === osmLayer) {
+      currentLayer = osmLayer2;
+    } else if (currentLayer === osmLayer2) {
+      currentLayer = satelliteLayer;
+    } else {
+      currentLayer = osmLayer;
+    }
+    currentLayer.addTo(mapInstance);
+  });
   
   // 添加数据点
   addDataPointsToMap(data);
@@ -87,6 +117,26 @@ function createWorldMap(data) {
   
   // 添加地图事件监听
   addMapEventListeners();
+}
+
+// 添加地图事件监听器
+function addMapEventListeners() {
+  if (!mapInstance) return;
+  
+  // 地图加载完成事件
+  mapInstance.on('load', function() {
+    console.log('地图加载完成');
+  });
+  
+  // 地图缩放事件
+  mapInstance.on('zoomend', function() {
+    console.log('地图缩放级别:', mapInstance.getZoom());
+  });
+  
+  // 地图拖动事件
+  mapInstance.on('moveend', function() {
+    console.log('地图中心点:', mapInstance.getCenter());
+  });
 }
 
 // 添加数据点到地图
