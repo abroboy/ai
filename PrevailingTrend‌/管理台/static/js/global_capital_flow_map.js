@@ -54,9 +54,6 @@ function createWorldMap(data) {
     dragging: true
   });
   
-  // 设置全局引用
-  enhancedMapInstance = mapInstance;
-  
   // 添加多个地图图层选项
   // OSM主图层
   const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

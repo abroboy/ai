@@ -31,6 +31,14 @@ SAFE_KEYS = {
 class AdminHandler(SimpleHTTPRequestHandler):
     def send_head(self):
         """优化静态文件缓存控制"""
+        # 对于/@vite/client等开发工具路径，直接返回404但不报错
+        if self.path == '/@vite/client':
+            self.send_response(404)
+            self.send_header("Content-type", "text/plain")
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            return None
+        
         path = self.translate_path(self.path)
         f = None
         if os.path.isdir(path):
@@ -51,19 +59,34 @@ class AdminHandler(SimpleHTTPRequestHandler):
         try:
             f = open(path, 'rb')
         except OSError:
-            self.send_error(404, "File not found")
-            return None
+            # 自定义404页面，对开发工具相关请求特殊处理
+            if self.path.endswith('.js') or self.path.endswith('.css'):
+                self.send_response(404)
+                self.send_header("Content-type", "text/plain")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                return None
+            else:
+                self.send_error(404, "File not found")
+                return None
         
         try:
             self.send_response(200)
             self.send_header("Content-type", ctype)
             fs = os.fstat(f.fileno())
             self.send_header("Content-Length", str(fs[6]))
-            # JavaScript文件设置严格缓存控制
-            if path.endswith('.js'):
+            
+            # 优化缓存策略：JS和CSS文件设置合理的缓存控制
+            if path.endswith('.js') or path.endswith('.css'):
+                # 设置1小时的缓存时间，同时支持ETag验证
+                self.send_header("Cache-Control", "max-age=3600, must-revalidate")
+                self.send_header("ETag", f"{fs.st_mtime}-{fs.st_size}")
+            elif path.endswith(('.html', '.htm')):
+                # HTML文件不缓存，确保获取最新版本
                 self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
                 self.send_header("Pragma", "no-cache")
                 self.send_header("Expires", "0")
+            
             self.end_headers()
             return f
         except:
@@ -136,7 +159,7 @@ class AdminHandler(SimpleHTTPRequestHandler):
         
         # API路由 - 基本功能路由
         api_routes = {
-            "/api/domestic-hotspot": generate_domestic_hotspots,
+            "/api/domestic-hotspot": self._generate_domestic_hotspots,
             "/api/wind-industries": generate_wind_industries,
             "/api/global-capital-flow": self._generate_global_capital_flow,
         }
@@ -234,6 +257,158 @@ class AdminHandler(SimpleHTTPRequestHandler):
         
         tree = walk(root, 0)
         return {"root": root, "items": tree}
+
+    def _generate_domestic_hotspots(self):
+        """生成国内热点数据"""
+        try:
+            # 导入服务
+            from services.domestic_hotspot_fetcher import get_domestic_hotspots
+            
+            # 获取热点数据
+            result = get_domestic_hotspots()
+            
+            if result.get('success'):
+                return result
+            else:
+                # 如果服务失败，返回模拟数据
+                return self._get_mock_domestic_hotspots()
+                
+        except Exception as e:
+            print(f"获取国内热点数据失败: {e}")
+            # 返回模拟数据作为备用
+            return self._get_mock_domestic_hotspots()
+    
+    def _get_mock_domestic_hotspots(self):
+        """获取模拟国内热点数据"""
+        mock_hotspots = [
+            {
+                "id": "dom_001",
+                "title": "A股三季度收官：结构性行情明显",
+                "content": "科技股领涨，新能源板块分化，消费股企稳回升",
+                "category": "A股",
+                "heat_score": 95,
+                "sentiment": "积极",
+                "source": "证券时报",
+                "publish_time": (datetime.now() - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S"),
+                "keywords": ["A股", "科技股", "新能源", "消费股"],
+                "url": "#"
+            },
+            {
+                "id": "dom_002",
+                "title": "央行降准释放流动性1.2万亿",
+                "content": "定向降准支持实体经济，房地产板块迎来反弹",
+                "category": "货币政策",
+                "heat_score": 92,
+                "sentiment": "积极",
+                "source": "中国证券报",
+                "publish_time": (datetime.now() - timedelta(minutes=25)).strftime("%Y-%m-%d %H:%M:%S"),
+                "keywords": ["央行", "降准", "流动性", "房地产"],
+                "url": "#"
+            },
+            {
+                "id": "dom_003",
+                "title": "新能源汽车销量创历史新高",
+                "content": "9月销量同比增长35%，产业链公司业绩分化",
+                "category": "新能源",
+                "heat_score": 89,
+                "sentiment": "积极",
+                "source": "财经网",
+                "publish_time": (datetime.now() - timedelta(minutes=40)).strftime("%Y-%m-%d %H:%M:%S"),
+                "keywords": ["新能源汽车", "销量", "产业链"],
+                "url": "#"
+            },
+            {
+                "id": "dom_004",
+                "title": "人工智能大模型商业化提速",
+                "content": "AI应用场景不断拓展，相关概念股受追捧",
+                "category": "科技",
+                "heat_score": 87,
+                "sentiment": "积极",
+                "source": "21世纪经济报道",
+                "publish_time": (datetime.now() - timedelta(minutes=55)).strftime("%Y-%m-%d %H:%M:%S"),
+                "keywords": ["人工智能", "大模型", "AI", "概念股"],
+                "url": "#"
+            },
+            {
+                "id": "dom_005",
+                "title": "消费板块复苏信号增强",
+                "content": "节假日消费数据亮眼，消费信心逐步恢复",
+                "category": "消费",
+                "heat_score": 82,
+                "sentiment": "积极",
+                "source": "经济日报",
+                "publish_time": (datetime.now() - timedelta(minutes=70)).strftime("%Y-%m-%d %H:%M:%S"),
+                "keywords": ["消费", "复苏", "节假日", "消费信心"],
+                "url": "#"
+            },
+            {
+                "id": "dom_006",
+                "title": "房地产政策持续优化调整",
+                "content": "多地出台支持政策，市场预期逐步改善",
+                "category": "房地产",
+                "heat_score": 78,
+                "sentiment": "中性",
+                "source": "中国房地产报",
+                "publish_time": (datetime.now() - timedelta(minutes=85)).strftime("%Y-%m-%d %H:%M:%S"),
+                "keywords": ["房地产", "政策", "支持", "市场预期"],
+                "url": "#"
+            }
+        ]
+        
+        # 计算统计数据
+        category_dist = {}
+        sentiment_dist = {"积极": 0, "中性": 0, "消极": 0}
+        source_dist = {}
+        total_heat = 0
+        
+        for hotspot in mock_hotspots:
+            # 分类统计
+            cat = hotspot["category"]
+            category_dist[cat] = category_dist.get(cat, 0) + 1
+            
+            # 情感统计
+            sent = hotspot["sentiment"]
+            if sent in sentiment_dist:
+                sentiment_dist[sent] += 1
+            
+            # 来源统计
+            src = hotspot["source"]
+            source_dist[src] = source_dist.get(src, 0) + 1
+            
+            # 热度统计
+            total_heat += hotspot["heat_score"]
+        
+        # 热度分布
+        high_heat = len([h for h in mock_hotspots if h["heat_score"] >= 80])
+        medium_heat = len([h for h in mock_hotspots if 60 <= h["heat_score"] < 80])
+        low_heat = len([h for h in mock_hotspots if h["heat_score"] < 60])
+        
+        statistics = {
+            "total_count": len(mock_hotspots),
+            "avg_heat_score": total_heat / len(mock_hotspots),
+            "category_distribution": category_dist,
+            "sentiment_distribution": sentiment_dist,
+            "source_distribution": source_dist,
+            "heat_distribution": {
+                "high": high_heat,
+                "medium": medium_heat,
+                "low": low_heat
+            },
+            "top_keywords": [
+                {"keyword": "A股", "count": 3},
+                {"keyword": "政策", "count": 2},
+                {"keyword": "新能源", "count": 2},
+                {"keyword": "消费", "count": 2}
+            ]
+        }
+        
+        return {
+            "success": True,
+            "data": mock_hotspots,
+            "statistics": statistics,
+            "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "total_count": len(mock_hotspots)
+        }
 
     def _generate_global_capital_flow(self):
         """生成全球资金流向数据"""

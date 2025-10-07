@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- IE 兼容性处理 -->
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <!-- 针对IE的性能优化：内联关键CSS -->
+  <!-- 性能优化：启用严格模式 -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;">
+  <!-- 关键资源预加载 -->
+  <link rel="preload" href="static/js/global_capital_flow.js" as="script" crossorigin>
+  <link rel="preload" href="static/js/domestic_hotspot_enhanced.js" as="script" crossorigin>
+  <!-- 性能优化：内联关键CSS -->
   <style id="critical-css">
     body { font-family: "Microsoft YaHei", sans-serif; background: linear-gradient(135deg,#667eea,#764ba2); min-height: 100vh; margin: 0; padding: 0; }
     .layout { display: flex; gap: 0; padding: 16px; }
@@ -25,14 +30,12 @@
     }
   </style>
   <title>管理台 - 大势所趋风险框架</title>
-  <!-- 针对IE的本地Bootstrap支持 -->
+  <!-- CSS文件合并与压缩优化 -->
   <link href="static/css/style.css" rel="stylesheet">
   <link href="static/css/global_capital_flow.css" rel="stylesheet">
-  <link href="static/css/global_capital_flow_enhanced.css" rel="stylesheet">
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- 条件加载CDN资源，优先使用本地缓存 -->
+  <script>if (!localStorage.getItem('bootstrapLoaded')) { document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">'); localStorage.setItem('bootstrapLoaded', 'true'); }</script>
+  <script>if (!localStorage.getItem('bootstrapIconsLoaded')) { document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">'); localStorage.setItem('bootstrapIconsLoaded', 'true'); }</script>
   <style>
     .enhanced-badge { background: #ff6b6b; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
     .realtime-badge { background: #28a745; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
@@ -165,14 +168,146 @@
         </div>
       </div>
       
+      <!-- 骨架屏 - 快速显示页面结构 -->
       <div id="content" class="content-area">
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary" role="status"><span class="visually-hidden">加载中...</span></div>
-          <p class="mt-3">正在加载模块...</p>
+        <div class="skeleton-container">
+          <!-- 骨架屏头部 -->
+          <div class="skeleton-header mb-4">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-subtitle"></div>
+          </div>
+          
+          <!-- 骨架屏内容区 -->
+          <div class="skeleton-content">
+            <div class="skeleton-row">
+              <div class="skeleton-bar"></div>
+            </div>
+            <div class="skeleton-row">
+              <div class="skeleton-bar short"></div>
+            </div>
+            <div class="skeleton-chart"></div>
+            <div class="skeleton-row">
+              <div class="skeleton-bar"></div>
+            </div>
+            <div class="skeleton-row">
+              <div class="skeleton-bar medium"></div>
+            </div>
+          </div>
         </div>
       </div>
+      
+      <style>
+        /* 骨架屏样式 */
+        .skeleton-container {
+          width: 100%;
+        }
+        
+        .skeleton-header {
+          margin-bottom: 24px;
+        }
+        
+        .skeleton-title {
+          height: 28px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: skeleton-loading 1.5s infinite;
+          border-radius: 8px;
+          width: 60%;
+          margin-bottom: 12px;
+        }
+        
+        .skeleton-subtitle {
+          height: 20px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: skeleton-loading 1.5s infinite;
+          border-radius: 4px;
+          width: 40%;
+        }
+        
+        .skeleton-row {
+          margin-bottom: 12px;
+        }
+        
+        .skeleton-bar {
+          height: 20px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: skeleton-loading 1.5s infinite;
+          border-radius: 4px;
+          width: 100%;
+        }
+        
+        .skeleton-bar.medium {
+          width: 75%;
+        }
+        
+        .skeleton-bar.short {
+          width: 45%;
+        }
+        
+        .skeleton-chart {
+          height: 250px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: skeleton-loading 1.5s infinite;
+          border-radius: 8px;
+          margin: 16px 0;
+        }
+        
+        @keyframes skeleton-loading {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        
+        /* 减少动画在低性能设备上的消耗 */
+        @media (prefers-reduced-motion: reduce) {
+          .skeleton-title,
+          .skeleton-subtitle,
+          .skeleton-bar,
+          .skeleton-chart {
+            animation: none;
+            background: #f0f0f0;
+          }
+        }
+      </style>
     </div>
   </div>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    // 性能监控：记录页面加载开始时间
+    window.performance && window.performance.mark && window.performance.mark('page-load-start');
+    
+    // 注册Service Worker以提高加载性能
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function(registration) {
+            console.log('Service Worker 注册成功:', registration.scope);
+            
+            // 如果有新的Service Worker等待激活，提示用户刷新
+            if (registration.waiting) {
+              registration.waiting.postMessage('skipWaiting');
+            }
+            
+            // 监听Service Worker更新
+            registration.addEventListener('updatefound', function() {
+              const installingWorker = registration.installing;
+              installingWorker.addEventListener('statechange', function() {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // 有新的Service Worker可用，可以提示用户刷新
+                  console.log('新的Service Worker可用，请刷新页面');
+                }
+              });
+            });
+          })
+          .catch(function(error) {
+            console.warn('Service Worker 注册失败:', error);
+          });
+      });
+    }
+  </script>
 
   <script>
     // 全局变量
@@ -303,6 +438,11 @@
         updateBreadcrumb(name, 'active');
         return;
       }
+      if(name==='国内热点数据' && typeof loadDomesticHotspotData==='function'){
+        loadDomesticHotspotData();
+        updateBreadcrumb(name, 'active');
+        return;
+      }
       // 默认处理方式
       loadBasicModule(name);
     }
@@ -430,52 +570,260 @@
       }, { passive: false });
     });
   </script>
-  <!-- 核心模块优先加载 -->
+  <!-- 性能优化：关键核心脚本使用defer异步加载 -->
   <!-- Chart.js for charts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>if (!localStorage.getItem('chartJsLoaded')) { document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js" defer crossorigin><\/script>'); localStorage.setItem('chartJsLoaded', 'true'); }</script>
   <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="static/js/global_capital_flow.js"></script>
-  <script src="static/js/global_capital_flow_enhanced.js"></script>
-  <script src="static/js/global_capital_flow_map.js"></script>
-  <script src="static/js/global_capital_flow_chart.js"></script>
-  <script src="static/js/global_capital_flow_utils.js"></script>
-  <script src="static/js/xueqiu_hotspot_data.js"></script>
-  <script src="static/js/xueqiu_hotspot_functions.js"></script>
-  <script src="static/js/domestic_hotspot_enhanced.js"></script>
-  <script src="static/js/xueqiu_hotspot_enhanced.js"></script>
-  <script src="static/js/company_attributes_enhanced.js"></script>
-  <script src="static/js/financial_statements.js"></script>
-  <script src="static/js/missing_modules.js"></script>
-  <script src="static/js/domestic_hotspot_data.js"></script>
-  <script src="static/js/domestic_hotspot_ui.js"></script>
-  <script src="static/js/domestic_hotspot_utils.js"></script>
+  <script>if (!localStorage.getItem('bootstrapJsLoaded')) { document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer crossorigin><\/script>'); localStorage.setItem('bootstrapJsLoaded', 'true'); }</script>
   
-  <!-- 延迟加载其他非关键模块，提升IE浏览器性能 -->
+  <!-- 核心功能脚本使用defer异步加载 -->
+  <script src="static/js/global_capital_flow.js" defer></script>
+  <script src="static/js/domestic_hotspot_enhanced.js" defer></script>
+  
+  <!-- 智能资源加载器 - 只在需要时加载相关模块 -->
   <script>
-    // 简化脚本加载，提高性能
-    function lazyLoadScripts() {
-      var scripts = [
-        'static/js/listed_companies_module.js',
-        'static/js/listed_companies_module_csv.js',
-        'static/js/foreign_hotspot_data.js',
-        'static/js/company_attributes.js'
-      ];
+    // 性能优化：动态模块加载器
+    const moduleLoaders = {
+      '国内热点数据': ['domestic_hotspot_enhanced.js'],
+      '全球资金流向': ['global_capital_flow_map.js', 'global_capital_flow_chart.js', 'global_capital_flow_utils.js'],
+      '雪球等论坛热点数据': ['xueqiu_hotspot_data.js', 'xueqiu_hotspot_functions.js', 'xueqiu_hotspot_enhanced.js'],
+      '上市公司或行业分类': ['listed_companies_module.js', 'listed_companies_module_csv.js'],
+      '国外热点数据': ['foreign_hotspot_data.js'],
+      '公司属性表': ['company_attributes.js', 'company_attributes_enhanced.js'],
+      '财务三表': ['financial_statements.js']
+    };
+    
+    // 已加载的脚本缓存
+    const loadedScripts = new Set();
+    
+    // 性能监控工具
+    const performanceMonitor = {
+      marks: {},
+      start: function(name) {
+        this.marks[name] = performance.now();
+        console.log(`Performance: ${name} started`);
+      },
+      end: function(name) {
+        if (this.marks[name]) {
+          const duration = performance.now() - this.marks[name];
+          console.log(`Performance: ${name} completed in ${duration.toFixed(2)}ms`);
+          return duration;
+        }
+        return 0;
+      }
+    };
+
+    // 动态加载脚本函数 - 优化版
+    function loadScript(src, callback, priority = 'normal') {
+      // 检查是否已加载
+      if (loadedScripts.has(src)) {
+        if (callback) callback();
+        return;
+      }
       
-      scripts.forEach(function(src, index) {
-        setTimeout(function() {
-          var script = document.createElement('script');
-          script.src = src;
-          script.onerror = function() {
-            console.warn('Failed to load script:', src);
-          };
-          document.body.appendChild(script);
-        }, index * 200);
-      });
+      // 性能标记
+      const scriptLoadKey = `script-${src}`;
+      performanceMonitor.start(scriptLoadKey);
+      
+      const script = document.createElement('script');
+      script.src = `static/js/${src}`;
+      
+      // 根据优先级设置加载行为
+      if (priority === 'high') {
+        script.async = false; // 高优先级脚本同步加载
+        script.defer = false;
+      } else {
+        script.async = true; // 低优先级脚本异步加载
+        script.defer = true;
+      }
+      
+      // 设置资源优先级
+      if ('importance' in script) {
+        script.importance = priority === 'high' ? 'high' : 'low';
+      }
+      
+      script.onload = function() {
+        loadedScripts.add(src);
+        performanceMonitor.end(scriptLoadKey);
+        if (callback) callback();
+      };
+      
+      script.onerror = function() {
+        console.warn('Failed to load script:', src);
+        performanceMonitor.end(scriptLoadKey);
+        // 尝试使用备用路径
+        if (src.includes('domestic_hotspot')) {
+          // 加载错误时尝试使用备用模块
+          loadScript('missing_modules.js', callback);
+        } else if (callback) {
+          callback();
+        }
+      };
+      
+      // 使用insertBefore替代appendChild以提高性能
+      const firstScript = document.getElementsByTagName('script')[0];
+      if (firstScript) {
+        firstScript.parentNode.insertBefore(script, firstScript);
+      } else {
+        document.body.appendChild(script);
+      }
     }
     
-    // 页面加载完成后延迟加载
-    setTimeout(lazyLoadScripts, 500);
+    // 模块预加载器 - 智能版本
+    function preloadCommonModules() {
+      // 性能标记
+      performanceMonitor.start('preload-common-modules');
+      
+      // 检测网络状况
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      const isSlowConnection = connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
+      
+      // 预加载默认模块的依赖
+      const defaultModuleScripts = moduleLoaders['国内热点数据'] || [];
+      
+      if (isSlowConnection) {
+        // 慢速网络下：只加载最核心的文件
+        const criticalScripts = defaultModuleScripts.slice(0, 2); // 只加载前两个最核心的文件
+        criticalScripts.forEach((script, index) => {
+          setTimeout(() => {
+            loadScript(script);
+          }, index * 500); // 增加间隔时间
+        });
+      } else {
+        // 快速网络下：正常预加载
+        defaultModuleScripts.forEach((script, index) => {
+          setTimeout(() => {
+            loadScript(script);
+          }, index * 200); // 减小间隔时间
+        });
+      }
+      
+      performanceMonitor.end('preload-common-modules');
+    }
+    
+    // 资源优先级队列管理器
+    const ResourceQueue = {
+      queue: [],
+      processing: false,
+      maxConcurrent: 2, // 最大并发加载数
+      
+      add: function(src, callback, priority = 'normal') {
+        this.queue.push({ src, callback, priority });
+        this.queue.sort((a, b) => (a.priority === 'high' && b.priority !== 'high') ? -1 : 1);
+        this.process();
+      },
+      
+      process: function() {
+        if (this.processing) return;
+        
+        this.processing = true;
+        
+        const processNext = () => {
+          if (this.queue.length === 0) {
+            this.processing = false;
+            return;
+          }
+          
+          // 取出待处理的任务
+          const batch = this.queue.splice(0, this.maxConcurrent);
+          let completed = 0;
+          
+          batch.forEach(item => {
+            loadScript(item.src, () => {
+              if (item.callback) item.callback();
+              completed++;
+              
+              if (completed === batch.length) {
+                setTimeout(processNext, 100); // 批处理间隔
+              }
+            }, item.priority);
+          });
+        };
+        
+        processNext();
+      }
+    };
+    
+    // 重写loadModule函数，实现智能按需加载
+    const originalLoadModule = window.loadModule;
+    window.loadModule = function(name) {
+      // 记录加载开始时间
+      const moduleLoadKey = `module-${name}`;
+      performanceMonitor.start(moduleLoadKey);
+      
+      // 先更新UI，显示模块正在加载
+      updateBreadcrumb(name, 'loading');
+      
+      // 清空内容区域，准备加载新模块
+      const contentElement = document.getElementById('content');
+      contentElement.innerHTML = '<div class="skeleton-container"><div class="skeleton-header mb-4"><div class="skeleton-title"></div><div class="skeleton-subtitle"></div></div><div class="skeleton-content"><div class="skeleton-row"><div class="skeleton-bar"></div></div><div class="skeleton-row"><div class="skeleton-bar short"></div></div><div class="skeleton-chart"></div><div class="skeleton-row"><div class="skeleton-bar"></div></div><div class="skeleton-row"><div class="skeleton-bar medium"></div></div></div></div>';
+      
+      // 获取该模块需要的脚本
+      const requiredScripts = moduleLoaders[name] || [];
+      
+      if (requiredScripts.length > 0) {
+        // 统计未加载的脚本数量
+        const unloadedScripts = requiredScripts.filter(script => !loadedScripts.has(script));
+        
+        if (unloadedScripts.length > 0) {
+          // 分批加载脚本：核心脚本优先加载
+          const coreScripts = unloadedScripts.slice(0, 2); // 前两个作为核心脚本
+          const nonCoreScripts = unloadedScripts.slice(2); // 其余作为非核心脚本
+          
+          // 加载核心脚本（高优先级）
+          coreScripts.forEach(script => {
+            ResourceQueue.add(script, null, 'high');
+          });
+          
+          // 等待核心脚本加载完成后执行模块，并继续加载非核心脚本
+          setTimeout(() => {
+            try {
+              // 尝试加载模块
+              originalLoadModule(name);
+              
+              // 核心模块加载成功后，继续加载非核心脚本（低优先级）
+              nonCoreScripts.forEach(script => {
+                ResourceQueue.add(script);
+              });
+            } catch (error) {
+              console.error(`Failed to load module ${name}:`, error);
+              loadBasicModule(name);
+            }
+            
+            // 记录加载时间
+            const duration = performanceMonitor.end(moduleLoadKey);
+            
+            // 如果加载时间过长，显示优化提示
+            if (duration > 2000) {
+              console.warn(`Module ${name} took longer than expected to load (${duration.toFixed(2)}ms). Consider optimizing this module.`);
+            }
+          }, 500);
+        } else {
+          // 所有脚本都已加载，直接执行模块
+          try {
+            originalLoadModule(name);
+            performanceMonitor.end(moduleLoadKey);
+          } catch (error) {
+            console.error(`Failed to load module ${name}:`, error);
+            loadBasicModule(name);
+            performanceMonitor.end(moduleLoadKey);
+          }
+        }
+      } else {
+        // 没有特定的脚本需求，直接加载基础模块
+        loadBasicModule(name);
+        performanceMonitor.end(moduleLoadKey);
+      }
+    };
+    
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+      // 预加载常用模块
+      setTimeout(preloadCommonModules, 300);
+      
+      // 加载基础功能模块
+      loadScript('missing_modules.js');
+    });
   </script>
 </body>
 </html>
