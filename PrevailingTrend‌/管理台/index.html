@@ -358,8 +358,8 @@
         updateBreadcrumb(name, 'active');
         return;
       }
-      if(name==='上市公司或行业分类' && typeof loadListedCompaniesModule==='function'){
-        loadListedCompaniesModule();
+      if(name==='上市公司或行业分类' && typeof loadWindIndustryClassification==='function'){
+        loadWindIndustryClassification();
         updateBreadcrumb(name, 'active');
         return;
       }
@@ -586,7 +586,7 @@
     const moduleLoaders = {
       '国内热点数据': ['domestic_hotspot_enhanced.js'],
       '全球资金流向': ['global_capital_flow_map.js', 'global_capital_flow_chart.js', 'global_capital_flow_utils.js'],
-      '雪球等论坛热点数据': ['xueqiu_hotspot_data.js', 'xueqiu_hotspot_functions.js', 'xueqiu_hotspot_enhanced.js'],
+      '雪球等论坛热点数据': ['xueqiu_hotspot_functions.js', 'xueqiu_hotspot_enhanced.js'],
       '上市公司或行业分类': ['listed_companies_module.js', 'listed_companies_module_csv.js'],
       '国外热点数据': ['foreign_hotspot_data.js'],
       '公司属性表': ['company_attributes.js', 'company_attributes_enhanced.js'],

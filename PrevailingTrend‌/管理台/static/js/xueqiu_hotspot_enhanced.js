@@ -131,6 +131,13 @@ function getMockXueqiuHotspotData() {
     };
 }
 
+// 获取情绪颜色
+function getSentimentColor(score) {
+    if (score >= 0.7) return 'text-success';
+    if (score >= 0.5) return 'text-warning';
+    return 'text-danger';
+}
+
 // 渲染雪球热点数据模块
 function renderXueqiuHotspotModule(container, responseData) {
     const data = responseData.data;
