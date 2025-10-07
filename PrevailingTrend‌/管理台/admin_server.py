@@ -162,6 +162,7 @@ class AdminHandler(SimpleHTTPRequestHandler):
             "/api/domestic-hotspot": self._generate_domestic_hotspots,
             "/api/wind-industries": generate_wind_industries,
             "/api/global-capital-flow": self._generate_global_capital_flow,
+            "/api/tencent-jian-index": self._generate_tencent_jian_index,
         }
         
         if parsed.path in api_routes:
@@ -529,6 +530,129 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 "error": str(e)
             }
 
+    def _generate_tencent_jian_index(self):
+        """生成腾讯济安指数数据"""
+        try:
+            # 模拟腾讯济安指数数据
+            index_data = {
+                "current_index": 3247.85,
+                "change": 38.76,
+                "change_percent": 1.23,
+                "open": 3210.45,
+                "high": 3256.78,
+                "low": 3205.12,
+                "volume": 1567890000,
+                "turnover": 45678900000,
+                "pe_ratio": 18.56,
+                "pb_ratio": 2.34,
+                "dividend_yield": 1.85,
+                "market_cap": 2800000000000,
+                "constituent_count": 156,
+                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+            # 成分股数据
+            constituents = [
+                {
+                    "code": "000858",
+                    "name": "五粮液",
+                    "weight": 8.5,
+                    "price": 156.78,
+                    "change": 2.1,
+                    "change_percent": 1.36,
+                    "contribution": 0.18
+                },
+                {
+                    "code": "000568",
+                    "name": "泸州老窖",
+                    "weight": 7.2,
+                    "price": 234.56,
+                    "change": 1.8,
+                    "change_percent": 0.77,
+                    "contribution": 0.13
+                },
+                {
+                    "code": "002415",
+                    "name": "海康威视",
+                    "weight": 6.8,
+                    "price": 34.12,
+                    "change": -0.5,
+                    "change_percent": -1.44,
+                    "contribution": -0.03
+                },
+                {
+                    "code": "600519",
+                    "name": "贵州茅台",
+                    "weight": 6.5,
+                    "price": 1789.23,
+                    "change": 12.5,
+                    "change_percent": 0.70,
+                    "contribution": 0.09
+                },
+                {
+                    "code": "000001",
+                    "name": "平安银行",
+                    "weight": 5.8,
+                    "price": 12.34,
+                    "change": 0.12,
+                    "change_percent": 0.98,
+                    "contribution": 0.07
+                }
+            ]
+            
+            # 行业分布
+            industry_distribution = [
+                {"industry": "食品饮料", "weight": 28.5, "count": 24},
+                {"industry": "电子科技", "weight": 23.2, "count": 32},
+                {"industry": "医药生物", "weight": 18.7, "count": 28},
+                {"industry": "金融服务", "weight": 12.4, "count": 18},
+                {"industry": "新能源", "weight": 8.9, "count": 15},
+                {"industry": "其他", "weight": 8.3, "count": 39}
+            ]
+            
+            # 历史数据（用于图表）
+            historical_data = {
+                "dates": [(datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(29, -1, -1)],
+                "values": [3200 + random.uniform(-50, 50) for _ in range(30)]
+            }
+            
+            # 计算统计数据
+            total_weight = sum(item["weight"] for item in constituents)
+            avg_change = sum(item["change_percent"] for item in constituents) / len(constituents)
+            positive_count = len([item for item in constituents if item["change"] > 0])
+            negative_count = len([item for item in constituents if item["change"] < 0])
+            
+            statistics = {
+                "total_weight": total_weight,
+                "avg_change": round(avg_change, 2),
+                "positive_count": positive_count,
+                "negative_count": negative_count,
+                "neutral_count": len(constituents) - positive_count - negative_count,
+                "top_contributor": max(constituents, key=lambda x: x["contribution"])["name"],
+                "bottom_contributor": min(constituents, key=lambda x: x["contribution"])["name"]
+            }
+            
+            return {
+                "success": True,
+                "message": "腾讯济安指数数据获取成功",
+                "data": {
+                    "index": index_data,
+                    "constituents": constituents,
+                    "industry_distribution": industry_distribution,
+                    "historical": historical_data,
+                    "statistics": statistics
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"生成腾讯济安指数数据失败: {str(e)}",
+                "data": {},
+                "error": str(e)
+            }
+
 
 def main():
     """主启动函数 - 统一的服务器启动入口"""
@@ -545,7 +669,7 @@ def main():
     print("访问地址: http://localhost:%d/index.html" % PORT)
     print("API接口: /api/listed-companies, /api/db/query")
     print("         /api/domestic-hotspot, /api/wind-industries")
-    print("         /api/global-capital-flow")
+    print("         /api/global-capital-flow, /api/tencent-jian-index")
     print("========================================")
     print("按 Ctrl+C 停止服务器")
     

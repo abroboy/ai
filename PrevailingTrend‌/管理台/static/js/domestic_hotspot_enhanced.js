@@ -169,13 +169,15 @@ function getMockDomesticHotspotData() {
 }
 
 // 渲染国内热点数据模块
-function renderDomesticHotspotModule(container, data) {
-    if (!data) {
-        console.error('数据为空');
+function renderDomesticHotspotModule(container, apiResponse) {
+    if (!apiResponse) {
+        console.error('API响应为空');
         return;
     }
     
-    const { data: hotspots, statistics } = data;
+    // API返回的数据结构是 {success, data, statistics}
+    const hotspots = apiResponse.data || [];
+    const statistics = apiResponse.statistics || {};
     
     // 处理统计数据，确保数据结构正确
     const stats = {
