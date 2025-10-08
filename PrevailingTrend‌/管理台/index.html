@@ -433,10 +433,28 @@
         updateBreadcrumb(name, 'active');
         return;
       }
-      if(name==='曲线预测分析' && typeof loadCurvePredictionAnalysis==='function'){
-        loadCurvePredictionAnalysis();
-        updateBreadcrumb(name, 'active');
-        return;
+      if(name==='曲线预测分析') {
+        console.log('开始加载曲线预测分析模块，函数状态:', typeof loadCurvePredictionAnalysis);
+        if(typeof loadCurvePredictionAnalysis==='function'){
+          console.log('加载曲线预测分析模块 - 专用实现');
+          loadCurvePredictionAnalysis();
+          updateBreadcrumb(name, 'active');
+          return;
+        } else {
+          console.log('曲线预测分析模块函数未找到，尝试加载专用文件');
+          // 尝试动态加载专用文件
+          loadScript('curve_prediction_analysis.js', function() {
+            if(typeof loadCurvePredictionAnalysis==='function'){
+              console.log('动态加载成功，调用专用实现');
+              loadCurvePredictionAnalysis();
+              updateBreadcrumb(name, 'active');
+            } else {
+              console.log('动态加载失败，使用基础模块');
+              loadBasicModule(name);
+            }
+          });
+          return;
+        }
       }
       if(name==='国内热点数据' && typeof loadDomesticHotspotData==='function'){
         loadDomesticHotspotData();
@@ -592,7 +610,7 @@
       '公司属性表': ['company_attributes.js', 'company_attributes_enhanced.js'],
       '财务三表': ['financial_statements.js'],
       '腾讯济安指数': ['tencent_jian_index.js'],
-      '热点数据表': ['complete_modules.js'],
+      '热点数据表': ['hotspot_table.js'],
       '企查查数据': ['qichacha_data.js'],
       '税银报告': ['tax_bank_report.js'],
       '公司分值表': ['company_score_table.js'],
@@ -635,7 +653,12 @@
       performanceMonitor.start(scriptLoadKey);
       
       const script = document.createElement('script');
-      script.src = `static/js/${src}`;
+      // 修复路径问题：如果src已经包含路径，则不添加前缀
+      if (src.startsWith('static/js/') || src.startsWith('/static/js/')) {
+        script.src = src;
+      } else {
+        script.src = `static/js/${src}`;
+      }
       
       // 根据优先级设置加载行为
       if (priority === 'high') {
@@ -660,9 +683,9 @@
       script.onerror = function() {
         console.warn('Failed to load script:', src);
         performanceMonitor.end(scriptLoadKey);
-        // 尝试使用备用路径
+        // 尝试使用备用路径（仅对特定模块）
         if (src.includes('domestic_hotspot')) {
-          // 加载错误时尝试使用备用模块
+          // 仅对国内热点数据模块使用备用路径
           loadScript('missing_modules.js', callback);
         } else if (callback) {
           callback();
@@ -689,10 +712,15 @@
       
       // 预加载默认模块的依赖
       const defaultModuleScripts = moduleLoaders['国内热点数据'] || [];
+      // 同时预加载曲线预测分析模块的依赖
+      const curvePredictionScripts = moduleLoaders['曲线预测分析'] || [];
+      
+      // 合并需要预加载的脚本
+      const scriptsToPreload = [...new Set([...defaultModuleScripts, ...curvePredictionScripts])];
       
       if (isSlowConnection) {
         // 慢速网络下：只加载最核心的文件
-        const criticalScripts = defaultModuleScripts.slice(0, 2); // 只加载前两个最核心的文件
+        const criticalScripts = scriptsToPreload.slice(0, 2); // 只加载前两个最核心的文件
         criticalScripts.forEach((script, index) => {
           setTimeout(() => {
             loadScript(script);
@@ -700,7 +728,7 @@
         });
       } else {
         // 快速网络下：正常预加载
-        defaultModuleScripts.forEach((script, index) => {
+        scriptsToPreload.forEach((script, index) => {
           setTimeout(() => {
             loadScript(script);
           }, index * 200); // 减小间隔时间
@@ -830,8 +858,8 @@
       // 预加载常用模块
       setTimeout(preloadCommonModules, 300);
       
-      // 加载基础功能模块
-      loadScript('missing_modules.js');
+      // 加载基础功能模块 - 不再加载missing_modules.js，因为所有模块都有专用实现
+      // loadScript('missing_modules.js'); // 注释掉，避免覆盖专用模块
     });
   </script>
 </body>
