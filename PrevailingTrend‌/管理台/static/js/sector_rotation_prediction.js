@@ -1,4 +1,4 @@
-// 板块轮动预测模块 - 智能板块轮动趋势分析
+// 板块轮动预测模块 - 现代化设计版本
 function loadSectorRotationPrediction() {
     const container = document.getElementById('content');
     
@@ -9,8 +9,8 @@ function loadSectorRotationPrediction() {
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h2><i class="bi bi-arrow-repeat text-primary"></i> 智能板块轮动预测</h2>
-                            <p class="text-muted">基于宏观经济、资金流向和市场情绪的多维度板块轮动分析</p>
+                            <h2 class="mb-2"><i class="bi bi-arrow-repeat text-primary"></i> 智能板块轮动预测</h2>
+                            <p class="text-muted mb-0">基于宏观经济、资金流向和市场情绪的多维度板块轮动分析</p>
                         </div>
                         <div class="btn-group">
                             <button class="btn btn-outline-primary" onclick="refreshSectorData()">
@@ -60,45 +60,38 @@ function loadSectorRotationPrediction() {
                 </div>
             </div>
             
-            <!-- 板块轮动热力图 -->
+            <!-- 多时间维度预测 -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="bi bi-grid-3x3-gap"></i> 板块轮动热力图</h5>
-                            <div class="btn-group">
-                                <button class="btn btn-light btn-sm" onclick="toggleHeatmapView('grid')">
-                                    <i class="bi bi-grid-3x3"></i> 网格视图
-                                </button>
-                                <button class="btn btn-outline-light btn-sm" onclick="toggleHeatmapView('chart')">
-                                    <i class="bi bi-bar-chart"></i> 图表视图
-                                </button>
-                                <button class="btn btn-outline-light btn-sm" onclick="generateSectorRotationHeatmap()">
-                                    <i class="bi bi-arrow-clockwise"></i> 刷新
-                                </button>
-                            </div>
+                        <div class="card-header bg-gradient-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-calendar-range"></i> 多时间维度板块轮动预测</h5>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="showTrendArrows" checked onchange="updateHeatmapDisplay()">
-                                    <label class="form-check-label" for="showTrendArrows">显示趋势箭头</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="showProbability" checked onchange="updateHeatmapDisplay()">
-                                    <label class="form-check-label" for="showProbability">显示概率值</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
-                                    <label class="form-check-label" for="autoRefresh">自动刷新(30秒)</label>
+                            <!-- 时间维度选择器 -->
+                            <div class="mb-4">
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="timeframe" id="timeframe-30d" autocomplete="off" checked onchange="changeTimeframe('30d')">
+                                    <label class="btn btn-outline-primary" for="timeframe-30d">30天预测</label>
+                                    
+                                    <input type="radio" class="btn-check" name="timeframe" id="timeframe-90d" autocomplete="off" onchange="changeTimeframe('90d')">
+                                    <label class="btn btn-outline-primary" for="timeframe-90d">90天预测</label>
+                                    
+                                    <input type="radio" class="btn-check" name="timeframe" id="timeframe-180d" autocomplete="off" onchange="changeTimeframe('180d')">
+                                    <label class="btn btn-outline-primary" for="timeframe-180d">180天预测</label>
+                                    
+                                    <input type="radio" class="btn-check" name="timeframe" id="timeframe-360d" autocomplete="off" onchange="changeTimeframe('360d')">
+                                    <label class="btn btn-outline-primary" for="timeframe-360d">360天预测</label>
                                 </div>
                             </div>
-                            <div id="sectorRotationHeatmap" style="height: 500px;">
-                                <div class="text-center py-5">
-                                    <div class="spinner-border text-primary" role="status">
+                            
+                            <!-- 预测结果展示 -->
+                            <div id="sectorRotationPrediction">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-info" role="status">
                                         <span class="visually-hidden">加载中...</span>
                                     </div>
-                                    <p class="mt-3">正在生成板块轮动热力图...</p>
+                                    <p class="mt-3">正在分析板块轮动趋势...</p>
                                 </div>
                             </div>
                         </div>
@@ -1040,6 +1033,188 @@ function exportSectorRotationReport() {
     
     // 在实际应用中，这里会生成PDF或Excel文件
     alert(`板块轮动分析报告已生成！\n\n${reportText}`);
+}
+
+// 生成板块轮动预测数据
+function generateSectorRotationPrediction(timeframe = '30d') {
+    const predictionContainer = document.getElementById('sectorRotationPrediction');
+    
+    // 模拟板块轮动预测数据
+    const sectorPredictions = [
+        { name: '资源能源', probability: 85, trend: '继续上涨', reason: '大宗商品价格支撑', type: '周期', strength: '强' },
+        { name: '基建制造', probability: 78, trend: '稳步上涨', reason: '政策利好推动', type: '周期', strength: '强' },
+        { name: '国防军工', probability: 72, trend: '震荡上行', reason: '地缘政治因素', type: '防御', strength: '中' },
+        { name: '医药生物', probability: 68, trend: '温和上涨', reason: '人口老龄化需求', type: '防御', strength: '中' },
+        { name: '金融保险', probability: 65, trend: '企稳回升', reason: '估值修复预期', type: '金融', strength: '中' },
+        { name: '消费零售', probability: 62, trend: '缓慢复苏', reason: '消费信心恢复', type: '消费', strength: '中' },
+        { name: '科技成长', probability: 45, trend: '震荡调整', reason: '估值压力较大', type: '成长', strength: '弱' },
+        { name: '新能源', probability: 38, trend: '继续调整', reason: '产能过剩担忧', type: '成长', strength: '弱' },
+        { name: '机器人', probability: 25, trend: '大幅下跌', reason: '技术瓶颈限制', type: '成长', strength: '弱' }
+    ];
+    
+    // 根据时间维度调整预测数据
+    const timeframeFactors = {
+        '30d': { factor: 1.0, label: '未来30天' },
+        '90d': { factor: 0.9, label: '未来90天' },
+        '180d': { factor: 0.8, label: '未来180天' },
+        '360d': { factor: 0.7, label: '未来360天' }
+    };
+    
+    const factor = timeframeFactors[timeframe] || timeframeFactors['30d'];
+    
+    // 生成预测表格HTML
+    const tableHtml = `
+        <div class="card">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">${factor.label}板块轮动预测</h6>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="sortByProbability()">
+                            <i class="bi bi-sort-numeric-down"></i> 按概率排序
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="filterByStrength('all')">
+                            <i class="bi bi-filter"></i> 筛选强度
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>板块名称</th>
+                                <th>预测概率</th>
+                                <th>趋势方向</th>
+                                <th>主要因素</th>
+                                <th>板块类型</th>
+                                <th>强度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sectorPredictions.map(sector => {
+                                const adjustedProbability = Math.round(sector.probability * factor.factor);
+                                return `
+                                <tr>
+                                    <td><strong>${sector.name}</strong></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px; width: 100px;">
+                                            <div class="progress-bar ${adjustedProbability >= 70 ? 'bg-success' : adjustedProbability >= 50 ? 'bg-warning' : 'bg-danger'}" 
+                                                 style="width: ${adjustedProbability}%">
+                                                ${adjustedProbability}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge ${sector.trend.includes('上涨') ? 'bg-success' : sector.trend.includes('调整') ? 'bg-warning' : 'bg-danger'}">
+                                            ${sector.trend}
+                                        </span>
+                                    </td>
+                                    <td><small class="text-muted">${sector.reason}</small></td>
+                                    <td><span class="badge bg-secondary">${sector.type}</span></td>
+                                    <td>
+                                        <span class="badge ${sector.strength === '强' ? 'bg-success' : sector.strength === '中' ? 'bg-warning' : 'bg-danger'}">
+                                            ${sector.strength}
+                                        </span>
+                                    </td>
+                                </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    predictionContainer.innerHTML = tableHtml;
+}
+
+// 排序功能
+function sortByProbability() {
+    alert('排序功能已触发，将按概率从高到低排序');
+}
+
+// 筛选功能
+function filterByStrength(strength) {
+    alert(`筛选功能已触发，显示${strength === 'all' ? '全部' : strength}强度板块`);
+}
+
+// 切换时间维度
+function changeTimeframe(timeframe) {
+    generateSectorRotationPrediction(timeframe);
+    document.getElementById('lastUpdateTime').textContent = new Date().toLocaleString('zh-CN');
+}
+
+// 生成投资策略
+function generateInvestmentStrategy(riskPreference = 'risk-balanced') {
+    const strategies = {
+        'risk-conservative': {
+            name: '保守型',
+            allocation: {
+                '资源能源': '25%',
+                '基建制造': '20%',
+                '国防军工': '15%',
+                '医药生物': '15%',
+                '金融保险': '15%',
+                '现金': '10%'
+            },
+            description: '稳健配置，重点布局防御性板块'
+        },
+        'risk-balanced': {
+            name: '平衡型',
+            allocation: {
+                '资源能源': '30%',
+                '基建制造': '25%',
+                '国防军工': '15%',
+                '医药生物': '10%',
+                '金融保险': '10%',
+                '消费零售': '5%',
+                '现金': '5%'
+            },
+            description: '均衡配置，兼顾周期与防御板块'
+        },
+        'risk-aggressive': {
+            name: '激进型',
+            allocation: {
+                '资源能源': '35%',
+                '基建制造': '30%',
+                '国防军工': '15%',
+                '科技成长': '10%',
+                '新能源': '5%',
+                '现金': '5%'
+            },
+            description: '积极配置，重点布局高增长板块'
+        }
+    };
+    
+    const strategy = strategies[riskPreference] || strategies['risk-balanced'];
+    const strategyContainer = document.getElementById('investmentStrategy');
+    
+    strategyContainer.innerHTML = `
+        <div class="alert alert-success">
+            <h6><i class="bi bi-lightning-charge"></i> ${strategy.name}投资策略</h6>
+            <p class="mb-2">${strategy.description}</p>
+            <div class="mt-3">
+                <h6>资产配置建议：</h6>
+                <div class="row">
+                    ${Object.entries(strategy.allocation).map(([sector, allocation]) => `
+                        <div class="col-6 mb-2">
+                            <small>${sector}: <span class="fw-bold text-primary">${allocation}</span></small>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-sm btn-outline-primary me-2" onclick="simulateStrategy('${riskPreference}')">
+                    <i class="bi bi-graph-up"></i> 策略回测
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="exportStrategy('${riskPreference}')">
+                    <i class="bi bi-download"></i> 导出策略
+                </button>
+            </div>
+        </div>
+    `;
 }
 
 // 初始化板块轮动预测模块
