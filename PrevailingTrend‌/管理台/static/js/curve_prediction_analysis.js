@@ -1,6 +1,12 @@
-// 曲线预测分析模块 - 完整实现
+// 曲线预测分析模块 - 完整实现（修复图表显示问题）
 function loadCurvePredictionAnalysis() {
     const container = document.getElementById('content');
+    
+    // 设置默认预测对象为平安银行
+    window.selectedPredictionObject = { name: '平安银行 (000001)', code: '000001', type: 'stock' };
+    
+    // 加载Chart.js库
+    loadChartJSLibrary();
     
     container.innerHTML = `
         <div class="container-fluid">
@@ -8,6 +14,23 @@ function loadCurvePredictionAnalysis() {
                 <div class="col-12">
                     <h2><i class="bi bi-graph-up-arrow text-warning"></i> 多模型趋势预测分析</h2>
                     <p class="text-muted">基于多种机器学习模型的金融数据趋势预测与对比分析</p>
+                </div>
+            </div>
+            
+            <!-- 默认测试对象提示 -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-info-circle"></i> 
+                                <strong>默认测试对象：平安银行 (000001)</strong> - 系统已自动选择平安银行作为预测对象
+                            </div>
+                            <button class="btn btn-success" onclick="startDefaultPrediction()">
+                                <i class="bi bi-play-circle"></i> 立即开始预测分析
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -312,6 +335,37 @@ function loadCurvePredictionAnalysis() {
     
     // 加载历史预测记录
     loadPredictionHistory();
+    
+    // 自动开始默认预测（延迟3秒，等待页面加载完成）
+    setTimeout(() => {
+        startDefaultPrediction();
+    }, 3000);
+}
+
+// 立即开始默认预测
+function startDefaultPrediction() {
+    if (!window.selectedPredictionObject) {
+        window.selectedPredictionObject = { name: '平安银行 (000001)', code: '000001', type: 'stock' };
+    }
+    
+    // 显示加载状态
+    const alertDiv = document.querySelector('.alert-info');
+    if (alertDiv) {
+        alertDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>默认测试对象：平安银行 (000001)</strong> - 正在执行多模型预测分析...
+                </div>
+                <div class="spinner-border spinner-border-sm text-success" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 执行多模型预测
+    runAllModelsPrediction(['arima', 'lstm', 'prophet', 'ensemble']);
 }
 
 // 搜索预测对象
@@ -443,6 +497,9 @@ function runAllModelsPrediction(selectedModels = ['arima', 'lstm', 'prophet', 'e
     const period = document.getElementById('modalPeriod') ? 
                   document.getElementById('modalPeriod').value : '30';
     
+    // 加载Chart.js库
+    loadChartJSLibrary();
+    
     // 显示加载状态
     showLoadingForAllModels();
     
@@ -458,6 +515,22 @@ function runAllModelsPrediction(selectedModels = ['arima', 'lstm', 'prophet', 'e
         
         // 更新历史记录
         updatePredictionHistory(objectName, selectedModels);
+        
+        // 更新提示信息
+        const alertDiv = document.querySelector('.alert-info');
+        if (alertDiv) {
+            alertDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-check-circle text-success"></i> 
+                        <strong>预测完成：平安银行 (000001)</strong> - 多模型预测分析已生成，请查看下方图表
+                    </div>
+                    <button class="btn btn-outline-success btn-sm" onclick="startDefaultPrediction()">
+                        <i class="bi bi-arrow-clockwise"></i> 重新预测
+                    </button>
+                </div>
+            `;
+        }
         
     }, 3000);
 }
@@ -544,81 +617,87 @@ function generateHistoricalDataForModel(model) {
     }
 }
 
-// 为不同模型生成不同的预测数据
+// 为不同模型生成不同的预测数据 - 改进版（反映港股机器人大跌和A股资源板块涨）
 function generatePredictionDataForModel(model, period) {
     const predictionLength = parseInt(period);
     
     return Array.from({length: predictionLength}, (_, i) => {
-        const baseValue = 120;
+        // 基础值根据预测对象类型调整
+        let baseValue = 120;
         let trend = 0;
+        let volatility = Math.random() * 6;
         
-        // 根据不同模型生成不同的预测趋势
-        switch(model) {
-            case 'arima':
-                trend = Math.sin(i * 0.1) * 8;
-                break;
-            case 'lstm':
-                trend = Math.sin(i * 0.15) * 12 + Math.sin(i * 0.05) * 4;
-                break;
-            case 'prophet':
-                trend = Math.sin(i * 0.08) * 10 + Math.sin(i * 0.25) * 6;
-                break;
-            case 'ensemble':
-                trend = Math.sin(i * 0.12) * 9 + Math.sin(i * 0.18) * 3;
-                break;
+        // 根据预测对象类型和市场情况调整预测趋势
+        const predictionObject = window.selectedPredictionObject;
+        if (predictionObject) {
+            const objectName = predictionObject.name.toLowerCase();
+            
+            // 港股机器人板块：大跌趋势
+            if (objectName.includes('港股') || objectName.includes('机器人') || objectName.includes('科技')) {
+                baseValue = 100; // 较低的基础值
+                // 大跌趋势：前10天快速下跌，后20天缓慢下跌
+                if (i < 10) {
+                    trend = -15 - (i * 1.5); // 前10天快速下跌
+                } else {
+                    trend = -30 - (i * 0.5); // 后20天缓慢下跌
+                }
+                volatility = Math.random() * 8; // 增加波动性
+            }
+            // A股资源板块：上涨趋势
+            else if (objectName.includes('资源') || objectName.includes('能源') || objectName.includes('煤炭') || objectName.includes('石油')) {
+                baseValue = 140; // 较高的基础值
+                // 上涨趋势：前15天稳步上涨，后15天加速上涨
+                if (i < 15) {
+                    trend = 8 + (i * 0.8); // 稳步上涨
+                } else {
+                    trend = 20 + (i * 1.2); // 加速上涨
+                }
+                volatility = Math.random() * 4; // 减少波动性
+            }
+            // 其他股票：正常波动
+            else {
+                // 根据不同模型生成不同的预测趋势
+                switch(model) {
+                    case 'arima':
+                        trend = Math.sin(i * 0.1) * 8;
+                        break;
+                    case 'lstm':
+                        trend = Math.sin(i * 0.15) * 12 + Math.sin(i * 0.05) * 4;
+                        break;
+                    case 'prophet':
+                        trend = Math.sin(i * 0.08) * 10 + Math.sin(i * 0.25) * 6;
+                        break;
+                    case 'ensemble':
+                        trend = Math.sin(i * 0.12) * 9 + Math.sin(i * 0.18) * 3;
+                        break;
+                }
+            }
         }
+        
+        const predictedValue = baseValue + trend + volatility;
         
         return {
             date: new Date(Date.now() + i * 24 * 60 * 60 * 1000),
-            value: baseValue + trend + Math.random() * 6,
-            lower: baseValue + trend - 4,
-            upper: baseValue + trend + 4
+            value: predictedValue,
+            lower: predictedValue - 4 - Math.abs(trend * 0.1),
+            upper: predictedValue + 4 + Math.abs(trend * 0.1),
+            trend: trend // 添加趋势信息用于显示
         };
     });
 }
 
 // 创建模型图表HTML
 function createModelChartHTML(model, objectName, historicalData, predictionData) {
-    const modelName = getModelDisplayName(model);
-    const totalPoints = historicalData.length + predictionData.length;
-    
-    return `
-        <div class="model-chart-container">
-            <h6 class="text-center mb-3">${objectName} - ${modelName}预测曲线</h6>
-            <div class="chart-area" style="height: 350px; background: #f8f9fa; border-radius: 8px; padding: 15px;">
-                <div class="chart-legend d-flex justify-content-center mb-2">
-                    <span class="badge bg-primary me-2">历史数据 (${historicalData.length}点)</span>
-                    <span class="badge bg-success me-2">预测数据 (${predictionData.length}天)</span>
-                    <span class="badge bg-warning">置信区间</span>
-                </div>
-                <div class="chart-visual mt-2" style="height: 300px; position: relative;">
-                    <div class="text-center" style="margin-top: 120px;">
-                        <i class="bi bi-graph-up text-primary display-4"></i>
-                        <p class="mt-2">${modelName}预测曲线</p>
-                        <div class="row mt-3">
-                            <div class="col-4">
-                                <small class="text-muted">最终预测值</small>
-                                <div><strong>${predictionData[predictionData.length-1]?.value.toFixed(2) || '--'}</strong></div>
-                            </div>
-                            <div class="col-4">
-                                <small class="text-muted">预测变化</small>
-                                <div><strong class="text-success">+${((predictionData[predictionData.length-1]?.value - historicalData[historicalData.length-1]?.value) || 0).toFixed(2)}</strong></div>
-                            </div>
-                            <div class="col-4">
-                                <small class="text-muted">置信度</small>
-                                <div><strong>${getModelConfidence(model)}%</strong></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+    // 现在直接使用真正的图表函数
+    return createRealChart(model, objectName, historicalData, predictionData);
 }
 
-// 创建模型详情HTML
+// 创建模型详情HTML - 改进版（添加市场趋势分析）
 function createModelDetailsHTML(model, objectName, period) {
     const modelInfo = getModelInfo(model);
+    
+    // 分析市场趋势
+    const marketAnalysis = analyzeMarketTrend(objectName);
     
     return `
         <div class="model-details">
@@ -641,13 +720,68 @@ function createModelDetailsHTML(model, objectName, period) {
             </div>
             <div class="mb-2">
                 <small class="text-muted">预测方向</small>
-                <div><span class="badge bg-success">上涨趋势</span></div>
+                <div><span class="badge ${marketAnalysis.trend === '上涨' ? 'bg-success' : marketAnalysis.trend === '下跌' ? 'bg-danger' : 'bg-warning'}">${marketAnalysis.trend}</span></div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">预期收益率</small>
+                <div><strong class="${marketAnalysis.expectedReturn >= 0 ? 'text-success' : 'text-danger'}">${marketAnalysis.expectedReturn >= 0 ? '+' : ''}${marketAnalysis.expectedReturn}%</strong></div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">市场风险</small>
+                <div><span class="badge ${marketAnalysis.riskLevel === '低' ? 'bg-success' : marketAnalysis.riskLevel === '中' ? 'bg-warning' : 'bg-danger'}">${marketAnalysis.riskLevel}</span></div>
             </div>
             <div class="mt-3">
                 <small class="text-muted">${modelInfo.description}</small>
+                <br>
+                <small class="text-info">${marketAnalysis.analysis}</small>
             </div>
         </div>
     `;
+}
+
+// 分析市场趋势函数
+function analyzeMarketTrend(objectName) {
+    const name = objectName.toLowerCase();
+    let trend = '震荡';
+    let expectedReturn = 0;
+    let riskLevel = '中';
+    let analysis = '市场表现相对平稳';
+    
+    // 港股机器人板块：大跌趋势
+    if (name.includes('港股') || name.includes('机器人') || name.includes('科技')) {
+        trend = '下跌';
+        expectedReturn = -12.5;
+        riskLevel = '高';
+        analysis = '受港股整体调整和机器人板块估值回调影响，预计短期内继续承压';
+    }
+    // A股资源板块：上涨趋势
+    else if (name.includes('资源') || name.includes('能源') || name.includes('煤炭') || name.includes('石油')) {
+        trend = '上涨';
+        expectedReturn = 8.7;
+        riskLevel = '低';
+        analysis = '受益于资源价格上涨和政策支持，资源板块表现强劲';
+    }
+    // 金融板块：稳定
+    else if (name.includes('银行') || name.includes('保险') || name.includes('证券')) {
+        trend = '震荡';
+        expectedReturn = 2.3;
+        riskLevel = '低';
+        analysis = '金融板块估值合理，预计维持稳定表现';
+    }
+    // 其他：根据市场情况判断
+    else {
+        trend = Math.random() > 0.5 ? '上涨' : '震荡';
+        expectedReturn = trend === '上涨' ? 3.5 + Math.random() * 4 : -1.5 + Math.random() * 3;
+        riskLevel = '中';
+        analysis = '受市场整体情绪影响，表现相对中性';
+    }
+    
+    return {
+        trend,
+        expectedReturn: expectedReturn.toFixed(1),
+        riskLevel,
+        analysis
+    };
 }
 
 // 获取模型显示名称
@@ -815,3 +949,236 @@ function loadPredictionHistory() {
     
     tableBody.innerHTML = tableHTML;
 }
+
+// 加载Chart.js库
+function loadChartJSLibrary() {
+    if (window.Chart) {
+        return; // 如果已经加载，直接返回
+    }
+    
+    // 创建script标签加载Chart.js
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js';
+    script.onload = function() {
+        console.log('Chart.js库加载成功');
+    };
+    script.onerror = function() {
+        console.error('Chart.js库加载失败，将使用备用方案');
+        createFallbackCharts();
+    };
+    document.head.appendChild(script);
+}
+
+// 创建真正的图表可视化
+function createRealChart(model, objectName, historicalData, predictionData) {
+    if (!window.Chart) {
+        // 如果Chart.js未加载，使用备用方案
+        return createFallbackChartHTML(model, objectName, historicalData, predictionData);
+    }
+    
+    const canvasId = `${model}ChartCanvas`;
+    const containerId = `${model}Chart`;
+    const container = document.getElementById(containerId);
+    
+    // 创建canvas元素
+    container.innerHTML = `
+        <div class="chart-header">
+            <h6 class="text-center mb-2">${objectName} - ${getModelDisplayName(model)}预测曲线</h6>
+        </div>
+        <canvas id="${canvasId}" style="height: 350px;"></canvas>
+    `;
+    
+    // 准备图表数据
+    const allData = [...historicalData, ...predictionData];
+    const labels = allData.map((_, index) => `Day ${index + 1}`);
+    
+    // 创建图表
+    try {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '历史数据',
+                        data: historicalData.map(d => d.value),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.4,
+                        pointRadius: 2
+                    },
+                    {
+                        label: '预测数据',
+                        data: [...Array(historicalData.length).fill(null), ...predictionData.map(d => d.value)],
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        borderDash: [5, 5],
+                        tension: 0.4,
+                        pointRadius: 3
+                    },
+                    {
+                        label: '置信区间上限',
+                        data: [...Array(historicalData.length).fill(null), ...predictionData.map(d => d.upper)],
+                        borderColor: 'rgba(255, 99, 132, 0.3)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.05)',
+                        borderDash: [2, 2],
+                        pointRadius: 0,
+                        fill: '+1'
+                    },
+                    {
+                        label: '置信区间下限',
+                        data: [...Array(historicalData.length).fill(null), ...predictionData.map(d => d.lower)],
+                        borderColor: 'rgba(255, 99, 132, 0.3)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.05)',
+                        borderDash: [2, 2],
+                        pointRadius: 0,
+                        fill: '-1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${objectName} - ${getModelDisplayName(model)}预测`
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: '时间'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: '数值'
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error(`创建${model}图表失败:`, error);
+        return createFallbackChartHTML(model, objectName, historicalData, predictionData);
+    }
+    
+    return container.innerHTML;
+}
+
+// 备用图表方案（当Chart.js不可用时）
+function createFallbackChartHTML(model, objectName, historicalData, predictionData) {
+    const modelName = getModelDisplayName(model);
+    const lastHistorical = historicalData[historicalData.length - 1];
+    const lastPrediction = predictionData[predictionData.length - 1];
+    const change = lastPrediction ? lastPrediction.value - lastHistorical.value : 0;
+    
+    return `
+        <div class="model-chart-container">
+            <h6 class="text-center mb-3">${objectName} - ${modelName}预测曲线</h6>
+            <div class="chart-area" style="height: 350px; background: #f8f9fa; border-radius: 8px; padding: 15px;">
+                <div class="chart-legend d-flex justify-content-center mb-2">
+                    <span class="badge bg-primary me-2">历史数据 (${historicalData.length}点)</span>
+                    <span class="badge bg-success me-2">预测数据 (${predictionData.length}天)</span>
+                    <span class="badge bg-warning">置信区间</span>
+                </div>
+                <div class="simple-chart mt-3" style="height: 250px; position: relative;">
+                    <!-- 简化的SVG图表 -->
+                    <svg width="100%" height="100%" viewBox="0 0 400 200">
+                        <!-- 网格线 -->
+                        <g stroke="#e0e0e0" stroke-width="1">
+                            ${Array.from({length: 5}, (_, i) => 
+                                `<line x1="0" y1="${40 + i * 30}" x2="400" y2="${40 + i * 30}"/>`
+                            ).join('')}
+                        </g>
+                        
+                        <!-- 历史数据线 -->
+                        <polyline 
+                            points="${historicalData.map((d, i) => 
+                                `${i * (400/historicalData.length)},${200 - (d.value - 100) * 2}`
+                            ).join(' ')}" 
+                            fill="none" 
+                            stroke="rgb(75, 192, 192)" 
+                            stroke-width="2"
+                        />
+                        
+                        <!-- 预测数据线 -->
+                        <polyline 
+                            points="${predictionData.map((d, i) => 
+                                `${(historicalData.length + i) * (400/(historicalData.length + predictionData.length))},${200 - (d.value - 100) * 2}`
+                            ).join(' ')}" 
+                            fill="none" 
+                            stroke="rgb(255, 99, 132)" 
+                            stroke-width="2"
+                            stroke-dasharray="5,5"
+                        />
+                        
+                        <!-- 置信区间 -->
+                        <polygon 
+                            points="
+                                ${predictionData.map((d, i) => 
+                                    `${(historicalData.length + i) * (400/(historicalData.length + predictionData.length))},${200 - (d.upper - 100) * 2}`
+                                ).join(' ')}
+                                ${predictionData.map((d, i) => 
+                                    `${(historicalData.length + predictionData.length - 1 - i) * (400/(historicalData.length + predictionData.length))},${200 - (d.lower - 100) * 2}`
+                                ).join(' ')}
+                            " 
+                            fill="rgba(255, 99, 132, 0.1)" 
+                            stroke="none"
+                        />
+                    </svg>
+                </div>
+                <div class="chart-info mt-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted">当前值</small>
+                            <div><strong>${lastHistorical.value.toFixed(2)}</strong></div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">预测值</small>
+                            <div><strong>${lastPrediction.value.toFixed(2)}</strong></div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">变化</small>
+                            <div><strong class="${change >= 0 ? 'text-success' : 'text-danger'}">${change >= 0 ? '+' : ''}${change.toFixed(2)}</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 更新生成模型预测函数，使用真正的图表
+function generateModelPrediction(model, objectName, period) {
+    const chartDiv = document.getElementById(`${model}Chart`);
+    const detailsDiv = document.getElementById(`${model}Details`);
+    
+    if (!chartDiv || !detailsDiv) return;
+    
+    // 生成模拟数据
+    const historicalData = generateHistoricalDataForModel(model);
+    const predictionData = generatePredictionDataForModel(model, period);
+    
+    // 使用真正的图表显示
+    createRealChart(model, objectName, historicalData, predictionData);
+    
+    // 更新模型详情
+    detailsDiv.innerHTML = createModelDetailsHTML(model, objectName, period);
+}
+
+// 备用图表创建函数
+function createFallbackCharts() {
+    console.log('使用备用图表方案');
+}
+

@@ -225,11 +225,26 @@ function loadIndustryCompanyScoreTable() {
                             <h5 class="mb-0"><i class="bi bi-heatmap"></i> 行业-公司评分分布热力图</h5>
                         </div>
                         <div class="card-body">
-                            <div id="heatmapChart" style="height: 400px;">
+                            <div class="mb-3">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-primary active" onclick="showHeatmap()">
+                                        <i class="bi bi-heatmap"></i> 热力图
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" onclick="showIndustryScores()">
+                                        <i class="bi bi-table"></i> 行业分值表
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="heatmapChart" style="height: 400px; display: block;">
                                 <div class="text-center text-muted py-5">
                                     <i class="bi bi-heatmap display-4"></i>
                                     <p class="mt-3">行业-公司评分分布热力图将在此显示</p>
                                 </div>
+                            </div>
+                            
+                            <div id="industryScoresTable" style="display: none;">
+                                <!-- 行业分值表将动态加载到这里 -->
                             </div>
                         </div>
                     </div>
@@ -3085,10 +3100,115 @@ function generateMarketScore(companyName, industry) {
 function generateIndustryScore(industry) {
     const industryScores = {
         'electrical_equipment': 9.2, 'pharmaceutical': 8.8, 'computers': 8.7, 'electronics': 8.9,
-        'food_beverage': 9.1, 'banking': 7.5, 'real_estate': 6.5, 'steel': 6.2
+        'food_beverage': 9.1, 'banking': 7.5, 'real_estate': 6.5, 'steel': 6.2,
+        'securities': 8.2, 'insurance': 7.8, 'construction': 7.1, 'nonferrous': 7.3,
+        'coal': 6.8, 'petrochemical': 7.4, 'chemical': 7.9, 'textile': 6.7,
+        'light_manufacturing': 7.2, 'public_utilities': 7.6, 'transportation': 7.3,
+        'automotive': 7.8, 'household_appliances': 8.1, 'agriculture': 7.0,
+        'commercial_trade': 7.4, 'leisure_services': 8.3, 'biotechnology': 8.9,
+        'medical_services': 8.7, 'media': 8.0, 'communication': 8.1,
+        'defense_military': 7.5, 'mechanical_equipment': 7.4
     };
     
     return industryScores[industry] || parseFloat((7.0 + Math.random() * 2).toFixed(1));
+}
+
+// 计算行业平均分值并生成行业分值表
+function calculateIndustryScoresTable() {
+    const industryScores = {};
+    const industryStats = {};
+    
+    // 计算每个行业的平均分值
+    Object.keys(industryData).forEach(industryKey => {
+        const industryInfo = industryData[industryKey];
+        const companies = industryInfo.companies;
+        
+        // 为行业中的每个公司生成分值
+        const scores = companies.map(companyName => {
+            return generateIndustryScore(industryKey);
+        });
+        
+        // 计算行业平均分值
+        const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+        const maxScore = Math.max(...scores);
+        const minScore = Math.min(...scores);
+        
+        industryScores[industryKey] = parseFloat(avgScore.toFixed(1));
+        industryStats[industryKey] = {
+            name: industryInfo.name,
+            companyCount: companies.length,
+            avgScore: parseFloat(avgScore.toFixed(1)),
+            maxScore: parseFloat(maxScore.toFixed(1)),
+            minScore: parseFloat(minScore.toFixed(1)),
+            scoreRange: parseFloat((maxScore - minScore).toFixed(1))
+        };
+    });
+    
+    return { industryScores, industryStats };
+}
+
+// 生成行业分值表HTML
+function generateIndustryScoresTableHTML() {
+    const { industryStats } = calculateIndustryScoresTable();
+    
+    // 按平均分值排序
+    const sortedIndustries = Object.entries(industryStats)
+        .sort(([,a], [,b]) => b.avgScore - a.avgScore);
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>排名</th>
+                        <th>行业名称</th>
+                        <th>公司数量</th>
+                        <th>平均分值</th>
+                        <th>最高分值</th>
+                        <th>最低分值</th>
+                        <th>分值范围</th>
+                        <th>投资评级</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    sortedIndustries.forEach(([industryKey, stats], index) => {
+        const recommendation = generateRecommendation(stats.avgScore);
+        const rankClass = index < 3 ? 'table-success' : (index >= sortedIndustries.length - 3 ? 'table-warning' : '');
+        
+        html += `
+            <tr class="${rankClass}">
+                <td><strong>${index + 1}</strong></td>
+                <td>${stats.name}</td>
+                <td>${stats.companyCount}</td>
+                <td><span class="badge bg-primary">${stats.avgScore}</span></td>
+                <td><span class="badge bg-success">${stats.maxScore}</span></td>
+                <td><span class="badge bg-secondary">${stats.minScore}</span></td>
+                <td><span class="badge bg-info">${stats.scoreRange}</span></td>
+                <td><span class="badge ${getRecommendationBadgeClass(recommendation)}">${recommendation}</span></td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    return html;
+}
+
+// 获取推荐等级对应的徽章样式
+function getRecommendationBadgeClass(recommendation) {
+    switch(recommendation) {
+        case '强烈推荐': return 'bg-danger';
+        case '推荐': return 'bg-success';
+        case '谨慎推荐': return 'bg-warning';
+        case '中性': return 'bg-info';
+        default: return 'bg-secondary';
+    }
 }
 
 function calculateCompositeScore(financial, market, industry) {
@@ -3530,4 +3650,273 @@ function generateProfitGrowth(companyName) {
     }
     
     return parseFloat((-10 + Math.random() * 45).toFixed(1));
+}
+
+// 显示热力图
+function showHeatmap() {
+    const heatmapChart = document.getElementById('heatmapChart');
+    const industryScoresTable = document.getElementById('industryScoresTable');
+    const heatmapBtn = document.querySelector('button[onclick="showHeatmap()"]');
+    const scoresBtn = document.querySelector('button[onclick="showIndustryScores()"]');
+    
+    // 切换按钮状态
+    heatmapBtn.classList.add('active');
+    scoresBtn.classList.remove('active');
+    
+    // 切换显示
+    heatmapChart.style.display = 'block';
+    industryScoresTable.style.display = 'none';
+    
+    // 生成热力图数据
+    generateHeatmapData();
+}
+
+// 显示行业分值表
+function showIndustryScores() {
+    const heatmapChart = document.getElementById('heatmapChart');
+    const industryScoresTable = document.getElementById('industryScoresTable');
+    const heatmapBtn = document.querySelector('button[onclick="showHeatmap()"]');
+    const scoresBtn = document.querySelector('button[onclick="showIndustryScores()"]');
+    
+    // 切换按钮状态
+    heatmapBtn.classList.remove('active');
+    scoresBtn.classList.add('active');
+    
+    // 切换显示
+    heatmapChart.style.display = 'none';
+    industryScoresTable.style.display = 'block';
+    
+    // 生成行业分值表
+    generateIndustryScoresTable();
+}
+
+// 生成热力图数据
+function generateHeatmapData() {
+    const heatmapChart = document.getElementById('heatmapChart');
+    
+    // 计算行业分值
+    const industryScores = calculateIndustryScores();
+    
+    // 生成热力图HTML
+    heatmapChart.innerHTML = `
+        <div class="text-center py-4">
+            <h5>行业-公司评分分布热力图</h5>
+            <div class="mb-3">
+                <span class="badge bg-success">高评分</span>
+                <span class="badge bg-warning">中评分</span>
+                <span class="badge bg-danger">低评分</span>
+            </div>
+            <div class="heatmap-container" style="height: 300px; overflow: auto;">
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th>行业</th>
+                            <th>公司数量</th>
+                            <th>平均综合评分</th>
+                            <th>评分分布</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${industryScores.map(industry => `
+                            <tr>
+                                <td><strong>${industry.name}</strong></td>
+                                <td>${industry.companyCount}</td>
+                                <td>${industry.avgScore.toFixed(2)}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" style="width: ${industry.scoreDistribution.excellent}%">优</div>
+                                        <div class="progress-bar bg-warning" style="width: ${industry.scoreDistribution.good}%">良</div>
+                                        <div class="progress-bar bg-danger" style="width: ${industry.scoreDistribution.average}%">中</div>
+                                        <div class="progress-bar bg-secondary" style="width: ${industry.scoreDistribution.poor}%">差</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+// 生成行业分值表
+function generateIndustryScoresTable() {
+    const industryScoresTable = document.getElementById('industryScoresTable');
+    
+    // 计算行业分值
+    const industryScores = calculateIndustryScores();
+    
+    // 生成行业分值表HTML
+    industryScoresTable.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>排名</th>
+                        <th>行业名称</th>
+                        <th>公司数量</th>
+                        <th>平均综合评分</th>
+                        <th>财务评分</th>
+                        <th>市场评分</th>
+                        <th>行业评分</th>
+                        <th>投资建议</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${industryScores.map((industry, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><strong>${industry.name}</strong></td>
+                            <td>${industry.companyCount}</td>
+                            <td><span class="badge bg-${getScoreBadgeClass(industry.avgScore)}">${industry.avgScore.toFixed(2)}</span></td>
+                            <td>${industry.avgFinancialScore.toFixed(2)}</td>
+                            <td>${industry.avgMarketScore.toFixed(2)}</td>
+                            <td>${industry.avgIndustryScore.toFixed(2)}</td>
+                            <td><span class="badge bg-${getRecommendationClass(industry.avgScore)}">${getRecommendation(industry.avgScore)}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewIndustryDetail('${industry.id}')">
+                                    <i class="bi bi-eye"></i> 查看
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// 计算行业分值
+function calculateIndustryScores() {
+    if (allCompaniesData.length === 0) {
+        allCompaniesData = generateAStockCompanies();
+    }
+    
+    const industryStats = {};
+    
+    // 按行业分组统计
+    allCompaniesData.forEach(company => {
+        if (!industryStats[company.industry]) {
+            industryStats[company.industry] = {
+                companies: [],
+                totalScore: 0,
+                totalFinancialScore: 0,
+                totalMarketScore: 0,
+                totalIndustryScore: 0,
+                scoreCounts: { excellent: 0, good: 0, average: 0, poor: 0 }
+            };
+        }
+        
+        const stats = industryStats[company.industry];
+        stats.companies.push(company);
+        stats.totalScore += company.compositeScore;
+        stats.totalFinancialScore += company.financialScore;
+        stats.totalMarketScore += company.marketScore;
+        stats.totalIndustryScore += company.industryScore;
+        
+        // 统计评分分布
+        if (company.compositeScore >= 9.0) stats.scoreCounts.excellent++;
+        else if (company.compositeScore >= 8.0) stats.scoreCounts.good++;
+        else if (company.compositeScore >= 6.0) stats.scoreCounts.average++;
+        else stats.scoreCounts.poor++;
+    });
+    
+    // 计算平均值并生成结果
+    return Object.keys(industryStats).map(industryId => {
+        const stats = industryStats[industryId];
+        const companyCount = stats.companies.length;
+        const avgScore = stats.totalScore / companyCount;
+        const avgFinancialScore = stats.totalFinancialScore / companyCount;
+        const avgMarketScore = stats.totalMarketScore / companyCount;
+        const avgIndustryScore = stats.totalIndustryScore / companyCount;
+        
+        // 计算评分分布百分比
+        const total = companyCount;
+        const scoreDistribution = {
+            excellent: (stats.scoreCounts.excellent / total) * 100,
+            good: (stats.scoreCounts.good / total) * 100,
+            average: (stats.scoreCounts.average / total) * 100,
+            poor: (stats.scoreCounts.poor / total) * 100
+        };
+        
+        return {
+            id: industryId,
+            name: getIndustryName(industryId),
+            companyCount: companyCount,
+            avgScore: avgScore,
+            avgFinancialScore: avgFinancialScore,
+            avgMarketScore: avgMarketScore,
+            avgIndustryScore: avgIndustryScore,
+            scoreDistribution: scoreDistribution
+        };
+    }).sort((a, b) => b.avgScore - a.avgScore); // 按平均分降序排序
+}
+
+// 获取行业名称
+function getIndustryName(industryId) {
+    const industryNames = {
+        'banking': '银行',
+        'securities': '证券',
+        'insurance': '保险',
+        'real_estate': '房地产',
+        'construction': '建筑装饰',
+        'steel': '钢铁',
+        'nonferrous': '有色金属',
+        'coal': '煤炭',
+        'petrochemical': '石油化工',
+        'chemical': '基础化工',
+        'textile': '纺织服装',
+        'light_manufacturing': '轻工制造',
+        'pharmaceutical': '医药生物',
+        'public_utilities': '公用事业',
+        'transportation': '交通运输',
+        'automotive': '汽车',
+        'household_appliances': '家用电器',
+        'food_beverage': '食品饮料',
+        'agriculture': '农林牧渔',
+        'commercial_trade': '商业贸易',
+        'leisure_services': '休闲服务',
+        'biotechnology': '生物制品',
+        'medical_services': '医疗服务',
+        'electronics': '电子',
+        'computers': '计算机',
+        'media': '传媒',
+        'communication': '通信',
+        'defense_military': '国防军工',
+        'mechanical_equipment': '机械设备',
+        'electrical_equipment': '电气设备'
+    };
+    
+    return industryNames[industryId] || industryId;
+}
+
+// 获取评分徽章类
+function getScoreBadgeClass(score) {
+    if (score >= 9.0) return 'success';
+    if (score >= 8.0) return 'warning';
+    if (score >= 6.0) return 'danger';
+    return 'secondary';
+}
+
+// 获取投资建议
+function getRecommendation(score) {
+    if (score >= 9.0) return '强烈推荐';
+    if (score >= 8.0) return '推荐';
+    if (score >= 6.0) return '谨慎关注';
+    return '观望';
+}
+
+// 获取投资建议类
+function getRecommendationClass(score) {
+    if (score >= 9.0) return 'success';
+    if (score >= 8.0) return 'warning';
+    if (score >= 6.0) return 'danger';
+    return 'secondary';
+}
+
+// 查看行业详情
+function viewIndustryDetail(industryId) {
+    alert(`查看行业详情: ${getIndustryName(industryId)}`);
+    // 实际实现中这里应该显示行业详情模态框
 }

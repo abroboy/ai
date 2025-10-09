@@ -127,6 +127,7 @@
       <div class="module-item" onclick="loadModule('对象因子权重表')">对象因子权重表 <span class="realtime-badge">实时</span></div>
       
       <div class="small text-muted mb-2 mt-3">第六层模块 - 预测分析</div>
+      <div class="module-item" onclick="loadModule('板块轮动预测')">板块轮动预测 <span class="realtime-badge">实时</span></div>
       <div class="module-item" onclick="loadModule('曲线预测分析')">曲线预测分析 <span class="realtime-badge">实时</span></div>
     </div>
     <div class="resizer" id="resizer"></div>
@@ -433,6 +434,29 @@
         updateBreadcrumb(name, 'active');
         return;
       }
+      if(name==='板块轮动预测') {
+        console.log('开始加载板块轮动预测模块，函数状态:', typeof loadSectorRotationPrediction);
+        if(typeof loadSectorRotationPrediction==='function'){
+          console.log('加载板块轮动预测模块 - 专用实现');
+          loadSectorRotationPrediction();
+          updateBreadcrumb(name, 'active');
+          return;
+        } else {
+          console.log('板块轮动预测模块函数未找到，尝试加载专用文件');
+          // 尝试动态加载专用文件
+          loadScript('sector_rotation_prediction.js', function() {
+            if(typeof loadSectorRotationPrediction==='function'){
+              console.log('动态加载成功，调用专用实现');
+              loadSectorRotationPrediction();
+              updateBreadcrumb(name, 'active');
+            } else {
+              console.log('动态加载失败，使用基础模块');
+              loadBasicModule(name);
+            }
+          });
+          return;
+        }
+      }
       if(name==='曲线预测分析') {
         console.log('开始加载曲线预测分析模块，函数状态:', typeof loadCurvePredictionAnalysis);
         if(typeof loadCurvePredictionAnalysis==='function'){
@@ -550,10 +574,12 @@
 
       // 拖拽过程
       document.addEventListener('mousemove', function(e) {
-        if (!isResizing) return;
+        if (!isResizing || !layout) return;
         
-        // 获取布局容器的位置
+        // 获取布局容器的位置（添加空值检查）
         const layoutRect = layout.getBoundingClientRect();
+        if (!layoutRect) return;
+        
         // 计算新的侧边栏宽度
         let newWidth = e.clientX - layoutRect.left - 16; // 减去padding
         
@@ -561,7 +587,9 @@
         newWidth = Math.max(200, Math.min(500, newWidth));
         
         // 设置侧边栏宽度
-        sidebar.style.width = newWidth + 'px';
+        if (sidebar) {
+          sidebar.style.width = newWidth + 'px';
+        }
       });
 
       // 移动端触摸支持
@@ -575,14 +603,19 @@
       });
 
       document.addEventListener('touchmove', function(e) {
-        if (!isResizing) return;
+        if (!isResizing || !layout) return;
         
         const touch = e.touches[0];
+        // 获取布局容器的位置（添加空值检查）
         const layoutRect = layout.getBoundingClientRect();
+        if (!layoutRect) return;
+        
         let newWidth = touch.clientX - layoutRect.left - 16;
         
         newWidth = Math.max(200, Math.min(500, newWidth));
-        sidebar.style.width = newWidth + 'px';
+        if (sidebar) {
+          sidebar.style.width = newWidth + 'px';
+        }
         
         e.preventDefault(); // 防止滚动
       }, { passive: false });
@@ -617,6 +650,7 @@
       '行业分值表': ['industry_score_table.js'],
       '行业+公司分值表': ['industry_company_score_table.js'],
       '对象因子权重表': ['object_factor_weight_table.js'],
+      '板块轮动预测': ['sector_rotation_prediction.js'],
       '曲线预测分析': ['curve_prediction_analysis.js']
     };
     
@@ -712,11 +746,12 @@
       
       // 预加载默认模块的依赖
       const defaultModuleScripts = moduleLoaders['国内热点数据'] || [];
-      // 同时预加载曲线预测分析模块的依赖
+      // 同时预加载板块轮动预测和曲线预测分析模块的依赖
+      const sectorRotationScripts = moduleLoaders['板块轮动预测'] || [];
       const curvePredictionScripts = moduleLoaders['曲线预测分析'] || [];
       
       // 合并需要预加载的脚本
-      const scriptsToPreload = [...new Set([...defaultModuleScripts, ...curvePredictionScripts])];
+      const scriptsToPreload = [...new Set([...defaultModuleScripts, ...sectorRotationScripts, ...curvePredictionScripts])];
       
       if (isSlowConnection) {
         // 慢速网络下：只加载最核心的文件
